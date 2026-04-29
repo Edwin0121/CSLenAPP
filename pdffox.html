@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PDF → Tabla & Excel (Multi-PDF)</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+      body {
+        font-family: "Segoe UI", sans-serif;
+        background: #f4f6f8;
+        margin: 40px;
+        color: #333;
+      }
+      h2 {
+        color: #0078d4;
+      }
+      input,
+      button {
+        padding: 10px 15px;
+        margin-right: 10px;
+        border: none;
+        border-radius: 5px;
+        font-size: 14px;
+      }
+      input {
+        background: #e0e0e0;
+      }
+      button {
+        background: #0078d4;
+        color: #fff;
+        cursor: pointer;
+      }
+      button:hover {
+        background: #005fa3;
+      }
+      #summary table {
+        border-collapse: collapse;
+        width: 100%;
+        margin-bottom: 20px;
+        background: #fff;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+      }
+      #summary th,
+      #summary td {
+        border: 1px solid #ddd;
+        padding: 8px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      #summary th {
+        background: #0078d4;
+        color: #fff;
+      }
+      table {
+        width: 100%;
+        margin-top: 20px;
+        border-collapse: collapse;
+        background: #fff;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        table-layout: auto;
+      }
+      th,
+      td {
+        padding: 10px;
+        border: 1px solid #ddd;
+        text-align: left;
+        white-space: nowrap;
+      }
+      th {
+        background: #0078d4;
+        color: #fff;
+      }
+    </style>
+  </head>
+  <body>
+    <h2>📥 Elegir archivos y Mostrar Tabla</h2>
+    <input type="file" id="pdfInput" accept="application/pdf" multiple />
+    <button id="exportBtn">Exportar a Excel</button>
+
+    <div id="summary"></div>
+
+    <table id="dataTable">
+      <thead>
+        <tr>
+          <th>PO</th>
+          <th>QTY</th>
+          <th>Material</th>
+          <th>Description</th>
+          <th>Size</th>
+          <th>UnitCost</th>
+          <th>ExFactory</th>
+          <th>ShipTo</th>
+        </tr>
+      </thead>
+      <tbody></tbody>
+    </table>
+
+    <script>
+      let rows = [];
+      const summaryPerPO = {};
+
+      document
+        .getElementById("pdfInput")
+        .addEventListener("change", async (e) => {
+          const files = Array.from(e.target.files);
+          rows = [];
+          Object.keys(summaryPerPO).forEach((k) => delete summaryPerPO[k]);
+
+          for (const file of files) {
+            const buffer = await readFileAsArrayBuffer(file);
+            const pdf = await pdfjsLib.getDocument(new Uint8Array(buffer))
+              .promise;
+            let text = "";
+            for (let p = 1; p <= pdf.numPages; p++) {
+              const page = await pdf.getPage(p);
+              const content = await page.getTextContent();
+              text += content.items.map((i) => i.str).join("\n") + "\n";
+            }
+            const { fileRows, fileSummary } = parseText(text);
+            rows.push(...fileRows);
+
+            const { PO, totalQty, descriptions, shipTo } = fileSummary;
+            if (!summaryPerPO[PO]) {
+              summaryPerPO[PO] = {
+                PO,
+                totalQty,
+                descriptions: new Set(descriptions),
+                shipTo,
+              };
+            } else {
+              summaryPerPO[PO].totalQty += totalQty;
+              descriptions.forEach((d) => summaryPerPO[PO].descriptions.add(d));
+            }
+          }
+
+          renderSummary();
+          renderTable();
+        });
+
+      function readFileAsArrayBuffer(file) {
+        return new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = (e) => rej(e);
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      function parseText(text) {
+        const lines = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l);
+
+        // Normalizamos
+        const normLines = lines.map((l) =>
+          l
+            .replace(/\u00A0/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+        );
+
+        const fileRows = [];
+        const fileSummary = {
+          PO: "",
+          totalQty: 0,
+          descriptions: new Set(),
+          shipTo: "",
+        };
+
+        // PO
+        const poM = text.match(/PO\s*[:\-]?\s*(\d{7,12})/i);
+        if (poM) fileSummary.PO = poM[1];
+
+        // Ship To extendido
+        let shipIdx = normLines.findIndex((l) => /^Ship[\s\-]?To:/i.test(l));
+        let startIdx = -1;
+
+        if (shipIdx === -1) {
+          for (let i = 0; i < normLines.length - 1; i++) {
+            if (
+              /^Ship$/i.test(normLines[i]) &&
+              /^To:?$/i.test(normLines[i + 1])
+            ) {
+              shipIdx = i;
+              break;
+            }
+          }
+        }
+
+        if (shipIdx > -1) {
+          const shipArr = [];
+
+          if (/^Ship[\s\-]?To:/i.test(normLines[shipIdx])) {
+            shipArr.push(normLines[shipIdx].replace(/^Ship[\s\-]?To:\s*/i, ""));
+            startIdx = shipIdx + 1;
+          } else {
+            startIdx = shipIdx + 2; // "Ship" + "To:"
+          }
+
+          const billIdx = normLines.findIndex((l) =>
+            /^Bill[\s\-]?To:/i.test(l)
+          );
+          const stopIdx = billIdx > -1 ? billIdx : normLines.length;
+
+          for (let k = startIdx; k < stopIdx; k++) {
+            if (/^(Payment Terms:|QTY|Country of Origin)/i.test(normLines[k]))
+              break;
+            if (!normLines[k].trim()) continue;
+            shipArr.push(normLines[k]);
+          }
+
+          fileSummary.shipTo = shipArr.join(", ");
+          console.log("📦 ShipTo detectado:", fileSummary.shipTo);
+        }
+
+        // bloques por QTY
+        for (let i = 0; i < normLines.length; i++) {
+          if (/^\d+$/.test(normLines[i])) {
+            const qty = parseInt(normLines[i], 10);
+            const material = normLines[i + 1] || "";
+
+            let desc = "",
+              dIdx = -1;
+            for (let j = i + 2; j < i + 6 && j < normLines.length; j++) {
+              const m = normLines[j].match(/\[(.*?)\]/);
+              if (m) {
+                desc = m[1];
+                dIdx = j;
+                break;
+              }
+            }
+            if (dIdx < 0) continue;
+
+            let size = "";
+            for (let s = dIdx + 1; s < dIdx + 6 && s < normLines.length; s++) {
+              if (/^[A-Z0-9]{1,4}$/.test(normLines[s])) {
+                size = normLines[s];
+                break;
+              }
+            }
+
+            let unitCost = "";
+            for (let u = dIdx + 1; u < dIdx + 6 && u < normLines.length; u++) {
+              if (/^\$\d+([.,]\d{1,2})?$/.test(normLines[u])) {
+                unitCost = normLines[u].replace(/[^0-9.,]/g, "");
+                break;
+              }
+            }
+
+            let exFactory = "";
+            for (let x = dIdx + 1; x < dIdx + 8 && x < normLines.length; x++) {
+              if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(normLines[x])) {
+                exFactory = normLines[x];
+                break;
+              }
+            }
+
+            fileSummary.totalQty += qty;
+            if (desc) fileSummary.descriptions.add(desc);
+
+            fileRows.push({
+              PO: fileSummary.PO,
+              QTY: qty,
+              Material: material,
+              Description: desc,
+              Size: size,
+              UnitCost: unitCost,
+              ExFactory: exFactory,
+              ShipTo: fileSummary.shipTo || "No detectado",
+            });
+          }
+        }
+
+        return { fileRows, fileSummary };
+      }
+
+      function renderSummary() {
+        const div = document.getElementById("summary");
+        let html = `
+          <table>
+            <thead>
+              <tr>
+                <th>PO</th>
+                <th>Total QTY</th>
+                <th>Descriptions</th>
+                <th>Ship To</th>
+              </tr>
+            </thead>
+            <tbody>
+        `;
+
+        Object.values(summaryPerPO).forEach((s) => {
+          html += `
+            <tr>
+              <td>${s.PO}</td>
+              <td>${s.totalQty}</td>
+              <td>${[...s.descriptions].join(", ")}</td>
+              <td>${s.shipTo || "No detectado"}</td>
+            </tr>
+          `;
+        });
+
+        html += "</tbody></table>";
+        div.innerHTML = html;
+      }
+
+      function renderTable() {
+        const tb = document.querySelector("#dataTable tbody");
+        tb.innerHTML = "";
+        rows.forEach((r) => {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${r.PO}</td>
+            <td>${r.QTY}</td>
+            <td>${r.Material}</td>
+            <td>${r.Description}</td>
+            <td>${r.Size}</td>
+            <td>${r.UnitCost}</td>
+            <td>${r.ExFactory}</td>
+            <td>${r.ShipTo}</td>
+          `;
+          tb.appendChild(tr);
+        });
+      }
+
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        const ws = XLSX.utils.json_to_sheet(rows, {
+          header: [
+            "PO",
+            "QTY",
+            "Material",
+            "Description",
+            "Size",
+            "UnitCost",
+            "ExFactory",
+            "ShipTo",
+          ],
+        });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Datos PDF");
+        XLSX.writeFile(wb, "datos_pdf.xlsx");
+      });
+    </script>
+  </body>
+</html>

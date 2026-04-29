@@ -1,0 +1,1848 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Control de Envíos Partes Cortadas</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+    <style>
+      :root {
+        --bg-body: #f3f4f6;
+        --bg-card: #ffffff;
+        --text-primary: #111827;
+        --text-secondary: #6b7280;
+        --accent-dark: #1f2937;
+        --border-color: #e5e7eb;
+      }
+      body {
+        background-color: var(--bg-body);
+        font-family: "Inter", sans-serif;
+        color: var(--text-primary);
+      }
+      .navbar-custom {
+        background-color: var(--accent-dark);
+        padding: 1rem 2rem;
+        color: white;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+      .kpi-stat-card {
+        padding: 1.25rem;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+        border-left: 4px solid transparent;
+      }
+      .kpi-stat-card.blue {
+        border-left-color: #3b82f6;
+      }
+      .kpi-stat-card.green {
+        border-left-color: #10b981;
+      }
+      .kpi-stat-card.gray {
+        border-left-color: #6b7280;
+      }
+      .kpi-stat-card.orange {
+        border-left-color: #f59e0b;
+      }
+      .kpi-label {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        color: var(--text-secondary);
+      }
+      .kpi-number {
+        font-size: 1.8rem;
+        font-weight: 700;
+        color: var(--text-primary);
+        margin-top: 0.5rem;
+      }
+      .card-custom {
+        background: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
+      }
+      .table-custom thead th {
+        background-color: #f9fafb;
+        color: #374151;
+        font-size: 0.75rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        padding: 1rem;
+        border-bottom: 2px solid #e5e7eb;
+      }
+      .table-custom tbody td {
+        padding: 0.85rem 1rem;
+        vertical-align: middle;
+        font-size: 0.9rem;
+        border-bottom: 1px solid #f3f4f6;
+        color: #4b5563;
+      }
+      .table-hover tbody tr:hover {
+        background-color: #f9fafb;
+      }
+      .kpi-link {
+        cursor: pointer;
+        text-decoration: none;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+      .kpi-link:hover {
+        text-decoration: underline;
+      }
+      .text-success-dark {
+        color: #059669;
+      }
+      .text-danger-dark {
+        color: #dc2626;
+      }
+      .dropzone {
+        border: 2px dashed #d1d5db;
+        background: #f9fafb;
+        border-radius: 8px;
+        padding: 3rem;
+        text-align: center;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .dropzone:hover {
+        border-color: #6b7280;
+        background: #f3f4f6;
+      }
+      #loader-overlay {
+        position: fixed;
+        top: 0;
+        left: 0;
+        width: 100%;
+        height: 100%;
+        background: rgba(255, 255, 255, 0.9);
+        z-index: 9999;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        backdrop-filter: blur(2px);
+      }
+      .pagination-container {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding-top: 1rem;
+        border-top: 1px solid #e5e7eb;
+      }
+      .modal-body-scroll {
+        max-height: 70vh;
+        overflow-y: auto;
+        padding-right: 5px;
+      }
+      .btn-dark-custom {
+        background-color: #374151;
+        border: none;
+        color: white;
+      }
+      .btn-dark-custom:hover {
+        background-color: #1f2937;
+        color: white;
+      }
+      .summary-card-item {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+        margin-bottom: 1rem;
+        overflow: hidden;
+      }
+      .summary-header {
+        background: #f3f4f6;
+        padding: 0.75rem 1rem;
+        border-bottom: 1px solid #e5e7eb;
+      }
+      .skipped-item {
+        background: #fee2e2;
+        border-left: 4px solid #dc2626;
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      tfoot {
+        background-color: #f1f5f9;
+        font-weight: bold;
+        border-top: 2px solid #e5e7eb;
+      }
+      tfoot td {
+        padding: 1rem !important;
+        color: #1f2937;
+      }
+    </style>
+  </head>
+  <body>
+    <div id="loader-overlay">
+      <div
+        class="spinner-border text-dark mb-3"
+        role="status"
+        style="width: 3rem; height: 3rem"
+      ></div>
+      <h6 class="text-secondary fw-bold" id="loaderText">Cargando datos...</h6>
+      <div class="progress mt-3" style="width: 200px; height: 5px">
+        <div
+          class="progress-bar bg-dark"
+          role="progressbar"
+          style="width: 0%"
+          id="loaderProgress"
+        ></div>
+      </div>
+    </div>
+
+    <nav
+      class="navbar-custom d-flex justify-content-between align-items-center sticky-top"
+    >
+      <div class="d-flex flex-column">
+        <div class="d-flex align-items-center gap-2 fw-bold fs-4">
+          <i class="bi bi-building-fill-gear"></i> CONTROL DE ENVIOS A
+          PROVEEDORES
+        </div>
+        <span class="small opacity-75 ms-4 ps-2 font-monospace"
+          >Módulo: Envíos Partes Cortadas</span
+        >
+      </div>
+      <div class="d-flex gap-2 align-items-center">
+        <div class="input-group input-group-sm me-2" style="width: 250px">
+          <span class="input-group-text bg-secondary text-white border-0"
+            ><i class="bi bi-search"></i
+          ></span>
+          <input
+            type="text"
+            class="form-control border-0"
+            id="globalSearch"
+            placeholder="Buscar Envío, Cliente..."
+          />
+        </div>
+
+        <button
+          class="btn btn-sm btn-outline-light"
+          onclick="openReqMode()"
+          title="Asignar N° Req"
+        >
+          <i class="bi bi-hash"></i> N° Req
+        </button>
+        <button
+          class="btn btn-sm btn-outline-light"
+          onclick="openPOMode()"
+          title="Asignar PO"
+        >
+          <i class="bi bi-tag-fill"></i> PO
+        </button>
+
+        <div class="dropdown">
+          <button
+            class="btn btn-sm btn-light text-dark fw-bold dropdown-toggle"
+            type="button"
+            data-bs-toggle="dropdown"
+          >
+            <i class="bi bi-file-earmark-bar-graph-fill me-1"></i> Reportes
+          </button>
+          <ul class="dropdown-menu dropdown-menu-end shadow">
+            <li><h6 class="dropdown-header">Generales</h6></li>
+            <li>
+              <button class="dropdown-item" onclick="exportGeneralReport()">
+                <i class="bi bi-table text-success me-2"></i>Exportar General
+                (Vista Actual)
+              </button>
+            </li>
+            <li><hr class="dropdown-divider" /></li>
+            <li><h6 class="dropdown-header">Pendientes</h6></li>
+            <li>
+              <button
+                class="dropdown-item"
+                onclick="exportSpecialReport('NO_PO')"
+              >
+                <i class="bi bi-exclamation-circle text-warning me-2"></i>Envíos
+                sin PO
+              </button>
+            </li>
+            <li>
+              <button
+                class="dropdown-item"
+                onclick="exportSpecialReport('NO_REQ')"
+              >
+                <i class="bi bi-exclamation-circle text-info me-2"></i>Envíos
+                sin Requisición
+              </button>
+            </li>
+          </ul>
+        </div>
+
+        <button
+          class="btn btn-sm btn-outline-light"
+          onclick="openImportModal()"
+        >
+          <i class="bi bi-cloud-arrow-up-fill"></i>
+        </button>
+      </div>
+    </nav>
+
+    <div class="container-fluid px-4 py-4">
+      <div class="row g-3 mb-4">
+        <div class="col-md-3">
+          <div class="card-custom kpi-stat-card gray">
+            <span class="kpi-label">Total Envíos (2024-25)</span>
+            <div class="kpi-number" id="kpi-shipments">0</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-custom kpi-stat-card green">
+            <span class="kpi-label">Piezas Procesadas</span>
+            <div class="kpi-number text-success" id="kpi-pieces">0</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-custom kpi-stat-card blue">
+            <span class="kpi-label">Cartera Clientes</span>
+            <div class="kpi-number text-primary" id="kpi-clients">0</div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-custom kpi-stat-card orange">
+            <span class="kpi-label">Pendientes de PO</span>
+            <div class="kpi-number text-warning" id="kpi-no-po">0</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-custom mb-4">
+        <div
+          class="card-header bg-white fw-bold py-3 border-bottom text-secondary"
+        >
+          <i class="bi bi-bar-chart-fill me-2"></i> Métricas por Proveedor (Clic
+          para filtrar)
+        </div>
+        <div class="card-body p-0">
+          <div
+            class="table-responsive"
+            style="max-height: 250px; overflow-y: auto"
+          >
+            <table class="table table-sm table-hover mb-0 text-center small">
+              <thead class="table-light sticky-top">
+                <tr>
+                  <th class="text-start ps-4">Proveedor</th>
+                  <th>Total Envíos</th>
+                  <th>Con PO</th>
+                  <th>Sin PO</th>
+                  <th>Con Req</th>
+                  <th>Sin Req</th>
+                </tr>
+              </thead>
+              <tbody id="providerKpiBody"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+
+      <div class="card-custom">
+        <div
+          class="card-header bg-white py-3 d-flex justify-content-between align-items-center"
+        >
+          <h5 class="fw-bold text-dark m-0">
+            <i class="bi bi-table me-2"></i>Detalle de Envíos
+          </h5>
+          <div>
+            <button
+              class="btn btn-sm btn-outline-secondary me-2"
+              onclick="resetFilters()"
+              id="btnResetFilters"
+              style="display: none"
+            >
+              <i class="bi bi-x-circle"></i> Quitar Filtros
+            </button>
+            <span class="badge bg-secondary fw-normal" id="lastUpdate"
+              >Actualizando...</span
+            >
+          </div>
+        </div>
+        <div class="card-body p-0">
+          <div class="table-responsive">
+            <table
+              class="table table-custom table-hover mb-0"
+              id="summaryTable"
+            >
+              <thead>
+                <tr>
+                  <th>Fecha <i class="bi bi-arrow-down"></i></th>
+                  <th>Envío #</th>
+                  <th>N° Req</th>
+                  <th>PO</th>
+                  <th>Proveedor</th>
+                  <th>Cliente(s)</th>
+                  <th class="text-end">Total Piezas</th>
+                  <th class="text-center" style="width: 180px">Acciones</th>
+                </tr>
+              </thead>
+              <tbody id="tableBody"></tbody>
+              <tfoot id="tableFooter">
+                <tr>
+                  <td colspan="6" class="text-end text-uppercase">
+                    Total en vista actual:
+                  </td>
+                  <td class="text-end text-success" id="grandTotalDisplay">
+                    0
+                  </td>
+                  <td></td>
+                </tr>
+              </tfoot>
+            </table>
+          </div>
+          <div class="pagination-container px-3 pb-3">
+            <div class="d-flex align-items-center gap-2">
+              <span class="text-muted small" id="pageInfo"
+                >Mostrando 0-0 de 0</span
+              >
+              <select
+                class="form-select form-select-sm"
+                style="width: auto"
+                id="pageSelector"
+                onchange="jumpToPage(this.value)"
+              ></select>
+            </div>
+            <div class="btn-group">
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                onclick="changePage(-1)"
+                id="btnPrev"
+              >
+                Anterior
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary"
+                onclick="changePage(1)"
+                id="btnNext"
+              >
+                Siguiente
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="importModal" tabindex="-1">
+      <div class="modal-dialog modal-lg modal-dialog-centered">
+        <div class="modal-content border-0">
+          <div class="modal-header border-0">
+            <h5 class="modal-title fw-bold">Cargar Archivos Excel</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body">
+            <div id="dropzone" class="dropzone">
+              <i
+                class="bi bi-file-earmark-spreadsheet display-3 text-secondary"
+              ></i>
+              <p class="mt-3 fw-bold text-dark">
+                Arrastra tus archivos aquí (Soporta múltiples)
+              </p>
+              <p class="small text-muted">
+                <strong>Requisito:</strong> Debe tener la palabra "BULTO" en la
+                celda A8.
+              </p>
+              <input
+                type="file"
+                id="fileInput"
+                accept=".xlsx,.xls"
+                multiple
+                hidden
+              />
+            </div>
+            <div id="fileInfo" class="mt-3 alert alert-secondary d-none">
+              <strong>Archivos seleccionados:</strong>
+              <span id="fileName"></span>
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button class="btn btn-light" data-bs-dismiss="modal">
+              Cancelar</button
+            ><button
+              class="btn btn-dark-custom px-4"
+              id="btnProcessExcel"
+              disabled
+              onclick="processExcelBatch()"
+            >
+              Procesar Lote
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="poModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">Asignar PO</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">ENVÍO #</label
+              ><input
+                class="form-control"
+                list="envioOptions"
+                id="poEnvioInput"
+                placeholder="Busca..."
+                readonly
+              /><datalist id="envioOptions"></datalist>
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">NUEVO PO</label
+              ><input
+                type="text"
+                class="form-control"
+                id="poValueInput"
+                placeholder="Ej: PO-2024-XXXX"
+              />
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button class="btn btn-dark-custom w-100" onclick="updatePO()">
+              Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="reqModal" tabindex="-1">
+      <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+          <div class="modal-header bg-light">
+            <h5 class="modal-title fw-bold">Asignar N° Req</h5>
+            <button
+              type="button"
+              class="btn-close"
+              data-bs-dismiss="modal"
+            ></button>
+          </div>
+          <div class="modal-body p-4">
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted">ENVÍO #</label
+              ><input
+                class="form-control"
+                list="envioOptions"
+                id="reqEnvioInput"
+                placeholder="Busca..."
+                readonly
+              />
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-bold text-muted"
+                >N° REQUISICIÓN</label
+              ><input
+                type="text"
+                class="form-control"
+                id="reqValueInput"
+                placeholder="Ej: REQ-XXXX"
+              />
+            </div>
+          </div>
+          <div class="modal-footer border-0">
+            <button class="btn btn-dark-custom w-100" onclick="updateReq()">
+              Guardar Cambios
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="modal fade" id="detailModal" tabindex="-1">
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0">
+          <div class="modal-header bg-light">
+            <div class="w-100">
+              <div class="d-flex justify-content-between align-items-start">
+                <div>
+                  <h5 class="modal-title fw-bold m-0 text-dark">
+                    Detalle de Envío:
+                    <span id="detailEnvioTitle" class="text-primary"></span>
+                  </h5>
+                  <div class="mt-1">
+                    <small class="text-secondary fw-bold text-uppercase"
+                      >Proveedor:</small
+                    >
+                    <small
+                      class="text-dark fw-bold ms-1"
+                      id="detailProveedor"
+                      style="font-size: 0.9rem"
+                    ></small>
+                  </div>
+                </div>
+                <button
+                  type="button"
+                  class="btn-close"
+                  data-bs-dismiss="modal"
+                ></button>
+              </div>
+            </div>
+          </div>
+          <div class="modal-body">
+            <div
+              class="d-flex justify-content-between align-items-center mb-3 p-2 bg-white border rounded"
+            >
+              <div class="btn-group">
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  id="btnDetailReq"
+                >
+                  <i class="bi bi-hash"></i> Asignar Req
+                </button>
+                <button
+                  class="btn btn-outline-secondary btn-sm"
+                  id="btnDetailPO"
+                >
+                  <i class="bi bi-tag"></i> Asignar PO
+                </button>
+              </div>
+              <button
+                class="btn btn-outline-dark btn-sm"
+                onclick="copyConcatenadosFromDetail()"
+              >
+                <i class="bi bi-copy"></i> Copiar Concatenados
+              </button>
+            </div>
+            <div class="table-responsive">
+              <table
+                class="table table-sm table-striped table-bordered mb-0 small"
+              >
+                <thead class="table-light">
+                  <tr>
+                    <th>Cliente</th>
+                    <th>Tipo</th>
+                    <th>Estilo</th>
+                    <th>Corte</th>
+                    <th>Color</th>
+                    <th class="text-end">Piezas</th>
+                    <th>PO</th>
+                  </tr>
+                </thead>
+                <tbody id="detailTableBody"></tbody>
+              </table>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div
+      class="modal fade"
+      id="uploadSummaryModal"
+      tabindex="-1"
+      data-bs-backdrop="static"
+    >
+      <div class="modal-dialog modal-xl modal-dialog-scrollable">
+        <div class="modal-content border-0">
+          <div class="modal-header bg-success text-white">
+            <h5 class="modal-title fw-bold">
+              <i class="bi bi-check-circle-fill me-2"></i>Resultados de Carga
+            </h5>
+            <button
+              type="button"
+              class="btn-close btn-close-white"
+              data-bs-dismiss="modal"
+              onclick="finishUploadFlow()"
+            ></button>
+          </div>
+          <div class="modal-body bg-light">
+            <div id="skippedContainer" class="mb-4" style="display: none">
+              <h6 class="fw-bold text-danger mb-2">
+                <i class="bi bi-exclamation-triangle-fill"></i> Archivos/Envíos
+                NO Cargados
+              </h6>
+              <div id="skippedList"></div>
+            </div>
+
+            <h6 class="fw-bold text-success mb-2" id="successTitle">
+              <i class="bi bi-check-circle"></i> Envíos Cargados Exitosamente
+            </h6>
+            <div id="multiSummaryContainer"></div>
+          </div>
+          <div class="modal-footer border-0 bg-white">
+            <button
+              class="btn btn-secondary px-4"
+              data-bs-dismiss="modal"
+              onclick="finishUploadFlow()"
+            >
+              Cerrar y Actualizar
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const SUPABASE_URL = "https://aawqcgapxdqemjqzwcsy.supabase.co";
+      // NOTA DE SEGURIDAD: Nunca expongas tu Service Key (role: service_role) en el cliente.
+      // Usa solo la Anon Key aquí. Si esta es la anon key, está bien.
+      const SUPABASE_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
+      const TABLE_NAME = "partescortadas";
+
+      // --- CORRECCIÓN AQUÍ: Renombramos 'supabase' a 'supabaseClient' para evitar conflicto ---
+      const supabaseClient = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_KEY
+      );
+
+      let rawData = [],
+        summaryData = [],
+        filteredData = [];
+      let currentPage = 1;
+      const rowsPerPage = 10;
+
+      let importModal, poModal, reqModal, detailModal, uploadSummaryModal;
+      let selectedFiles = [];
+      let batchResults = {};
+      let skippedBatches = [];
+
+      const loader = document.getElementById("loader-overlay");
+      const loaderText = document.getElementById("loaderText");
+      const loaderProgress = document.getElementById("loaderProgress");
+
+      document.addEventListener("DOMContentLoaded", () => {
+        importModal = new bootstrap.Modal(
+          document.getElementById("importModal")
+        );
+        poModal = new bootstrap.Modal(document.getElementById("poModal"));
+        reqModal = new bootstrap.Modal(document.getElementById("reqModal"));
+        detailModal = new bootstrap.Modal(
+          document.getElementById("detailModal")
+        );
+        uploadSummaryModal = new bootstrap.Modal(
+          document.getElementById("uploadSummaryModal")
+        );
+
+        loadData();
+        setupDropzone();
+
+        document
+          .getElementById("globalSearch")
+          .addEventListener("input", (e) => {
+            const term = e.target.value.toLowerCase();
+            filteredData = summaryData.filter(
+              (i) =>
+                (i.ENVIO || "").toLowerCase().includes(term) ||
+                (i.CLIENTE_DISPLAY || "").toLowerCase().includes(term) ||
+                (i.PO || "").toLowerCase().includes(term) ||
+                (i.REQ || "").toLowerCase().includes(term) ||
+                (i.PROVEEDOR || "").toLowerCase().includes(term)
+            );
+            currentPage = 1;
+            renderTablePage();
+            if (term === "")
+              document.getElementById("btnResetFilters").style.display = "none";
+          });
+      });
+
+      const toggleLoader = (show, text = "Procesando...") => {
+        loader.style.display = show ? "flex" : "none";
+        loaderText.innerText = text;
+        loaderProgress.style.width = "0%";
+      };
+
+      // --- CORRECCIÓN DE FECHAS V26.0 ---
+      function smartDate(dateStr) {
+        if (!dateStr) return { valid: false, obj: new Date(0), display: "-" };
+        if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
+          const [y, m, d] = dateStr.split("-").map(Number);
+          const localDate = new Date(y, m - 1, d);
+          return {
+            valid: true,
+            obj: localDate,
+            display: localDate.toLocaleDateString(),
+          };
+        }
+        let d = new Date(dateStr);
+        if (!isNaN(d.getTime()))
+          return { valid: true, obj: d, display: d.toLocaleDateString() };
+        return { valid: false, obj: new Date(0), display: dateStr };
+      }
+
+      function getLocalISODate() {
+        const d = new Date();
+        const year = d.getFullYear();
+        const month = String(d.getMonth() + 1).padStart(2, "0");
+        const day = String(d.getDate()).padStart(2, "0");
+        return `${year}-${month}-${day}`;
+      }
+
+      async function loadData() {
+        toggleLoader(true, "Cargando base de datos completa...");
+        rawData = [];
+        let from = 0;
+        const limit = 1000;
+        let moreData = true;
+        let totalCount = 0;
+
+        // Usamos supabaseClient en lugar de supabase
+        const { count } = await supabaseClient
+          .from(TABLE_NAME)
+          .select("*", { count: "exact", head: true });
+        if (count) totalCount = count;
+
+        while (moreData) {
+          // Usamos supabaseClient
+          const { data, error } = await supabaseClient
+            .from(TABLE_NAME)
+            .select("*")
+            .range(from, from + limit - 1);
+          if (error) {
+            toggleLoader(false);
+            return Swal.fire("Error", error.message, "error");
+          }
+          if (data.length > 0) {
+            rawData = rawData.concat(data);
+            from += limit;
+            if (totalCount > 0) {
+              const pct = Math.min(
+                100,
+                Math.round((rawData.length / totalCount) * 100)
+              );
+              loaderProgress.style.width = `${pct}%`;
+            }
+          }
+          if (data.length < limit) moreData = false;
+        }
+        processLocalData();
+      }
+
+      function processLocalData() {
+        const groups = {};
+        const providerStats = {};
+        let totalP = 0;
+
+        rawData.forEach((r) => {
+          const env = r["ENVIO#"] || "SIN_ENVIO";
+          const prov = r.PROVEEDOR || "SIN PROVEEDOR";
+          const hasPO =
+            r.PO &&
+            String(r.PO).trim() !== "" &&
+            String(r.PO).trim() !== "null";
+          const hasReq =
+            r["N°"] &&
+            String(r["N°"]).trim() !== "" &&
+            String(r["N°"]).trim() !== "null";
+          const clientName = r.CLIENTE || "Desconocido";
+
+          if (!groups[env]) {
+            const dateInfo = smartDate(r.FECHA);
+            groups[env] = {
+              ENVIO: env,
+              PO: r.PO,
+              REQ: r["N°"],
+              PROVEEDOR: prov,
+              FECHA_OBJ: dateInfo.obj,
+              FECHA_DISPLAY: dateInfo.display,
+              CLIENTS_SET: new Set(),
+              SEARCH_META: "",
+            };
+            if (!providerStats[prov])
+              providerStats[prov] = {
+                total: 0,
+                withPO: 0,
+                noPO: 0,
+                withReq: 0,
+                noReq: 0,
+              };
+            providerStats[prov].total++;
+            if (hasPO) providerStats[prov].withPO++;
+            else providerStats[prov].noPO++;
+            if (hasReq) providerStats[prov].withReq++;
+            else providerStats[prov].noReq++;
+          }
+
+          groups[env].CLIENTS_SET.add(clientName);
+          groups[env].SEARCH_META += ` ${r.ESTILO || ""} ${r.CORTE || ""} ${
+            r.COLOR || ""
+          } ${r.TIPO || ""}`;
+          const p = Number(r.PARTES) || 0;
+          groups[env].TOTAL = (groups[env].TOTAL || 0) + p;
+          totalP += p;
+        });
+
+        summaryData = Object.values(groups).map((g) => {
+          const distinctFirstWords = new Set();
+          g.CLIENTS_SET.forEach((c) => distinctFirstWords.add(c.split(" ")[0]));
+          g.CLIENTE_DISPLAY = Array.from(distinctFirstWords).join(", ");
+          return g;
+        });
+
+        summaryData.sort((a, b) => b.FECHA_OBJ - a.FECHA_OBJ);
+        filteredData = [...summaryData];
+
+        document.getElementById("kpi-shipments").innerText = summaryData.length;
+        document.getElementById("kpi-pieces").innerText =
+          totalP.toLocaleString();
+        document.getElementById("kpi-clients").innerText = new Set(
+          rawData.map((d) => d.CLIENTE)
+        ).size;
+        document.getElementById("kpi-no-po").innerText = summaryData.filter(
+          (s) => !s.PO || s.PO.trim() === ""
+        ).length;
+        document.getElementById("lastUpdate").innerText =
+          "Actualizado: " + new Date().toLocaleTimeString();
+
+        renderProviderStats(providerStats);
+
+        const dl = document.getElementById("envioOptions");
+        dl.innerHTML = "";
+        summaryData.forEach((i) => {
+          const op = document.createElement("option");
+          op.value = i.ENVIO;
+          op.label = `${i.CLIENTE_DISPLAY} (${i.TOTAL} pzs)`;
+          dl.appendChild(op);
+        });
+
+        currentPage = 1;
+        renderTablePage();
+        toggleLoader(false);
+      }
+
+      // --- EXPORTAR ---
+      function exportGeneralReport() {
+        toggleLoader(true, "Generando reporte general...");
+        const visibleEnvios = new Set(filteredData.map((i) => i.ENVIO));
+        const rowsToExport = rawData.filter((r) =>
+          visibleEnvios.has(r["ENVIO#"])
+        );
+        if (rowsToExport.length === 0) {
+          toggleLoader(false);
+          return Swal.fire("Info", "No hay datos para exportar.", "info");
+        }
+
+        const groups = {};
+        rowsToExport.forEach((r) => {
+          const env = r["ENVIO#"];
+          if (!groups[env]) groups[env] = [];
+          groups[env].push(r);
+        });
+        const sortedKeys = filteredData
+          .map((item) => item.ENVIO)
+          .filter((key) => groups[key]);
+
+        const headerStyle = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "374151" } },
+          alignment: { horizontal: "center" },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
+        const tableHeaderStyle = {
+          font: { bold: true, color: { rgb: "000000" } },
+          fill: { fgColor: { rgb: "E5E7EB" } },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
+        const cellStyle = {
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
+        const totalStyle = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: "F3F4F6" } },
+          border: { top: { style: "thin" } },
+        };
+
+        const wb = XLSX.utils.book_new();
+        const wsData = [];
+        wsData.push([
+          {
+            v: "REPORTE GENERAL DE ENVÍOS",
+            s: { font: { bold: true, sz: 14 } },
+          },
+        ]);
+        wsData.push([
+          {
+            v: "Generado el: " + new Date().toLocaleDateString(),
+            s: { font: { italic: true } },
+          },
+        ]);
+        wsData.push([]);
+        wsData.push(
+          [
+            "Fecha",
+            "Proveedor",
+            "Envío #",
+            "N° Req",
+            "PO",
+            "Cliente",
+            "Estilo",
+            "Corte",
+            "Color",
+            "Piezas",
+          ].map((h) => ({ v: h, s: headerStyle }))
+        );
+
+        sortedKeys.forEach((envKey) => {
+          const groupRows = groups[envKey];
+          let subtotal = 0;
+          groupRows.forEach((r) => {
+            const pcs = Number(r.PARTES) || 0;
+            subtotal += pcs;
+            wsData.push([
+              { v: r.FECHA, s: cellStyle },
+              { v: r.PROVEEDOR, s: cellStyle },
+              { v: r["ENVIO#"], s: cellStyle },
+              { v: r["N°"] || "", s: cellStyle },
+              { v: r.PO || "", s: cellStyle },
+              { v: r.CLIENTE, s: cellStyle },
+              { v: r.ESTILO, s: cellStyle },
+              { v: r.CORTE, s: cellStyle },
+              { v: r.COLOR, s: cellStyle },
+              { v: pcs, t: "n", z: "#,##0", s: cellStyle },
+            ]);
+          });
+          wsData.push([
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "", s: totalStyle },
+            { v: "TOTAL " + envKey + ":", s: totalStyle },
+            { v: subtotal, t: "n", z: "#,##0", s: totalStyle },
+          ]);
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws["!views"] = [{ state: "frozen", xSplit: 0, ySplit: 4 }];
+        ws["!cols"] = [
+          { wch: 12 },
+          { wch: 25 },
+          { wch: 20 },
+          { wch: 15 },
+          { wch: 15 },
+          { wch: 25 },
+          { wch: 15 },
+          { wch: 15 },
+          { wch: 20 },
+          { wch: 12 },
+        ];
+        XLSX.utils.book_append_sheet(wb, ws, "General");
+        XLSX.writeFile(
+          wb,
+          `Reporte_General_${new Date().toISOString().slice(0, 10)}.xlsx`
+        );
+        toggleLoader(false);
+      }
+
+      function exportSpecialReport(type) {
+        toggleLoader(true, "Generando reporte...");
+        let filteredRows = [];
+        if (type === "NO_PO")
+          filteredRows = rawData.filter(
+            (r) =>
+              !r.PO ||
+              String(r.PO).trim() === "" ||
+              String(r.PO).trim() === "null"
+          );
+        else if (type === "NO_REQ")
+          filteredRows = rawData.filter(
+            (r) =>
+              !r["N°"] ||
+              String(r["N°"]).trim() === "" ||
+              String(r["N°"]).trim() === "null"
+          );
+
+        if (filteredRows.length === 0) {
+          toggleLoader(false);
+          return Swal.fire("Info", "No hay datos pendientes.", "info");
+        }
+
+        const groups = {};
+        filteredRows.forEach((r) => {
+          const env = r["ENVIO#"];
+          if (!groups[env]) groups[env] = [];
+          groups[env].push(r);
+        });
+        const headerStyle = {
+          font: { bold: true, color: { rgb: "FFFFFF" } },
+          fill: { fgColor: { rgb: "374151" } },
+          alignment: { horizontal: "center" },
+        };
+        const tableHeaderStyle = {
+          font: { bold: true, color: { rgb: "000000" } },
+          fill: { fgColor: { rgb: "E5E7EB" } },
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
+        const cellStyle = {
+          border: {
+            top: { style: "thin" },
+            bottom: { style: "thin" },
+            left: { style: "thin" },
+            right: { style: "thin" },
+          },
+        };
+        const totalStyle = {
+          font: { bold: true },
+          fill: { fgColor: { rgb: "F3F4F6" } },
+          border: { top: { style: "thin" } },
+        };
+
+        const wb = XLSX.utils.book_new();
+        const wsData = [];
+        wsData.push([
+          {
+            v:
+              "REPORTE PENDIENTES - " +
+              (type === "NO_PO" ? "SIN PO" : "SIN REQUISICIÓN"),
+            s: { font: { bold: true, sz: 14 } },
+          },
+        ]);
+        wsData.push([
+          {
+            v: "Generado el: " + new Date().toLocaleDateString(),
+            s: { font: { italic: true } },
+          },
+        ]);
+        wsData.push([]);
+
+        Object.keys(groups)
+          .sort()
+          .forEach((envio) => {
+            const rows = groups[envio];
+            const info = rows[0];
+            const groupHeader = [
+              { v: `ENVÍO: ${envio}`, s: headerStyle },
+              { v: `PROVEEDOR: ${info.PROVEEDOR}`, s: headerStyle },
+              { v: `FECHA: ${info.FECHA}`, s: headerStyle },
+            ];
+            const totalCols = type === "NO_PO" ? 7 : 6;
+            while (groupHeader.length < totalCols)
+              groupHeader.push({ v: "", s: headerStyle });
+            wsData.push(groupHeader);
+
+            const headers = [];
+            if (type === "NO_PO")
+              headers.push({ v: "N° Req", s: tableHeaderStyle });
+            headers.push(
+              { v: "Cliente", s: tableHeaderStyle },
+              { v: "Estilo", s: tableHeaderStyle },
+              { v: "Corte", s: tableHeaderStyle },
+              { v: "Color", s: tableHeaderStyle },
+              { v: "Tipo", s: tableHeaderStyle },
+              { v: "Piezas", s: tableHeaderStyle }
+            );
+            wsData.push(headers);
+
+            let subtotal = 0;
+            rows.forEach((r) => {
+              const pcs = Number(r.PARTES) || 0;
+              subtotal += pcs;
+              const row = [];
+              if (type === "NO_PO")
+                row.push({ v: r["N°"] || "-", s: cellStyle });
+              row.push(
+                { v: r.CLIENTE, s: cellStyle },
+                { v: r.ESTILO, s: cellStyle },
+                { v: r.CORTE, s: cellStyle },
+                { v: r.COLOR, s: cellStyle },
+                { v: r.TIPO, s: cellStyle },
+                { v: pcs, t: "n", z: "#,##0", s: cellStyle }
+              );
+              wsData.push(row);
+            });
+            const footer = [];
+            const spacersCount = type === "NO_PO" ? 5 : 4;
+            for (let i = 0; i < spacersCount; i++)
+              footer.push({ v: "", s: totalStyle });
+            footer.push({ v: "TOTAL ENVÍO:", s: totalStyle });
+            footer.push({ v: subtotal, t: "n", z: "#,##0", s: totalStyle });
+            wsData.push(footer);
+            wsData.push([]);
+          });
+
+        const ws = XLSX.utils.aoa_to_sheet(wsData);
+        ws["!views"] = [{ state: "frozen", xSplit: 0, ySplit: 0 }];
+        const cols = [];
+        if (type === "NO_PO") cols.push({ wch: 15 });
+        cols.push(
+          { wch: 25 },
+          { wch: 15 },
+          { wch: 15 },
+          { wch: 20 },
+          { wch: 35 },
+          { wch: 12 }
+        );
+        ws["!cols"] = cols;
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+        XLSX.writeFile(
+          wb,
+          `Reporte_Pendientes_${type}_${new Date()
+            .toISOString()
+            .slice(0, 10)}.xlsx`
+        );
+        toggleLoader(false);
+      }
+
+      function renderProviderStats(stats) {
+        const tbody = document.getElementById("providerKpiBody");
+        tbody.innerHTML = "";
+        Object.keys(stats)
+          .sort()
+          .forEach((prov) => {
+            const s = stats[prov];
+            const makeLink = (text, type, filterVal) =>
+              text === 0
+                ? `<span class="text-muted">-</span>`
+                : `<span class="kpi-link ${type}" onclick="filterByProviderStat('${prov}', '${filterVal}')">${text}</span>`;
+            const tr = document.createElement("tr");
+            tr.innerHTML = `<td class="text-start ps-4 fw-bold text-dark"><span class="provider-link fw-bold" onclick="filterByProviderStat('${prov}', 'ALL')">${prov}</span></td><td><span class="badge bg-secondary">${
+              s.total
+            }</span></td><td>${makeLink(
+              s.withPO,
+              "text-success-dark",
+              "WITH_PO"
+            )}</td><td>${makeLink(
+              s.noPO,
+              "text-danger-dark",
+              "NO_PO"
+            )}</td><td>${makeLink(
+              s.withReq,
+              "text-primary",
+              "WITH_REQ"
+            )}</td><td>${makeLink(s.noReq, "text-muted", "NO_REQ")}</td>`;
+            tbody.appendChild(tr);
+          });
+      }
+
+      window.filterByProviderStat = (provider, criteria) => {
+        filteredData = summaryData.filter((row) => {
+          if (row.PROVEEDOR !== provider) return false;
+          if (criteria === "ALL") return true;
+          const hasPO = row.PO && row.PO.trim() !== "";
+          const hasReq = row.REQ && row.REQ.trim() !== "";
+          if (criteria === "WITH_PO") return hasPO;
+          if (criteria === "NO_PO") return !hasPO;
+          if (criteria === "WITH_REQ") return hasReq;
+          if (criteria === "NO_REQ") return !hasReq;
+          return true;
+        });
+        currentPage = 1;
+        renderTablePage();
+        document.getElementById("btnResetFilters").style.display =
+          "inline-block";
+        Swal.fire({
+          toast: true,
+          position: "top-end",
+          icon: "info",
+          title: `Filtrado: ${provider}`,
+          showConfirmButton: false,
+          timer: 1500,
+        });
+      };
+
+      window.resetFilters = () => {
+        filteredData = [...summaryData];
+        document.getElementById("globalSearch").value = "";
+        document.getElementById("btnResetFilters").style.display = "none";
+        currentPage = 1;
+        renderTablePage();
+      };
+
+      function renderTablePage() {
+        const tb = document.getElementById("tableBody");
+        tb.innerHTML = "";
+        const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+        if (currentPage < 1) currentPage = 1;
+        if (currentPage > totalPages && totalPages > 0)
+          currentPage = totalPages;
+        const start = (currentPage - 1) * rowsPerPage;
+        const end = start + rowsPerPage;
+        const pageData = filteredData.slice(start, end);
+
+        document.getElementById("pageInfo").innerText = `Mostrando ${Math.min(
+          start + 1,
+          filteredData.length
+        )}-${Math.min(end, filteredData.length)} de ${filteredData.length}`;
+        document.getElementById("btnPrev").disabled = currentPage === 1;
+        document.getElementById("btnNext").disabled = currentPage >= totalPages;
+
+        const selector = document.getElementById("pageSelector");
+        selector.innerHTML = "";
+        for (let i = 1; i <= totalPages; i++) {
+          const opt = document.createElement("option");
+          opt.value = i;
+          opt.text = `Página ${i}`;
+          if (i === currentPage) opt.selected = true;
+          selector.appendChild(opt);
+        }
+
+        if (pageData.length === 0)
+          return (tb.innerHTML =
+            '<tr><td colspan="8" class="text-center p-5 text-muted">No se encontraron datos</td></tr>');
+
+        pageData.forEach((i) => {
+          const poBadge = i.PO
+            ? `<span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2">${i.PO}</span>`
+            : `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle px-2">Sin Asignar</span>`;
+          const reqBadge = i.REQ
+            ? `<span class="fw-bold text-dark small">${i.REQ}</span>`
+            : `<span class="text-muted small">-</span>`;
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+                    <td class="small">${
+                      i.FECHA_DISPLAY
+                    }</td><td class="fw-bold text-primary">${
+            i.ENVIO
+          }</td><td>${reqBadge}</td><td>${poBadge}</td><td class="small text-secondary fw-bold">${
+            i.PROVEEDOR || ""
+          }</td><td class="fw-bold text-dark small text-uppercase">${
+            i.CLIENTE_DISPLAY
+          }</td><td class="text-end fw-bold font-monospace text-secondary">${(
+            i.TOTAL || 0
+          ).toLocaleString()}</td>
+                    <td class="text-center"><div class="btn-group" role="group"><button class="btn btn-sm btn-outline-secondary border-0" onclick="openDetailModal('${
+                      i.ENVIO
+                    }')" title="Ver Detalles"><i class="bi bi-eye"></i></button><button class="btn btn-sm btn-outline-secondary border-0" onclick="handleReqClick('${
+            i.ENVIO
+          }', '${
+            i.REQ || ""
+          }')" title="Asignar Req"><i class="bi bi-hash"></i></button><button class="btn btn-sm btn-outline-secondary border-0" onclick="handlePOClick('${
+            i.ENVIO
+          }', '${
+            i.PO || ""
+          }')" title="Asignar PO"><i class="bi bi-tag"></i></button><button class="btn btn-sm btn-outline-danger border-0" onclick="deleteEnvio('${
+            i.ENVIO
+          }')" title="Eliminar"><i class="bi bi-trash"></i></button></div></td>
+                `;
+          tb.appendChild(tr);
+        });
+
+        const totalVisible = filteredData.reduce(
+          (acc, curr) => acc + (curr.TOTAL || 0),
+          0
+        );
+        document.getElementById("grandTotalDisplay").innerText =
+          totalVisible.toLocaleString();
+      }
+
+      window.changePage = (dir) => {
+        currentPage += dir;
+        renderTablePage();
+      };
+      window.jumpToPage = (pageNum) => {
+        currentPage = parseInt(pageNum);
+        renderTablePage();
+      };
+
+      function handleReqClick(envio, current) {
+        if (
+          current &&
+          current !== "undefined" &&
+          current !== "null" &&
+          current !== ""
+        ) {
+          Swal.fire({
+            title: "¿Actualizar?",
+            text: `Ya existe Req: ${current}. ¿Cambiar?`,
+            icon: "question",
+            showCancelButton: true,
+          }).then((r) => {
+            if (r.isConfirmed) openReqMode(envio);
+          });
+        } else openReqMode(envio);
+      }
+      function handlePOClick(envio, current) {
+        if (
+          current &&
+          current !== "undefined" &&
+          current !== "null" &&
+          current !== ""
+        ) {
+          Swal.fire({
+            title: "¿Actualizar?",
+            text: `Ya existe PO: ${current}. ¿Cambiar?`,
+            icon: "question",
+            showCancelButton: true,
+          }).then((r) => {
+            if (r.isConfirmed) openPOMode(envio);
+          });
+        } else openPOMode(envio);
+      }
+
+      async function deleteEnvio(envio) {
+        if (
+          (
+            await Swal.fire({
+              title: "¿Eliminar?",
+              html: `Borrar envío <b>${envio}</b>? Irreversible.`,
+              icon: "warning",
+              showCancelButton: true,
+              confirmButtonColor: "#d33",
+              confirmButtonText: "Sí",
+            })
+          ).isConfirmed
+        ) {
+          toggleLoader(true, "Eliminando...");
+          // Usamos supabaseClient
+          const { error } = await supabaseClient
+            .from(TABLE_NAME)
+            .delete()
+            .eq('"ENVIO#"', envio);
+          if (error) {
+            toggleLoader(false);
+            Swal.fire("Error", error.message, "error");
+          } else {
+            rawData = rawData.filter((r) => r["ENVIO#"] !== envio);
+            processLocalData();
+            Swal.fire("Eliminado", "", "success");
+          }
+        }
+      }
+
+      function openPOMode(e = "") {
+        document.getElementById("poEnvioInput").value = e;
+        document.getElementById("poValueInput").value = "";
+        poModal.show();
+      }
+      function openReqMode(e = "") {
+        document.getElementById("reqEnvioInput").value = e;
+        document.getElementById("reqValueInput").value = "";
+        reqModal.show();
+      }
+      function openImportModal() {
+        document.getElementById("fileInput").value = "";
+        document.getElementById("fileInfo").classList.add("d-none");
+        document.getElementById("btnProcessExcel").disabled = true;
+        selectedFiles = [];
+        importModal.show();
+      }
+      function finishUploadFlow() {
+        uploadSummaryModal.hide();
+        loadData();
+      }
+
+      async function copyConcatenadosFromDetail() {
+        if (!window.currentDetailRows || window.currentDetailRows.length === 0)
+          return;
+
+        const first = window.currentDetailRows[0];
+        const header = `${first.PROVEEDOR}\n${first["ENVIO#"]}\n`;
+
+        const body = window.currentDetailRows
+          .map((r) => r.CONCATENADO)
+          .join("\n");
+        const finalText = header + body;
+
+        try {
+          await navigator.clipboard.writeText(finalText);
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Copiado",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } catch (e) {}
+      }
+
+      window.copyConcatenadosFromBatch = async (env) => {
+        const rows = batchResults[env]?.rows;
+        if (!rows || rows.length === 0) return;
+
+        const first = rows[0];
+        const header = `${first.PROVEEDOR}\n${first["ENVIO#"]}\n`;
+        const body = rows.map((r) => r.CONCATENADO).join("\n");
+        const finalText = header + body;
+
+        try {
+          await navigator.clipboard.writeText(finalText);
+          Swal.fire({
+            toast: true,
+            position: "top-end",
+            icon: "success",
+            title: "Copiado",
+            showConfirmButton: false,
+            timer: 1500,
+          });
+        } catch (e) {}
+      };
+
+      function openDetailModal(envio) {
+        const rows = rawData.filter((r) => r["ENVIO#"] === envio);
+        const prov = rows.length > 0 ? rows[0].PROVEEDOR : "";
+        const currentReq = rows.length > 0 ? rows[0]["N°"] : "";
+        const currentPO = rows.length > 0 ? rows[0].PO : "";
+
+        document.getElementById("detailEnvioTitle").innerText = envio;
+        document.getElementById("detailProveedor").innerText = prov;
+
+        document.getElementById("btnDetailReq").onclick = () => {
+          detailModal.hide();
+          handleReqClick(envio, currentReq);
+        };
+        document.getElementById("btnDetailPO").onclick = () => {
+          detailModal.hide();
+          handlePOClick(envio, currentPO);
+        };
+
+        const tb = document.getElementById("detailTableBody");
+        tb.innerHTML = "";
+
+        rows.forEach((r) => {
+          tb.innerHTML += `<tr><td>${r.CLIENTE}</td><td>${r.TIPO}</td><td>${
+            r.ESTILO
+          }</td><td>${r.CORTE}</td><td>${
+            r.COLOR
+          }</td><td class="text-end font-monospace">${(
+            Number(r.PARTES) || 0
+          ).toLocaleString()}</td><td>${r.PO || ""}</td></tr>`;
+        });
+
+        const totalDetail = rows.reduce(
+          (acc, r) => acc + (Number(r.PARTES) || 0),
+          0
+        );
+        tb.innerHTML += `<tr class="table-active fw-bold"><td colspan="5" class="text-end">TOTAL ENVÍO:</td><td class="text-end text-success">${totalDetail.toLocaleString()}</td><td></td></tr>`;
+
+        window.currentDetailRows = rows;
+        detailModal.show();
+      }
+
+      function setupDropzone() {
+        const dz = document.getElementById("dropzone");
+        const fi = document.getElementById("fileInput");
+        dz.onclick = () => fi.click();
+        dz.ondragover = (e) => {
+          e.preventDefault();
+          dz.style.borderColor = "#333";
+        };
+        dz.ondragleave = () => {
+          dz.style.borderColor = "#d1d5db";
+        };
+        dz.ondrop = (e) => {
+          e.preventDefault();
+          dz.style.borderColor = "#d1d5db";
+          handleFiles(e.dataTransfer.files);
+        };
+        fi.onchange = (e) => handleFiles(e.target.files);
+      }
+      function handleFiles(files) {
+        if (!files || files.length === 0) return;
+        selectedFiles = [];
+        let names = [];
+        Array.from(files).forEach((f) => {
+          names.push(f.name);
+          const r = new FileReader();
+          r.onload = (e) => {
+            selectedFiles.push({ name: f.name, buffer: e.target.result });
+            if (selectedFiles.length === files.length) {
+              document.getElementById("btnProcessExcel").disabled = false;
+            }
+          };
+          r.readAsArrayBuffer(f);
+        });
+        document.getElementById("fileName").innerText = names.join(", ");
+        document.getElementById("fileInfo").classList.remove("d-none");
+      }
+
+      async function processExcelBatch() {
+        if (selectedFiles.length === 0) return;
+        importModal.hide();
+        toggleLoader(true, "Procesando Lote...");
+        batchResults = {};
+        skippedBatches = [];
+
+        try {
+          for (let fileObj of selectedFiles) {
+            const wb = XLSX.read(fileObj.buffer, {
+              type: "array",
+              cellDates: true,
+            });
+            const ws = wb.Sheets[wb.SheetNames[0]];
+
+            const cellA8 = ws[XLSX.utils.encode_cell({ r: 7, c: 0 })];
+            const valA8 = cellA8 ? String(cellA8.v).trim().toUpperCase() : "";
+
+            if (!valA8.includes("BULTO")) {
+              skippedBatches.push({
+                env: "Desconocido",
+                file: fileObj.name,
+                reason: "Formato Incorrecto: No se encontró '# BULTO' en A8",
+              });
+              continue;
+            }
+
+            const read = (c) => (ws[c] ? String(ws[c].v).trim() : "");
+            const prov = read("C4");
+            const env = read("F5");
+
+            if (!env) {
+              skippedBatches.push({
+                env: "Sin Dato",
+                file: fileObj.name,
+                reason: "No se encontró el ENVÍO en F5",
+              });
+              continue;
+            }
+
+            const localDateISO = getLocalISODate();
+
+            if (!batchResults[env]) {
+              batchResults[env] = {
+                prov: prov,
+                date: localDateISO,
+                rows: [],
+                sourceFile: fileObj.name,
+              };
+            }
+
+            let R = 8;
+            let safety = 0;
+            while (safety < 5000) {
+              const cellB = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
+              if (cellB && String(cellB.v).toUpperCase().includes("TOTAL"))
+                break;
+
+              const getVal = (c) =>
+                ws[XLSX.utils.encode_cell({ r: R, c: c })]
+                  ? String(ws[XLSX.utils.encode_cell({ r: R, c: c })].v).trim()
+                  : "";
+              const partesSrc = getVal(4);
+              if (!partesSrc || partesSrc.trim() === "") {
+                R++;
+                safety++;
+                continue;
+              }
+
+              const [tipo, cli, est, cor, col] = [
+                getVal(2),
+                getVal(7),
+                getVal(8),
+                getVal(9),
+                getVal(10),
+              ];
+
+              if (!tipo.toUpperCase().includes("SETEO") && (est || col)) {
+                let p = Math.round(
+                  (parseFloat(partesSrc.replace(/[^0-9.]/g, "")) || 0) * 12
+                );
+                if (p > 0 || est) {
+                  batchResults[env].rows.push({
+                    PROVEEDOR: prov,
+                    FECHA: localDateISO,
+                    "ENVIO#": env,
+                    "N°": "",
+                    TIPO: tipo,
+                    CLIENTE: cli,
+                    ESTILO: est,
+                    CORTE: cor,
+                    COLOR: col,
+                    PARTES: p,
+                    CONCATENADO: `${cli}; ${tipo}; ${est}; ${cor}; ${col}; ${p} PCS/Partes`,
+                    PO: "",
+                  });
+                }
+              }
+              R++;
+              safety++;
+            }
+          }
+
+          const envios = Object.keys(batchResults);
+          if (envios.length === 0 && skippedBatches.length === 0)
+            throw new Error("No se encontraron datos válidos.");
+
+          for (let env of envios) {
+            const group = batchResults[env];
+            // Usamos supabaseClient
+            const { data: existingRows } = await supabaseClient
+              .from(TABLE_NAME)
+              .select('PO, "N°"')
+              .eq('"ENVIO#"', env);
+            let isBlocked = false;
+            let blockReason = "";
+
+            if (existingRows && existingRows.length > 0) {
+              const hasPO = existingRows.some(
+                (r) => r.PO && r.PO.trim() !== "" && r.PO !== "null"
+              );
+              const hasReq = existingRows.some(
+                (r) => r["N°"] && r["N°"].trim() !== "" && r["N°"] !== "null"
+              );
+              if (hasPO) {
+                isBlocked = true;
+                blockReason = "Ya tiene PO asignada";
+              } else if (hasReq) {
+                isBlocked = true;
+                blockReason = "Ya tiene Req asignada";
+              }
+            }
+
+            if (isBlocked) {
+              group.status = "BLOCKED";
+              skippedBatches.push({
+                env: env,
+                file: group.sourceFile || "N/A",
+                reason: blockReason,
+              });
+              continue;
+            }
+
+            // Usamos supabaseClient
+            if (existingRows && existingRows.length > 0)
+              await supabaseClient
+                .from(TABLE_NAME)
+                .delete()
+                .eq('"ENVIO#"', env);
+
+            // Usamos supabaseClient
+            for (let i = 0; i < group.rows.length; i += 100) {
+              await supabaseClient
+                .from(TABLE_NAME)
+                .insert(group.rows.slice(i, i + 100));
+            }
+            group.status = "SUCCESS";
+          }
+
+          renderMultiUploadSummary();
+        } catch (e) {
+          toggleLoader(false);
+          Swal.fire("Error", e.message, "error");
+        }
+      }
+
+      function renderMultiUploadSummary() {
+        toggleLoader(false);
+        const container = document.getElementById("multiSummaryContainer");
+        container.innerHTML = "";
+        const skippedDiv = document.getElementById("skippedContainer");
+        const skippedList = document.getElementById("skippedList");
+        skippedList.innerHTML = "";
+
+        if (skippedBatches.length > 0) {
+          skippedDiv.style.display = "block";
+          let tableHtml = `<div class="table-responsive"><table class="table table-sm table-bordered mb-0 table-error"><thead><tr><th>Archivo</th><th>Envío #</th><th>Motivo del Error</th></tr></thead><tbody>`;
+          skippedBatches.forEach((item) => {
+            tableHtml += `<tr><td class="fw-bold text-dark">${
+              item.file || "N/A"
+            }</td><td>${item.env}</td><td class="text-danger small">${
+              item.reason
+            }</td></tr>`;
+          });
+          tableHtml += `</tbody></table></div>`;
+          skippedList.innerHTML = tableHtml;
+        } else {
+          skippedDiv.style.display = "none";
+        }
+
+        const envios = Object.keys(batchResults);
+        let hasSuccess = false;
+        envios.forEach((env) => {
+          const group = batchResults[env];
+          if (group.status !== "SUCCESS") return;
+          hasSuccess = true;
+          const totalPcs = group.rows.reduce((a, b) => a + b.PARTES, 0);
+          const card = document.createElement("div");
+          card.className = "summary-card-item bg-white shadow-sm";
+          let html = `<div class="summary-header d-flex justify-content-between align-items-center"><div><strong>Envío #${env}</strong> <span class="mx-2 text-muted">|</span> <small>${
+            group.prov
+          }</small> <span class="mx-2 text-muted">|</span> <strong class="text-success">${totalPcs.toLocaleString()} Pcs</strong></div><div><span class="badge bg-success">Cargado</span><button class="btn btn-warning btn-sm fw-bold ms-3" onclick="copyConcatenadosFromBatch('${env}')"><i class="bi bi-copy"></i> Copiar</button></div></div><div class="table-responsive" style="max-height: 200px;"><table class="table table-sm table-striped mb-0 small"><thead class="table-light sticky-top"><tr><th>Cliente</th><th>Estilo</th><th>Corte</th><th>Color</th><th class="text-end">Piezas</th></tr></thead><tbody>`;
+          group.rows.forEach((r) => {
+            html += `<tr><td>${r.CLIENTE}</td><td>${r.ESTILO}</td><td>${r.CORTE}</td><td>${r.COLOR}</td><td class="text-end">${r.PARTES}</td></tr>`;
+          });
+          html += `</tbody></table></div>`;
+          card.innerHTML = html;
+          container.appendChild(card);
+        });
+
+        if (!hasSuccess && skippedBatches.length === 0)
+          container.innerHTML =
+            '<div class="alert alert-info text-center">No se cargaron envíos nuevos.</div>';
+        uploadSummaryModal.show();
+      }
+
+      async function updatePO() {
+        const e = document.getElementById("poEnvioInput").value;
+        const v = document.getElementById("poValueInput").value;
+        if (!e || !v)
+          return Swal.fire("Atención", "Datos incompletos", "warning");
+        poModal.hide();
+        toggleLoader(true);
+        // Usamos supabaseClient
+        await supabaseClient
+          .from(TABLE_NAME)
+          .update({ PO: v })
+          .eq('"ENVIO#"', e);
+        rawData.forEach((r) => {
+          if (r["ENVIO#"] === e) r.PO = v;
+        });
+        processLocalData();
+        toggleLoader(false);
+        Swal.fire("Listo", "PO actualizada", "success");
+      }
+
+      async function updateReq() {
+        const e = document.getElementById("reqEnvioInput").value;
+        const v = document.getElementById("reqValueInput").value;
+        if (!e || !v)
+          return Swal.fire("Atención", "Datos incompletos", "warning");
+        reqModal.hide();
+        toggleLoader(true);
+        // Usamos supabaseClient
+        await supabaseClient
+          .from(TABLE_NAME)
+          .update({ "N°": v })
+          .eq('"ENVIO#"', e);
+        rawData.forEach((r) => {
+          if (r["ENVIO#"] === e) r["N°"] = v;
+        });
+        processLocalData();
+        toggleLoader(false);
+        Swal.fire("Listo", "Req actualizada", "success");
+      }
+    </script>
+  </body>
+</html>

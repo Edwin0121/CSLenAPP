@@ -1,0 +1,603 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PDF to Excel Dudley</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <!-- Tema propio -->
+    <link rel="stylesheet" href="theme.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("csl-theme");
+          if (t) {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- PDF.js + SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://code.jquery.com/jquery-3.7.0.min.js"></script>
+
+    <style>
+      body {
+        padding: 16px;
+        background: #f5f7fb;
+      }
+
+      header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+        color: #111;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #111;
+      }
+      header .badge {
+        color: #111;
+        background: rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        font-weight: 500;
+      }
+
+      .card-wrap {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .toolbar .left,
+      .toolbar .right {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .filebox {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 8px 12px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .filebox .name {
+        color: #475569;
+        font-size: 14px;
+      }
+
+      /* Paginación por PO + búsqueda */
+      .po-pager {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .po-pager .btn {
+        border-radius: 8px;
+      }
+      .po-pager .badge {
+        background: #eef2ff;
+        color: #1e293b;
+        border: 1px solid #dbeafe;
+      }
+      .form-select,
+      .form-control {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
+      .search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .search-wrap .form-control {
+        min-width: 260px;
+      }
+
+      /* Tabla */
+      .table-container {
+        margin-top: 8px;
+      }
+      table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f7f7f7;
+        color: #111;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 700;
+      }
+      tbody td {
+        white-space: nowrap;
+      }
+      .subtotal-row td {
+        background: #fff7ed !important;
+        border-top: 2px solid #fdba74 !important;
+        font-weight: 700;
+      }
+      .muted {
+        color: #64748b;
+      }
+    </style>
+  </head>
+  <body class="stretch-full">
+    <!-- Encabezado -->
+    <header class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1>PDF to Excel Dudley</h1>
+        <span class="badge"
+          >Procesa uno o más PDF y consolida en tabla/Excel</span
+        >
+      </div>
+      <div class="small text-muted">pdfdudley.html</div>
+    </header>
+
+    <!-- Controles -->
+    <section class="card-wrap">
+      <div class="toolbar">
+        <div class="left">
+          <div class="filebox">
+            <span class="name">Selecciona PDF(s)</span>
+            <input
+              type="file"
+              id="pdfInput"
+              multiple
+              accept=".pdf"
+              class="form-control form-control-sm"
+              style="max-width: 320px"
+            />
+          </div>
+          <button id="processBtn" class="btn btn-sm btn-primary">
+            📂 Procesar PDFs
+          </button>
+          <button id="exportBtn" class="btn btn-sm btn-success">
+            📊 Exportar a Excel
+          </button>
+        </div>
+        <div class="right text-secondary small">
+          Extracción intacta • Subtotales + paginación por PO •
+          <b>Búsqueda global</b>
+        </div>
+      </div>
+    </section>
+
+    <!-- Paginación por PO + Búsqueda global -->
+    <section class="card-wrap">
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap"
+        style="gap: 10px"
+      >
+        <div class="po-pager">
+          <label class="small text-secondary">POs por página</label>
+          <select
+            id="poPerPage"
+            class="form-select form-select-sm"
+            style="width: auto"
+          >
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="4">4</option>
+            <option value="8">8</option>
+            <option value="16">16</option>
+          </select>
+          <button id="btnPrev" class="btn btn-sm btn-outline-primary">
+            ◀ Anterior
+          </button>
+          <button id="btnNext" class="btn btn-sm btn-outline-primary">
+            Siguiente ▶
+          </button>
+          <span class="badge rounded-pill" id="pageInfo">Página 0/0</span>
+          <select
+            id="jumpPO"
+            class="form-select form-select-sm"
+            style="min-width: 220px"
+          >
+            <option value="" disabled selected>Ir a PO…</option>
+          </select>
+        </div>
+
+        <div class="search-wrap ms-auto">
+          <span class="small muted">Buscar</span>
+          <input
+            id="globalSearch"
+            class="form-control form-control-sm"
+            placeholder="PO, style, color, size, qty, cost, due, ship..."
+          />
+          <button id="btnClearSearch" class="btn btn-sm btn-outline-secondary">
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabla Detalle -->
+    <section class="card-wrap table-container">
+      <table
+        id="resultsTable"
+        class="table table-bordered table-striped align-middle"
+      >
+        <thead>
+          <tr>
+            <th>PO</th>
+            <th>STYLE</th>
+            <th>COLOR</th>
+            <th>SIZE</th>
+            <th>QTY</th>
+            <th>Garment Cost</th>
+            <th>Due Date</th>
+            <th>Ship Goods to</th>
+          </tr>
+        </thead>
+        <tbody id="tbodyResults"></tbody>
+      </table>
+    </section>
+
+    <!-- ----------- LÓGICA DE EXTRACCIÓN (SIN CAMBIOS) ----------- -->
+    <script>
+      async function extractStructuredText(file) {
+        const pdf = await pdfjsLib.getDocument({
+          data: await file.arrayBuffer(),
+        }).promise;
+        const structured = [];
+        for (let i = 1; i <= pdf.numPages; i++) {
+          const page = await pdf.getPage(i);
+          const content = await page.getTextContent();
+          const rows = {};
+          for (const item of content.items) {
+            const [, , , , x, y] = item.transform;
+            const rowKey = Math.round(y);
+            if (!rows[rowKey]) rows[rowKey] = [];
+            rows[rowKey].push({ x, str: item.str });
+          }
+          const pageRows = Object.keys(rows)
+            .sort((a, b) => b - a)
+            .map((y) =>
+              rows[y]
+                .sort((a, b) => a.x - b.x)
+                .map((o) => o.str)
+                .join(" ")
+            );
+          structured.push(...pageRows);
+        }
+        return structured;
+      }
+
+      function parseStructuredRows(rows) {
+        const poLine = rows.find(
+          (r) => r.includes("Supplier PO") && r.includes("Issued")
+        );
+        let po = "N/A";
+        if (poLine) {
+          const m = poLine.match(/Supplier PO\s+([A-Z0-9-\s]+?)\s+Issued/i);
+          if (m) po = m[1].replace(/\s+/g, "");
+        }
+        const dueMatch = rows.find((r) => r.includes("Due Date"));
+        const due = dueMatch
+          ? dueMatch.replace(/.*Due Date\s*/i, "").trim()
+          : "N/A";
+        const shipStart = rows.findIndex((r) => r.includes("SHIP GOODS TO"));
+        const ship =
+          shipStart >= 0
+            ? rows.slice(shipStart + 1, shipStart + 4).join(" ")
+            : "N/A";
+        const sizeHeaderLine = rows.find(
+          (r) => r.includes("Target Order Qty") && r.includes("Order Qty")
+        );
+        let sizeLabels = [];
+        if (sizeHeaderLine) {
+          const m = sizeHeaderLine.match(
+            /Target Order Qty\s+(.+?)\s+Order Qty/i
+          );
+          if (m) sizeLabels = m[1].trim().split(/\s+/);
+        }
+        const records = [];
+        rows.forEach((line, idx) => {
+          const styleMatch = line.match(/([A-Z]{2}-\s*\d{5})/);
+          if (!styleMatch) return;
+          const style = styleMatch[1].replace(/\s+/g, "");
+          let color = "N/A";
+          const colorMatch = line.match(
+            new RegExp(styleMatch[1] + "\\s+(.+?)\\s+\\d{5}-")
+          );
+          if (colorMatch) color = colorMatch[1].trim();
+          const qtyLine = rows[idx + 1] || "";
+          const nums = qtyLine.match(/\d+/g) || [];
+          const sizes = {};
+          sizeLabels.forEach((lbl, i) => {
+            sizes[lbl] = nums[i] ? parseInt(nums[i], 10) : 0;
+          });
+          const costMatch = line.match(/\$([\d\.]+)/);
+          const cost = costMatch ? parseFloat(costMatch[1]) : 0;
+          records.push({ po, style, color, cost, due, ship, sizes });
+        });
+        return records;
+      }
+    </script>
+
+    <!-- ----------- RENDER POR PO + PAGINACIÓN POR PO + BÚSQUEDA GLOBAL ----------- -->
+    <script>
+      let lastRecords = [];
+      let groupedByPO = {};
+      let poList = [];
+      let currentPage = 1;
+      let perPage = 2;
+
+      let searchQuery = "";
+      const tbody = document.getElementById("tbodyResults");
+      const poPerPageSel = document.getElementById("poPerPage");
+      const pageInfo = document.getElementById("pageInfo");
+      const btnPrev = document.getElementById("btnPrev");
+      const btnNext = document.getElementById("btnNext");
+      const jumpPO = document.getElementById("jumpPO");
+      const globalSearch = document.getElementById("globalSearch");
+      const btnClearSearch = document.getElementById("btnClearSearch");
+
+      function fmt(n) {
+        return Number(n || 0).toLocaleString();
+      }
+      function fmtMoney(n) {
+        return Number(n || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function recordMatches(r, q) {
+        if (!q) return true;
+        const s = q.toLowerCase();
+        if ((r.po || "").toLowerCase().includes(s)) return true;
+        if ((r.style || "").toLowerCase().includes(s)) return true;
+        if ((r.color || "").toLowerCase().includes(s)) return true;
+        if (
+          String(r.due || "")
+            .toLowerCase()
+            .includes(s)
+        )
+          return true;
+        if ((r.ship || "").toLowerCase().includes(s)) return true;
+        if (
+          String(r.cost || "")
+            .toLowerCase()
+            .includes(s)
+        )
+          return true;
+        for (const [size, qty] of Object.entries(r.sizes || {})) {
+          if (String(size).toLowerCase().includes(s)) return true;
+          if (String(qty).toLowerCase().includes(s)) return true;
+        }
+        return false;
+      }
+
+      function getActivePOs() {
+        if (!searchQuery) return poList.slice();
+        const out = [];
+        for (const po of poList) {
+          const recs = groupedByPO[po] || [];
+          if (recs.some((r) => recordMatches(r, searchQuery))) out.push(po);
+        }
+        return out;
+      }
+
+      function buildPagerUI(activePOs) {
+        const totalPages = Math.max(1, Math.ceil(activePOs.length / perPage));
+        if (currentPage > totalPages) currentPage = totalPages;
+        pageInfo.textContent = `Página ${
+          activePOs.length ? currentPage : 0
+        }/${totalPages} • POs: ${activePOs.length}`;
+
+        // “Ir a PO…” sobre la lista activa
+        jumpPO.innerHTML = `<option value="" disabled selected>Ir a PO…</option>`;
+        activePOs.forEach((po, idx) => {
+          const opt = document.createElement("option");
+          opt.value = String(idx + 1);
+          opt.textContent = po;
+          jumpPO.appendChild(opt);
+        });
+      }
+
+      function renderPage() {
+        const activePOs = getActivePOs();
+        tbody.innerHTML = "";
+
+        if (activePOs.length === 0) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="8" class="text-center text-muted py-4">Sin resultados para “${searchQuery}”.</td>`;
+          tbody.appendChild(tr);
+          buildPagerUI(activePOs);
+          return;
+        }
+
+        const start = (currentPage - 1) * perPage;
+        const end = Math.min(start + perPage, activePOs.length);
+        const slice = activePOs.slice(start, end);
+
+        slice.forEach((po) => {
+          let subtotalQty = 0;
+          let subtotalAmount = 0;
+          const recs = (groupedByPO[po] || []).filter((r) =>
+            recordMatches(r, searchQuery)
+          );
+          recs.forEach((r) => {
+            Object.entries(r.sizes).forEach(([size, q]) => {
+              // si la fila no coincide por size/qty y hay búsqueda, ocúltala
+              if (searchQuery) {
+                const s = searchQuery.toLowerCase();
+                const sizeHit =
+                  String(size).toLowerCase().includes(s) ||
+                  String(q).toLowerCase().includes(s);
+                const recHit = recordMatches(r, searchQuery);
+                if (!sizeHit && !recHit) return;
+              }
+              const qn = Number(q || 0);
+              const cost = Number(r.cost || 0);
+              const tr = document.createElement("tr");
+              tr.innerHTML = `
+              <td>${po}</td>
+              <td>${r.style}</td>
+              <td>${r.color}</td>
+              <td>${size}</td>
+              <td>${fmt(qn)}</td>
+              <td>${fmtMoney(cost)}</td>
+              <td>${r.due}</td>
+              <td>${r.ship}</td>`;
+              tbody.appendChild(tr);
+              subtotalQty += qn;
+              subtotalAmount += qn * cost;
+            });
+          });
+          const sub = document.createElement("tr");
+          sub.className = "subtotal-row";
+          sub.innerHTML = `
+          <td>Subtotal PO: ${po}</td>
+          <td></td><td></td><td></td>
+          <td>${fmt(subtotalQty)}</td>
+          <td>${fmtMoney(subtotalAmount)}</td>
+          <td></td><td></td>`;
+          tbody.appendChild(sub);
+        });
+
+        buildPagerUI(activePOs);
+      }
+
+      // Eventos UI
+      poPerPageSel.addEventListener("change", () => {
+        perPage = parseInt(poPerPageSel.value, 10) || 1;
+        currentPage = 1;
+        renderPage();
+      });
+      btnPrev.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderPage();
+        }
+      });
+      btnNext.addEventListener("click", () => {
+        const totalPages = Math.max(
+          1,
+          Math.ceil(getActivePOs().length / perPage)
+        );
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderPage();
+        }
+      });
+      jumpPO.addEventListener("change", () => {
+        const idx = parseInt(jumpPO.value, 10) - 1;
+        if (isNaN(idx)) return;
+        currentPage = Math.floor(idx / perPage) + 1;
+        renderPage();
+      });
+
+      // Búsqueda global (con pequeño debounce)
+      let tId = null;
+      globalSearch.addEventListener("input", (e) => {
+        const val = e.target.value || "";
+        clearTimeout(tId);
+        tId = setTimeout(() => {
+          searchQuery = val.trim();
+          currentPage = 1;
+          renderPage();
+        }, 150);
+      });
+      btnClearSearch.addEventListener("click", () => {
+        globalSearch.value = "";
+        searchQuery = "";
+        currentPage = 1;
+        renderPage();
+        globalSearch.focus();
+      });
+
+      // Procesar PDFs (extracción intacta)
+      document
+        .getElementById("processBtn")
+        .addEventListener("click", async () => {
+          const files = Array.from(document.getElementById("pdfInput").files);
+          if (!files.length) return alert("Sube al menos un PDF.");
+
+          lastRecords = [];
+          for (const file of files) {
+            const structuredRows = await extractStructuredText(file);
+            const recs = parseStructuredRows(structuredRows);
+            lastRecords.push(...recs);
+          }
+
+          // Agrupar por PO
+          groupedByPO = {};
+          lastRecords.forEach((r) => {
+            if (!groupedByPO[r.po]) groupedByPO[r.po] = [];
+            groupedByPO[r.po].push(r);
+          });
+          poList = Object.keys(groupedByPO);
+
+          // Reset búsqueda y primera página
+          globalSearch.value = "";
+          searchQuery = "";
+          currentPage = 1;
+          renderPage();
+        });
+
+      // Exportar Excel (lógica intacta)
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        if (!lastRecords.length) return alert("Primero procesa un PDF.");
+
+        const excelData = [];
+        lastRecords.forEach((r) => {
+          for (const [size, qty] of Object.entries(r.sizes)) {
+            excelData.push({
+              PO: r.po,
+              STYLE: r.style,
+              COLOR: r.color,
+              SIZE: size,
+              QTY: String(qty),
+              "Garment Cost": r.cost.toFixed(2),
+              "Due Date": String(r.due),
+              "Ship Goods to": r.ship,
+            });
+          }
+        });
+
+        const ws = XLSX.utils.json_to_sheet(excelData, { cellText: true });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Ordenes");
+        const cols = Object.keys(excelData[0]).map((k) => ({
+          wch: Math.max(14, k.length + 4),
+        }));
+        ws["!cols"] = cols;
+        XLSX.writeFile(wb, "Ordenes Dudley.xlsx");
+      });
+    </script>
+
+    <!-- Bootstrap JS -->
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

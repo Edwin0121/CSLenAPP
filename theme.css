@@ -1,0 +1,196 @@
+/* =============================
+   Customer Service Lenor – theme.css
+   Estilo unificado para TODAS las páginas internas.
+   Integra modo claro/oscuro (sin JS necesario) y
+   componentes básicos (tablas, formularios, botones).
+   ============================= */
+:root{
+  --bg: #f5f7fb;
+  --panel: #ffffff;
+  --panel-2:#ffffff;
+  --text: #0f172a;
+  --muted: #475569;
+  --brand: #1e40af;
+  --ok:#16a34a;
+  --warn:#d97706;
+  --danger:#dc2626;
+  --ring: rgba(30,64,175,.22);
+  --border: #e5e7eb;
+  --shadow: 0 8px 24px rgba(2,6,23,.06);
+}
+/* Fuerza tema por atributo (permitido por index con localStorage 'csl-theme') */
+/* Preferencia del SO (fallback) */
+}
+
+/* Reset + base */
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;line-height:1.45;padding:16px;}
+body{margin:0;background:var(--bg);color:var(--text);font-family:"Segoe UI", system-ui, -apple-system, Roboto, Helvetica, Arial, sans-serif;line-height:1.45;padding:16px;}
+
+main, .container{ width:100%; max-width:100%; margin:0; background: var(--panel); border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow); padding: 16px; }
+
+/* Tipografías */
+h1,h2,h3,h4{margin:0 0 12px 0; line-height:1.2; font-weight:800;}
+h1{font-size: clamp(22px, 3vw, 28px);}
+h2{font-size: clamp(18px, 2.5vw, 22px); color: var(--muted);}
+p{margin: 0 0 10px 0; color: var(--text);}
+small, .muted{color:var(--muted)}
+
+hr{border:0; height:1px; background:var(--border); margin:14px 0}
+
+/* Enlaces y botones */
+a{color:var(--brand); text-decoration:none}
+a:hover{text-decoration:underline}
+.btn{
+  border:1px solid var(--border);
+  background: linear-gradient(180deg, var(--panel-2), var(--panel));
+  color:var(--text);
+  padding:8px 12px; border-radius:10px; font-weight:700; cursor:pointer;
+  display:inline-flex; align-items:center; gap:8px; transition:.2s;
+}
+.btn:hover{transform: translateY(-1px); box-shadow: var(--shadow)}
+.btn.primary{border-color:transparent; background: linear-gradient(135deg, var(--brand), #3b82f6); color:#06121f;}
+.btn.ok{ background: linear-gradient(135deg, var(--ok), #10b981); border-color: transparent; color: #03160f;}
+.btn.warn{ background: linear-gradient(135deg, var(--warn), #f97316); border-color: transparent; color: #160b03;}
+.btn.danger{ background: linear-gradient(135deg, var(--danger), #ef4444); border-color: transparent; color: #160303;}
+
+/* Formularios */
+input, select, textarea{
+  width:100%; padding:10px 12px; border-radius:10px;
+  border:1px solid var(--border); outline:none; background: var(--panel-2);
+  color:var(--text); transition:.2s;
+}
+input:focus, select:focus, textarea:focus{ box-shadow: 0 0 0 4px var(--ring) }
+label{ display:block; font-weight:700; margin-bottom:6px; color: var(--muted) }
+.field{ margin-bottom:12px }
+
+/* Tablas */
+.table-wrap{ overflow:auto; border-radius:12px; border: 1px solid var(--border); }
+table{width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;color:#0b1220;font-size:14px;}
+thead th{
+  position:sticky; top:0; background:linear-gradient(180deg, rgba(2,6,23,.32), rgba(2,6,23,.12));
+  color:var(--muted); font-weight:800; text-align:left;
+}
+th, td{ padding:10px 12px; border-bottom:1px solid var(--border); }
+tbody tr:hover{ background:#f8fafc; }
+tfoot td{ font-weight:700 }
+
+/* Tarjetas/Paneles reutilizables */
+.card{
+  background: linear-gradient(180deg, rgba(2,6,23,.16), rgba(2,6,23,.06)), var(--panel);
+  border: 1px solid var(--border); border-radius: 14px; box-shadow: var(--shadow);
+  padding: 14px;
+}
+.badge{
+  font-size:12px; color:var(--muted);
+  padding:6px 10px; border-radius:999px; border:1px solid var(--border);
+}
+
+/* Scrollbar (webkit) */
+*::-webkit-scrollbar{height:10px;width:10px}
+*::-webkit-scrollbar-thumb{background:rgba(148,163,184,.35); border-radius:999px}
+*::-webkit-scrollbar-track{background:transparent}
+
+/* Utilidades */
+.grid{ display:grid; gap:12px }
+.grid.cols-2{ grid-template-columns: repeat(2, minmax(0,1fr)) }
+.grid.cols-3{ grid-template-columns: repeat(3, minmax(0,1fr)) }
+.grid.cols-4{ grid-template-columns: repeat(4, minmax(0,1fr)) }
+@media (max-width: 960px){
+  .grid.cols-2, .grid.cols-3, .grid.cols-4{ grid-template-columns: 1fr }
+}
+.hidden{ display:none !important }
+
+/* Helper para contenedores existentes */
+.wrapper, .content, .page, .section { padding: 8px }
+
+
+/* ======= Tablas profesionales (normalizadas) =======
+   - Fondo blanco con texto oscuro SIEMPRE (también en modo oscuro)
+   - Encabezado sticky, zebra striping, hover, bordes suaves
+   - Ancho completo, scroll horizontal si desborda
+   - Alineación de números con utilidades (.num, .right, [data-type="number"], etc.)
+   ==================================================== */
+
+.table-wrap{ overflow:auto; border-radius:12px; border: 1px solid #e5e7eb; background:#ffffff; }
+
+/* Estilo base (aplica aunque no exista .table-wrap) */
+table{width:100%;border-collapse:separate;border-spacing:0;background:#ffffff;color:#0b1220;font-size:14px;}
+caption{
+  caption-side: top;
+  text-align:left;
+  font-weight:800;
+  color:#111827;
+  padding:12px 0 6px 0;
+}
+thead th{
+  position:sticky; top:0;
+  background: #f8fafc;
+  color:#0f172a;
+  font-weight:800;
+  z-index:1;
+  border-bottom: 2px solid #e5e7eb;
+}
+th, td{
+  padding: 12px 14px;
+  border-bottom:1px solid #e5e7eb;
+  vertical-align: middle;
+}
+tbody tr:hover{ background:#f8fafc; }
+
+/* Bordes redondeados en las esquinas de la tabla */
+thead th:first-child{ border-top-left-radius: 10px; }
+thead th:last-child{ border-top-right-radius: 10px; }
+tbody tr:last-child td:first-child{ border-bottom-left-radius: 10px; }
+tbody tr:last-child td:last-child{ border-bottom-right-radius: 10px; }
+
+/* Utilidades de alineación y formato numérico */
+td.num, th.num,
+td.right, th.right,
+td[data-type="number"], th[data-type="number"],
+td[data-type="numeric"], th[data-type="numeric"],
+td[data-type="currency"], th[data-type="currency"]{ text-align:right; font-variant-numeric: tabular-nums; }
+
+/* Estado/s y badges ligeros dentro de celdas */
+td .badge{ background:#eef2ff; border-color:#e5e7eb; color:#1f2937; }
+
+/* Tamaño compacto opcional */
+table.table-compact th, table.table-compact td{ padding: 8px 10px; font-size: 13px; }
+
+/* Responsive: en móviles mantenemos el scroll horizontal (no colapsamos filas) */
+@media (max-width: 640px){
+  th, td{ padding: 10px 12px; }
+}
+
+/* Force full width for legacy narrow shells */
+.stretch-full, .dashboard, .phone, .mobile, .shell, .shell-narrow, .frame, .device, .viewport {
+  max-width: 100% !important;
+  width: 100% !important;
+  margin: 0 !important;
+  padding-left: 0;
+  padding-right: 0;
+}
+header .badge{
+  color: #fff;
+  background: transparent;
+  border-color: rgba(255,255,255,.45);
+}
+/* Encabezado gris con degradado + texto negro */
+header{
+  background: linear-gradient(135deg,#f3f4f6 0%, #d1d5db 100%);
+  color:#111;                 /* texto negro */
+  border:1px solid #e5e7eb;   /* borde sutil */
+  border-radius:12px;
+  padding:16px;
+  margin-bottom:12px;
+}
+
+/* Título y textos del header en negro */
+header h1, header .small { color:#111; }
+
+/* “badge” del subtítulo en gris claro con texto negro */
+header .badge{
+  color:#111;
+  background:rgba(0,0,0,.06);
+  border-color:rgba(0,0,0,.25);
+}

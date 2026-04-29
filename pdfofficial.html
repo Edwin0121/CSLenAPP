@@ -1,0 +1,593 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PDF to Excel Official Sports</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- UI base -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+
+    <style>
+      body {
+        padding: 16px;
+      }
+
+      /* Header claro */
+      header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+        color: #111;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      header h1,
+      header .small {
+        color: #111;
+      }
+      header .badge {
+        color: #111;
+        background: rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
+
+      /* Pills */
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        font-weight: 600;
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        color: #111;
+      }
+      .pill.status {
+        background: #eef2ff;
+        border-color: #c7d2fe;
+      }
+      .pill.count {
+        background: #ecfeff;
+        border-color: #a5f3fc;
+      }
+
+      /* Cards & toolbar */
+      .card {
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fff;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar .left,
+      .toolbar .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .small {
+        font-size: 12px;
+        color: #475569;
+      }
+      .hint {
+        color: #6b7280;
+      }
+
+      /* Dropzone-like input */
+      .filebox {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 12px 14px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .filebox .name {
+        color: #475569;
+        font-size: 14px;
+      }
+
+      /* Table wrapper */
+      .table-wrap {
+        margin-top: 12px;
+        overflow: auto;
+        max-height: 65vh;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 8px 10px;
+        white-space: nowrap;
+      }
+      thead th {
+        background: #f7f7f7;
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      .num {
+        text-align: right;
+      }
+
+      /* Subtotal */
+      tr.subtotal-row td {
+        background: #fff7ed; /* naranja clarito */
+        border-top: 2px solid #fdba74;
+        font-weight: 700;
+      }
+      .footer-note {
+        color: #64748b;
+        font-size: 12px;
+        margin-top: 8px;
+      }
+
+      /* Pager */
+      .pager-bar {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .pager-bar .form-select {
+        width: auto;
+      }
+    </style>
+
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("csl-theme");
+          if (t) {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {}
+      })();
+    </script>
+  </head>
+  <body class="stretch-full">
+    <!-- Header -->
+    <header class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1 class="m-0">PDF to Excel Official Sports</h1>
+        <div class="badge">
+          Extracción por coordenadas con PDF.js → Tabla / Excel
+        </div>
+      </div>
+      <div class="d-flex align-items-center gap-2">
+        <span id="statusPill" class="pill status">Listo</span>
+        <span id="poCountPill" class="pill count">0 POs</span>
+        <span id="rowCountPill" class="pill count">0 filas</span>
+        <div class="small">pdfofficial.html</div>
+      </div>
+    </header>
+
+    <main class="container">
+      <!-- Controles -->
+      <section class="card mb-3">
+        <div class="toolbar">
+          <div class="left">
+            <div class="filebox">
+              <span class="name">Selecciona uno o varios PDF</span>
+              <input
+                type="file"
+                id="pdfInput"
+                multiple
+                accept="application/pdf"
+                class="form-control form-control-sm"
+                style="max-width: 340px"
+              />
+            </div>
+            <button class="btn btn-sm btn-primary" onclick="procesarPDFs()">
+              Procesar PDFs
+            </button>
+            <button class="btn btn-sm btn-success" onclick="exportarExcel()">
+              Exportar a Excel
+            </button>
+          </div>
+          <div class="right hint">
+            Carga los PDF de Official Sports y conviértelos a una tabla
+            exportable.
+          </div>
+        </div>
+      </section>
+
+      <!-- Resultados -->
+      <section class="card">
+        <div class="d-flex align-items-center justify-content-between">
+          <h5 class="m-0">Resultados</h5>
+          <div class="pager-bar">
+            <label class="small">PO por página</label>
+            <select id="pageSize" class="form-select form-select-sm">
+              <option value="10">10</option>
+              <option value="25" selected>25</option>
+              <option value="50">50</option>
+            </select>
+            <div
+              class="btn-group btn-group-sm"
+              role="group"
+              aria-label="Paginación"
+            >
+              <button id="prevPage" class="btn btn-outline-secondary">
+                « Anterior
+              </button>
+              <button id="nextPage" class="btn btn-outline-secondary">
+                Siguiente »
+              </button>
+            </div>
+            <span id="pageInfo" class="small text-muted">Página 1 de 1</span>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table class="table" id="tablaResultados">
+            <thead>
+              <tr>
+                <th>PO</th>
+                <th>Estilo</th>
+                <th>Color</th>
+                <th>Talla</th>
+                <th class="num">Qty</th>
+                <th class="num">Precio Venta</th>
+                <th>XFD</th>
+                <th>Ship To</th>
+                <th class="num">Importe (Qty×Precio)</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div class="footer-note">
+          Subtotales por PO incluyen Qty y <em>Importe (Qty × Precio)</em>. La
+          paginación es por PO; no se cortan grupos.
+        </div>
+      </section>
+    </main>
+
+    <!-- PDF.js y SheetJS -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <!-- LÓGICA ORIGINAL + capa de agrupado/paginación (post-proceso) -->
+    <script>
+      const statusPill = document.getElementById("statusPill");
+      const rowCountPill = document.getElementById("rowCountPill");
+      const poCountPill = document.getElementById("poCountPill");
+
+      const pageSizeSel = document.getElementById("pageSize");
+      const prevBtn = document.getElementById("prevPage");
+      const nextBtn = document.getElementById("nextPage");
+      const pageInfo = document.getElementById("pageInfo");
+
+      let grouped = []; // [{po, rows:[...], subtotalQty:number, subtotalImporte:number}]
+      let flatRows = []; // [{po, estilo, color, talla, qty, precio, xfd, shipto}]
+      let currentPage = 1; // 1-based
+
+      function setStatus(text) {
+        statusPill.textContent = text;
+      }
+      function setRowCount(n) {
+        rowCountPill.textContent = `${n.toLocaleString()} fila${
+          n === 1 ? "" : "s"
+        }`;
+      }
+      function setPOCount(n) {
+        poCountPill.textContent = `${n.toLocaleString()} PO${
+          n === 1 ? "" : "s"
+        }`;
+      }
+
+      function parseNumber(val) {
+        if (val == null) return 0;
+        if (typeof val === "number") return val;
+        const s = String(val).replace(/[^\d.-]/g, ""); // quita $ , espacios, etc.
+        const n = Number(s);
+        return isNaN(n) ? 0 : n;
+      }
+
+      // --- RENDER AGRUPADO + PAGINADO (por PO) ---
+      function gatherFromTable() {
+        flatRows = [];
+        const tbody = document.querySelector("#tablaResultados tbody");
+        for (const tr of tbody.querySelectorAll("tr")) {
+          const tds = tr.querySelectorAll("td");
+          if (tds.length < 8) continue;
+          // nota: la columna 9 (importe) se deja vacía en filas normales
+          flatRows.push({
+            po: tds[0].textContent.trim(),
+            estilo: tds[1].textContent.trim(),
+            color: tds[2].textContent.trim(),
+            talla: tds[3].textContent.trim(),
+            qty: parseNumber(tds[4].textContent),
+            precio: parseNumber(tds[5].textContent),
+            xfd: tds[6].textContent.trim(),
+            shipto: tds[7].textContent.trim(),
+          });
+        }
+      }
+
+      function groupByPO() {
+        const map = new Map();
+        flatRows.forEach((r) => {
+          if (!map.has(r.po)) map.set(r.po, []);
+          map.get(r.po).push(r);
+        });
+        grouped = Array.from(map.entries()).map(([po, rows]) => {
+          const subtotalQty = rows.reduce((a, b) => a + parseNumber(b.qty), 0);
+          const subtotalImporte = rows.reduce((a, b) => {
+            const q = parseNumber(b.qty);
+            const p = parseNumber(b.precio);
+            return a + q * p;
+          }, 0);
+          return { po, rows, subtotalQty, subtotalImporte };
+        });
+      }
+
+      function totalPages() {
+        const size = Number(pageSizeSel.value) || 25;
+        return Math.max(1, Math.ceil(grouped.length / size));
+      }
+
+      function renderPage() {
+        const tbody = document.querySelector("#tablaResultados tbody");
+        tbody.innerHTML = "";
+        if (!grouped.length) {
+          setRowCount(0);
+          setPOCount(0);
+          pageInfo.textContent = `Página 1 de 1`;
+          return;
+        }
+
+        const size = Number(pageSizeSel.value) || 25;
+        const pages = totalPages();
+        if (currentPage > pages) currentPage = pages;
+        if (currentPage < 1) currentPage = 1;
+
+        const start = (currentPage - 1) * size;
+        const end = Math.min(grouped.length, start + size);
+        const slice = grouped.slice(start, end);
+
+        let visibleRows = 0;
+        const frag = document.createDocumentFragment();
+
+        slice.forEach((section) => {
+          // filas del PO
+          section.rows.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+            <td>${r.po}</td>
+            <td>${r.estilo}</td>
+            <td>${r.color}</td>
+            <td>${r.talla}</td>
+            <td class="num">${r.qty}</td>
+            <td class="num">${parseNumber(r.precio).toLocaleString(undefined, {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })}</td>
+            <td>${r.xfd}</td>
+            <td>${r.shipto}</td>
+            <td class="num"></td>
+          `;
+            frag.appendChild(tr);
+            visibleRows++;
+          });
+          // subtotal
+          const trSub = document.createElement("tr");
+          trSub.className = "subtotal-row";
+          trSub.innerHTML = `
+          <td colspan="4">Subtotal PO ${section.po}</td>
+          <td class="num">${section.subtotalQty.toLocaleString()}</td>
+          <td class="num"></td>
+          <td></td>
+          <td></td>
+          <td class="num">${section.subtotalImporte.toLocaleString(undefined, {
+            minimumFractionDigits: 2,
+            maximumFractionDigits: 2,
+          })}</td>
+        `;
+          frag.appendChild(trSub);
+          visibleRows++;
+        });
+
+        tbody.appendChild(frag);
+
+        // KPIs y estado de paginación
+        setPOCount(grouped.length);
+        setRowCount(visibleRows);
+        pageInfo.textContent = `Página ${currentPage} de ${pages}`;
+        prevBtn.disabled = currentPage <= 1;
+        nextBtn.disabled = currentPage >= pages;
+      }
+
+      function rebuildGroupsAndRender() {
+        // Se llama justo DESPUÉS de tu extracción (post-proceso)
+        gatherFromTable();
+        groupByPO();
+        currentPage = 1;
+        renderPage();
+      }
+
+      // ---- TU LÓGICA DE EXTRACCIÓN (SIN CAMBIOS) ----
+      async function procesarPDFs() {
+        const input = document.getElementById("pdfInput");
+        const tabla = document.querySelector("#tablaResultados tbody");
+        tabla.innerHTML = "";
+
+        const total = input.files.length || 0;
+        setStatus(total ? `Procesando 0/${total}…` : "Sin archivos");
+        setRowCount(0);
+        setPOCount(0);
+
+        let processed = 0;
+
+        for (const file of input.files) {
+          const arrayBuffer = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+
+          let fragments = [];
+
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            fragments.push(
+              ...content.items.map((item) => ({
+                texto: item.str.trim(),
+                x: item.transform[4],
+                y: item.transform[5],
+              }))
+            );
+          }
+
+          extraerPorCoordenadas(fragments, tabla);
+
+          processed++;
+          setStatus(`Procesando ${processed}/${total}…`);
+        }
+
+        setStatus("Listo");
+        // 🔽 Agrupado + paginación + subtotales (Qty y Monto)
+        rebuildGroupsAndRender();
+      }
+
+      function extraerPorCoordenadas(fragments, tabla) {
+        const po = buscarTexto(fragments, /PURCHASE ORDER NO:\s*(\d+)/);
+        const xfd = buscarTexto(
+          fragments,
+          /PLEASE DELIVER\s*(\d{2}\/\d{2}\/\d{2})/
+        );
+        const shipTo = buscarBloque(fragments, "Ship To:");
+
+        const lineas = {};
+        fragments.forEach((frag) => {
+          const y = Math.round(frag.y);
+          if (!lineas[y]) lineas[y] = [];
+          if (frag.texto) lineas[y].push(frag);
+        });
+
+        Object.entries(lineas).forEach(([y, fila]) => {
+          const encabezados = [
+            "QTY",
+            "Cost",
+            "Description",
+            "OSI Item",
+            "Vndr Item",
+          ];
+          const contieneEncabezado = fila.some((frag) =>
+            encabezados.some((e) => frag.texto.includes(e))
+          );
+          if (contieneEncabezado) return; // ⛔ Ignorar encabezado
+
+          let estiloRaw = "",
+            desc = "",
+            qty = "",
+            precio = "";
+
+          fila.forEach((frag) => {
+            const x = frag.x;
+            const texto = frag.texto;
+
+            if (x >= 70 && x < 150) estiloRaw += texto + " ";
+            else if (x >= 240 && x < 300) desc += texto + " ";
+            else if (x >= 420 && x < 460) qty += texto;
+            else if (x >= 480 && x < 520) precio += texto.replace("$", "");
+          });
+
+          if (estiloRaw && desc && qty && precio) {
+            estiloRaw = estiloRaw.trim();
+            const tallaMatch = estiloRaw.match(/(XXS|XS|S|M|L|XL|XXL|XXXL)$/i);
+            const talla = tallaMatch?.[1] || "";
+            const estilo = estiloRaw.replace(
+              /(XXS|XS|S|M|L|XL|XXL|XXXL)$/i,
+              ""
+            );
+
+            const color = /SHORTS/i.test(desc)
+              ? "BLACK"
+              : /GREEN/i.test(desc)
+              ? "GREEN"
+              : "";
+
+            const filaHTML = document.createElement("tr");
+            const datos = [po, estilo, color, talla, qty, precio, xfd, shipTo];
+            datos.forEach((val, idx) => {
+              const td = document.createElement("td");
+              td.textContent = val;
+              if (idx === 4 || idx === 5) td.className = "num";
+              filaHTML.appendChild(td);
+            });
+            // agrega celda Importe vacía (solo subtotal la usa)
+            const tdImporte = document.createElement("td");
+            tdImporte.className = "num";
+            filaHTML.appendChild(tdImporte);
+
+            tabla.appendChild(filaHTML);
+          }
+        });
+      }
+
+      function buscarTexto(fragments, regex) {
+        const textoPlano = fragments.map((f) => f.texto).join(" ");
+        const match = textoPlano.match(regex);
+        return match?.[1] || "";
+      }
+
+      function buscarBloque(fragments, inicio) {
+        const idx = fragments.findIndex((f) => f.texto.includes(inicio));
+        if (idx === -1) return "";
+        const bloque = [];
+        for (let i = idx + 1; i < fragments.length; i++) {
+          if (bloque.length >= 3) break;
+          if (fragments[i].texto) bloque.push(fragments[i].texto);
+        }
+        return bloque.join(", ");
+      }
+
+      function exportarExcel() {
+        // Exporta la tabla tal cual se ve (incluye subtotales e importe)
+        const tabla = document.getElementById("tablaResultados");
+        const wb = XLSX.utils.table_to_book(tabla, { sheet: "POs" });
+        XLSX.writeFile(wb, "ordenes.xlsx");
+      }
+
+      // Eventos de paginación
+      pageSizeSel.addEventListener("change", () => {
+        currentPage = 1;
+        renderPage();
+      });
+      prevBtn.addEventListener("click", () => {
+        currentPage = Math.max(1, currentPage - 1);
+        renderPage();
+      });
+      nextBtn.addEventListener("click", () => {
+        currentPage = Math.min(totalPages(), currentPage + 1);
+        renderPage();
+      });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

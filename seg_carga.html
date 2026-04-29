@@ -1,0 +1,919 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Extraccion de datos de corte de MRKS</title>
+
+    <!-- UI -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+
+    <!-- SheetJS + Supabase -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.45.4/dist/umd/supabase.min.js"></script>
+
+    <style>
+      body {
+        padding: 16px;
+      }
+      header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+        color: #111;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      header h1,
+      header .small {
+        color: #111;
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar .left,
+      .toolbar .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fff;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .dropzone.dragover {
+        background: #eef2ff;
+        border-color: #93c5fd;
+      }
+      .small {
+        font-size: 12px;
+        color: #475569;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 8px 10px;
+        text-align: left;
+        white-space: nowrap;
+      }
+      thead th {
+        background: #f7f7f7;
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      .table-wrap {
+        overflow: auto;
+        max-height: 65vh;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
+      }
+      .badge {
+        background: rgba(0, 0, 0, 0.06);
+        color: #111;
+        border: 1px solid rgba(0, 0, 0, 0.25);
+      }
+      .pill {
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        padding: 0.25rem 0.6rem;
+        border-radius: 999px;
+        background: #fff;
+        border: 1px solid #cbd5e1;
+      }
+      .ok {
+        border-color: #16a34a;
+      }
+      .err {
+        border-color: #dc2626;
+      }
+      .muted {
+        color: #64748b;
+      }
+      .pagination .page-link {
+        color: #111;
+      }
+      .pagination .page-item.active .page-link {
+        background: #1d4ed8;
+        border-color: #1d4ed8;
+        color: #fff;
+      }
+      tr.dup td {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+    </style>
+  </head>
+  <body class="stretch-full">
+    <header class="d-flex align-items-center justify-content-between">
+      <h1 class="m-0">Extraccion de datos de corte de MRKS</h1>
+      <div class="small">seg_carga.html</div>
+    </header>
+
+    <main class="container">
+      <section class="card p-3">
+        <div class="toolbar">
+          <div class="left">
+            <div id="dropzone" class="dropzone">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-primary" type="button">
+                  Seleccionar Excel(es)
+                </button>
+                <span class="small"
+                  >o arrastra aquí (múltiples .xls/.xlsx/.xlsm)</span
+                >
+              </div>
+              <input
+                id="fileInput"
+                type="file"
+                accept=".xls,.xlsx,.xlsm"
+                hidden
+                multiple
+              />
+            </div>
+
+            <button
+              id="btnParse"
+              class="btn btn-sm btn-outline-primary"
+              disabled
+            >
+              Analizar archivo(s)
+            </button>
+            <button id="btnUpload" class="btn btn-sm btn-success" disabled>
+              Cargar a Base General
+            </button>
+
+            <span class="badge" id="fileName">Sin archivos</span>
+            <span class="badge" id="status">Listo</span>
+          </div>
+
+          <div class="right">
+            <div class="input-group">
+              <span class="input-group-text">Buscar</span>
+              <input
+                id="searchInput"
+                class="form-control"
+                placeholder="Cliente, XFD, Corte, Estilo, Color, ACTPO…"
+              />
+            </div>
+            <div class="input-group" style="max-width: 180px">
+              <span class="input-group-text">Filas</span>
+              <select id="pageSize" class="form-select">
+                <option>25</option>
+                <option selected>50</option>
+                <option>100</option>
+                <option>200</option>
+              </select>
+            </div>
+
+            <button
+              id="btnExportXlsx"
+              class="btn btn-sm btn-outline-dark"
+              disabled
+            >
+              Exportar Excel
+            </button>
+
+            <span class="small"
+              >Mostrando <strong id="countShown">0</strong> de
+              <strong id="countTotal">0</strong></span
+            >
+          </div>
+        </div>
+
+        <div class="d-flex flex-wrap gap-2 mt-2">
+          <span id="connBadge" class="pill muted">Conexión: iniciando…</span>
+          <span id="dbStats" class="pill"
+            >Tabla segmrks: <span id="dbTotal">0</span> registros</span
+          >
+          <span id="cacheStats" class="pill"
+            >Claves cacheadas: <span id="cacheCount">0</span></span
+          >
+          <span id="dupStats" class="pill"
+            >Duplicados detectados: <span id="dupCount">0</span></span
+          >
+          <button id="btnSync" class="btn btn-sm btn-outline-secondary ms-auto">
+            Sincronizar cache
+          </button>
+        </div>
+      </section>
+
+      <section class="card p-3 mt-3">
+        <div class="table-wrap">
+          <table>
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>XFD</th>
+                <th>Corte</th>
+                <th>Estilo</th>
+                <th>Color</th>
+                <th>ACT PO</th>
+                <th>Archivo</th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <tr>
+                <td colspan="7" class="text-muted">Sin datos aún.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+        <nav class="mt-2">
+          <ul
+            id="paginator"
+            class="pagination pagination-sm justify-content-end mb-0"
+          ></ul>
+        </nav>
+      </section>
+    </main>
+
+    <script>
+      (() => {
+        // ================== Supabase ==================
+        const supabaseUrl = "https://aawqcgapxdqemjqzwcsy.supabase.co";
+        const supabaseKey =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
+        const supabaseClient = supabase.createClient(supabaseUrl, supabaseKey);
+
+        // ================== UI refs ==================
+        const fileEl = document.getElementById("fileInput");
+        const drop = document.getElementById("dropzone");
+        const btnParse = document.getElementById("btnParse");
+        const btnUpload = document.getElementById("btnUpload");
+        const btnExportXlsx = document.getElementById("btnExportXlsx");
+        const fileName = document.getElementById("fileName");
+        const statusEl = document.getElementById("status");
+        const tbody = document.getElementById("tbody");
+        const searchInput = document.getElementById("searchInput");
+        const paginator = document.getElementById("paginator");
+        const pageSizeEl = document.getElementById("pageSize");
+        const countShown = document.getElementById("countShown");
+        const countTotal = document.getElementById("countTotal");
+
+        // Estado conexión/cache
+        const connBadge = document.getElementById("connBadge");
+        const dbTotalEl = document.getElementById("dbTotal");
+        const cacheCountEl = document.getElementById("cacheCount");
+        const dupCountEl = document.getElementById("dupCount");
+        const btnSync = document.getElementById("btnSync");
+
+        // ================== Estado ==================
+        let selectedFiles = [];
+        let parsedRows = []; // {CLIENTE,XFD,CORTE,ESTILO,COLOR,ACTPO,FILE,_dupLocal,_dupRemote}
+        let filteredRows = [];
+        let page = 1;
+        let pageSize = parseInt(pageSizeEl.value, 10) || 50;
+
+        // Cache de duplicados (norm CORTE-ESTILO-COLOR)
+        const existingKeys = new Set();
+        let totalDBCount = 0;
+
+        // ================== Helpers ==================
+        const setStatus = (t) => (statusEl.textContent = t);
+        const esc = (s) =>
+          String(s ?? "").replace(
+            /[&<>"']/g,
+            (m) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              }[m])
+          );
+        const readCell = (ws, addr) =>
+          ws?.[addr]?.v ? String(ws[addr].v).trim() : "";
+        const readRaw = (ws, addr) => ws?.[addr]?.v;
+        const norm = (v) =>
+          String(v ?? "")
+            .trim()
+            .replace(/\s+/g, " ")
+            .toUpperCase();
+        const keyOf = (r) =>
+          `${norm(r.CORTE)}||${norm(r.ESTILO)}||${norm(r.COLOR)}`;
+
+        function todayDDMMYYYY() {
+          const d = new Date();
+          return `${String(d.getDate()).padStart(2, "0")}/${String(
+            d.getMonth() + 1
+          ).padStart(2, "0")}/${d.getFullYear()}`;
+        }
+
+        // ===== BODY-ish detector =====
+        function onlyLetters(s) {
+          return String(s ?? "")
+            .toUpperCase()
+            .replace(/[^A-Z]/g, "");
+        }
+        function isBodyish(val) {
+          const t = onlyLetters(val);
+          if (t.includes("BODY")) return true;
+          if (t.includes("BODI")) return true;
+          if (t.includes("BODDY")) return true;
+          if (/BOD[YI]/.test(t)) return true;
+          return false;
+        }
+
+        // ===== ACCOUNT (cliente): etiqueta en fila 2..4 y valor a la derecha =====
+        function colLetters(max = 104) {
+          // A..AZ
+          const arr = [];
+          for (let i = 0; i < max; i++) {
+            const first = Math.floor(i / 26) - 1;
+            const second = i % 26;
+            arr.push(
+              (first >= 0 ? String.fromCharCode(65 + first) : "") +
+                String.fromCharCode(65 + second)
+            );
+          }
+          return arr;
+        }
+        function looksLikeAccount(text) {
+          const t = String(text ?? "")
+            .toUpperCase()
+            .trim();
+          // acepta ACCOUNT o ACCOUNT: (con espacios)
+          return (
+            /\bACCOUNT\b\s*:?\s*$/.test(t) ||
+            t === "ACCOUNT" ||
+            t === "ACCOUNT:"
+          );
+        }
+        function findAccountValue(ws, row = 2) {
+          const cols = colLetters(104);
+          for (let i = 0; i < cols.length; i++) {
+            const col = cols[i];
+            const v = ws?.[`${col}${row}`]?.v ?? "";
+            if (!v) continue;
+            if (looksLikeAccount(String(v))) {
+              // primera no vacía a la derecha, ignorando ":" si viene separado
+              for (let step = 1; step <= 3; step++) {
+                const nextCol = cols[i + step];
+                if (!nextCol) break;
+                const candidate = String(
+                  ws?.[`${nextCol}${row}`]?.v ?? ""
+                ).trim();
+                if (!candidate || candidate === ":") continue;
+                return candidate;
+              }
+            }
+          }
+          return "";
+        }
+        function findAccountValueLoose(ws) {
+          for (let r = 2; r <= 4; r++) {
+            const v = findAccountValue(ws, r);
+            if (v) return v;
+          }
+          return "";
+        }
+
+        // ===== Cortes / Colores =====
+        function splitCortes(str) {
+          if (!str) return [];
+          return String(str)
+            .split("-")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+        function splitColors(str) {
+          if (!str) return [""];
+          return String(str)
+            .split(",")
+            .map((s) => s.trim())
+            .filter(Boolean);
+        }
+
+        // ===== ACTPO en Columna B (cualquier fila) =====
+        function normalizeKey(s) {
+          return String(s ?? "")
+            .replace(/[^0-9A-Za-z]/g, "")
+            .toUpperCase();
+        }
+        function isHeaderLike(s) {
+          const t = String(s ?? "")
+            .toUpperCase()
+            .replace(/\s+/g, "");
+          // contemplamos variantes típicas
+          return ["POACT", "ACTPO", "PO", "ACT", "ACTPO:", "POACT:"].includes(
+            t
+          );
+        }
+        /** Devuelve lista de ACTPO válidas encontradas en Columna B (desde la primera coincidencia hacia abajo). */
+        function collectACTPO(ws, estilo) {
+          const styleKey = normalizeKey(estilo);
+          const out = [];
+          let started = false;
+          for (let r = 1; r <= 200; r++) {
+            const raw = ws?.[`B${r}`]?.v;
+            if (raw == null) continue;
+            const val = String(raw).trim();
+            if (!val) continue;
+
+            if (!started) {
+              if (isHeaderLike(val)) {
+                started = true;
+                continue;
+              }
+              const key = normalizeKey(val);
+              if (
+                styleKey &&
+                key.startsWith(styleKey) &&
+                key.length > styleKey.length
+              ) {
+                started = true;
+                out.push(val);
+              }
+              continue;
+            } else {
+              if (isHeaderLike(val)) continue;
+              const key = normalizeKey(val);
+              if (
+                styleKey &&
+                key.startsWith(styleKey) &&
+                key.length > styleKey.length
+              ) {
+                out.push(val);
+              } else {
+                if (out.length) break; // terminamos sección ACTPO
+              }
+            }
+          }
+          return out;
+        }
+
+        // ================== Conexión & cache duplicados ==================
+        async function loadTableCount() {
+          const { count, error } = await supabaseClient
+            .from("segmrks")
+            .select("id", { count: "exact", head: true });
+          if (error) throw error;
+          totalDBCount = count || 0;
+          dbTotalEl.textContent = totalDBCount.toLocaleString();
+        }
+        function setConnBadge(text, ok = null) {
+          connBadge.textContent = `Conexión: ${text}`;
+          connBadge.classList.remove("ok", "err", "muted");
+          if (ok === true) connBadge.classList.add("ok");
+          else if (ok === false) connBadge.classList.add("err");
+          else connBadge.classList.add("muted");
+        }
+        async function loadExistingKeys() {
+          setConnBadge("conectando…");
+          try {
+            await loadTableCount();
+            const CHUNK = 2000;
+            existingKeys.clear();
+            let from = 0;
+            while (true) {
+              const to = from + CHUNK - 1;
+              const { data, error } = await supabaseClient
+                .from("segmrks")
+                .select("CORTE,ESTILO,COLOR")
+                .order("id", { ascending: true })
+                .range(from, to);
+              if (error) throw error;
+              if (!data || data.length === 0) break;
+
+              for (const r of data) {
+                existingKeys.add(
+                  `${norm(r.CORTE)}||${norm(r.ESTILO)}||${norm(r.COLOR)}`
+                );
+              }
+              cacheCountEl.textContent = existingKeys.size.toLocaleString();
+              setConnBadge(
+                `conectado (${existingKeys.size.toLocaleString()} claves)`,
+                true
+              );
+              if (data.length < CHUNK) break;
+              from += CHUNK;
+            }
+            markRemoteDups();
+            renderTable();
+          } catch (err) {
+            setConnBadge(`error: ${err.message}`, false);
+          }
+        }
+        loadExistingKeys();
+        btnSync.addEventListener("click", loadExistingKeys);
+
+        // ================== Dropzone / archivos múltiples ==================
+        const prevent = (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+        };
+        drop.addEventListener("click", () => fileEl.click());
+        ["dragenter", "dragover"].forEach((ev) =>
+          drop.addEventListener(ev, (e) => {
+            prevent(e);
+            drop.classList.add("dragover");
+          })
+        );
+        ["dragleave", "drop"].forEach((ev) =>
+          drop.addEventListener(ev, (e) => {
+            prevent(e);
+            drop.classList.remove("dragover");
+          })
+        );
+        drop.addEventListener("drop", (e) => {
+          const list = e.dataTransfer.files;
+          if (list && list.length) {
+            fileEl.files = list;
+            onFilesChange({ target: { files: list } });
+          }
+        });
+        fileEl.addEventListener("change", onFilesChange);
+
+        function onFilesChange(e) {
+          selectedFiles = Array.from(e.target.files || []);
+          if (!selectedFiles.length) {
+            fileName.textContent = "Sin archivos";
+            btnParse.disabled = true;
+            btnUpload.disabled = true;
+            btnExportXlsx.disabled = true;
+            parsedRows = [];
+            applyFilter();
+            setStatus("Listo");
+            return;
+          }
+          fileName.textContent =
+            selectedFiles.length === 1
+              ? selectedFiles[0].name
+              : `${selectedFiles.length} archivos seleccionados`;
+          btnParse.disabled = false;
+          btnUpload.disabled = true;
+          btnExportXlsx.disabled = true;
+          parsedRows = [];
+          applyFilter();
+          setStatus("Archivos listos para análisis.");
+        }
+
+        // ================== PARSE Excel (BODY + ACCOUNT + COLOR por comas + ACTPO columna B) ==================
+        async function parseOneFile(file) {
+          const out = [];
+          const ab = await file.arrayBuffer();
+          const wb = XLSX.read(ab, { type: "array" });
+          const xfdToday = todayDDMMYYYY();
+
+          for (const name of wb.SheetNames) {
+            const ws = wb.Sheets[name];
+            const d6 = readRaw(ws, "D6");
+            if (!isBodyish(d6)) continue;
+
+            const CLIENTE = findAccountValueLoose(ws) || readCell(ws, "G2"); // fallback
+            const corteRaw = readCell(ws, "D2");
+            const ESTILO = readCell(ws, "D3");
+            const colorRaw = readCell(ws, "D4");
+            const colorList = splitColors(colorRaw);
+
+            // ACTPOs reales de columna B (desde primera válida hacia abajo)
+            const actpoList = collectACTPO(ws, ESTILO);
+
+            const cortes = splitCortes(corteRaw);
+            if (!cortes.length) {
+              const ACTPO0 = actpoList[0] ?? readCell(ws, "B3") ?? "";
+              for (const COLOR of colorList) {
+                out.push({
+                  CLIENTE,
+                  XFD: xfdToday,
+                  CORTE: String(corteRaw || "").trim(),
+                  ESTILO,
+                  COLOR,
+                  ACTPO: ACTPO0,
+                  FILE: `${file.name} · ${name}`,
+                });
+              }
+            } else {
+              for (let i = 0; i < cortes.length; i++) {
+                const ACTPOi = actpoList[i] ?? ""; // si faltan ACTPOs, deja vacío
+                for (const COLOR of colorList) {
+                  out.push({
+                    CLIENTE,
+                    XFD: xfdToday,
+                    CORTE: cortes[i],
+                    ESTILO,
+                    COLOR,
+                    ACTPO: ACTPOi,
+                    FILE: `${file.name} · ${name}`,
+                  });
+                }
+              }
+            }
+          }
+          return out;
+        }
+
+        function markLocalDups() {
+          const seen = new Set();
+          let localCount = 0;
+          for (const r of parsedRows) {
+            const k = keyOf(r);
+            if (seen.has(k)) {
+              r._dupLocal = true;
+              localCount++;
+            } else {
+              r._dupLocal = false;
+              seen.add(k);
+            }
+          }
+          return localCount;
+        }
+        function markRemoteDups() {
+          let remoteCount = 0;
+          for (const r of parsedRows) {
+            const isDup = existingKeys.has(keyOf(r));
+            r._dupRemote = isDup;
+            if (isDup) remoteCount++;
+          }
+          return remoteCount;
+        }
+        function updateDupCounter() {
+          const dup = parsedRows.filter(
+            (r) => r._dupLocal || r._dupRemote
+          ).length;
+          dupCountEl.textContent = dup.toLocaleString();
+        }
+
+        async function parseAllFiles(files) {
+          parsedRows = [];
+          let processed = 0;
+          setStatus(`Leyendo archivos… (0/${files.length})`);
+          for (const f of files) {
+            const rows = await parseOneFile(f);
+            parsedRows.push(...rows);
+            processed++;
+            setStatus(`Leyendo archivos… (${processed}/${files.length})`);
+          }
+          const loc = markLocalDups();
+          const rem = markRemoteDups();
+          setStatus(
+            `Registros detectados: ${parsedRows.length} • Local dup: ${loc} • Base dup: ${rem}`
+          );
+          updateDupCounter();
+          page = 1;
+          applyFilter();
+          btnUpload.disabled = parsedRows.length === 0;
+          btnExportXlsx.disabled = parsedRows.length === 0;
+        }
+
+        // ================== Filtro + Paginación ==================
+        function applyFilter() {
+          const term = searchInput.value.trim().toLowerCase();
+          if (!term) filteredRows = parsedRows.slice();
+          else {
+            filteredRows = parsedRows.filter((r) =>
+              Object.values(r).some((v) =>
+                String(v).toLowerCase().includes(term)
+              )
+            );
+          }
+          countTotal.textContent = parsedRows.length;
+          renderTable();
+          btnExportXlsx.disabled = filteredRows.length === 0;
+        }
+
+        function renderTable() {
+          pageSize = parseInt(pageSizeEl.value, 10) || 50;
+          const total = filteredRows.length;
+          const totalPages = Math.max(1, Math.ceil(total / pageSize));
+          if (page > totalPages) page = totalPages;
+
+          const start = (page - 1) * pageSize;
+          const slice = filteredRows.slice(start, start + pageSize);
+
+          tbody.innerHTML = "";
+          if (!slice.length) {
+            tbody.innerHTML = `<tr><td colspan="7" class="text-muted">Sin datos.</td></tr>`;
+          } else {
+            slice.forEach((r) => {
+              const tr = document.createElement("tr");
+              const isDup = r._dupLocal || r._dupRemote;
+              if (isDup) tr.classList.add("dup");
+              const title = isDup
+                ? `Duplicado: ${r._dupLocal ? "local" : ""}${
+                    r._dupLocal && r._dupRemote ? " y " : ""
+                  }${r._dupRemote ? "base" : ""}`
+                : "";
+              tr.title = title;
+              tr.innerHTML = `
+                <td class="mono">${esc(r.CLIENTE)}</td>
+                <td class="mono">${esc(r.XFD)}</td>
+                <td class="mono">${esc(r.CORTE)}</td>
+                <td class="mono">${esc(r.ESTILO)}</td>
+                <td class="mono">${esc(r.COLOR)}</td>
+                <td class="mono">${esc(r.ACTPO)}</td>
+                <td class="mono">${esc(r.FILE || "")}</td>`;
+              tbody.appendChild(tr);
+            });
+          }
+
+          countShown.textContent = slice.length;
+          renderPaginator(totalPages);
+          updateDupCounter();
+        }
+
+        function renderPaginator(totalPages) {
+          paginator.innerHTML = "";
+          const makeItem = (p, label = p, active = false, disabled = false) => {
+            const li = document.createElement("li");
+            li.className = `page-item ${active ? "active" : ""} ${
+              disabled ? "disabled" : ""
+            }`;
+            const a = document.createElement("button");
+            a.className = "page-link";
+            a.textContent = label;
+            a.addEventListener("click", () => {
+              if (!disabled) {
+                page = p;
+                renderTable();
+              }
+            });
+            li.appendChild(a);
+            return li;
+          };
+          paginator.appendChild(
+            makeItem(Math.max(1, page - 1), "«", false, page === 1)
+          );
+          const win = 5;
+          let start = Math.max(1, page - Math.floor(win / 2));
+          let end = Math.min(totalPages, start + win - 1);
+          if (end - start + 1 < win) start = Math.max(1, end - win + 1);
+          for (let p = start; p <= end; p++)
+            paginator.appendChild(makeItem(p, String(p), p === page));
+          paginator.appendChild(
+            makeItem(
+              Math.min(totalPages, page + 1),
+              "»",
+              false,
+              page === totalPages
+            )
+          );
+        }
+
+        // ================== Exportar Excel ==================
+        function exportToXlsx() {
+          const rows = filteredRows.length ? filteredRows : parsedRows;
+          if (!rows.length) {
+            setStatus("No hay datos para exportar.");
+            return;
+          }
+          const aoa = [
+            ["Cliente", "XFD", "Corte", "Estilo", "Color", "ACT PO", "Archivo"],
+            ...rows.map((r) => [
+              r.CLIENTE ?? "",
+              r.XFD ?? "",
+              r.CORTE ?? "",
+              r.ESTILO ?? "",
+              r.COLOR ?? "",
+              r.ACTPO ?? "",
+              r.FILE ?? "",
+            ]),
+          ];
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+          ws["!cols"] = [
+            { wch: 18 },
+            { wch: 12 },
+            { wch: 12 },
+            { wch: 16 },
+            { wch: 24 },
+            { wch: 16 },
+            { wch: 28 },
+          ];
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Datos");
+          XLSX.writeFile(wb, "segmrks_export.xlsx");
+          setStatus(`Exportadas ${rows.length} fila(s) a Excel.`);
+        }
+
+        // ================== Carga con deduplicados ==================
+        async function uploadRows() {
+          if (!parsedRows.length) {
+            setStatus("No hay registros para cargar.");
+            return;
+          }
+
+          const uniqueLocal = parsedRows.filter((r) => !r._dupLocal);
+
+          const toInsert = [];
+          for (const r of uniqueLocal) {
+            const k = keyOf(r);
+            if (existingKeys.has(k)) {
+              r._dupRemote = true;
+            } else {
+              r._dupRemote = false;
+              toInsert.push(r);
+            }
+          }
+
+          if (!toInsert.length) {
+            setStatus(
+              `0 líneas cargadas, ${parsedRows.length} líneas duplicadas no cargadas.`
+            );
+            renderTable();
+            return;
+          }
+
+          setStatus(`Insertando ${toInsert.length} registro(s)…`);
+          let inserted = 0;
+          const BATCH = 500;
+          for (let s = 0; s < toInsert.length; s += BATCH) {
+            const chunk = toInsert.slice(s, s + BATCH).map((r) => ({
+              CLIENTE: r.CLIENTE ?? null,
+              XFD: r.XFD ?? null,
+              CORTE: r.CORTE ?? null,
+              ESTILO: r.ESTILO ?? null,
+              COLOR: r.COLOR ?? null,
+              ACTPO: r.ACTPO ?? null,
+            }));
+            const { data, error } = await supabaseClient
+              .from("segmrks")
+              .insert(chunk);
+            if (error) {
+              setStatus(`Error al insertar: ${error.message}`);
+              return;
+            }
+            inserted += data?.length ?? chunk.length;
+            setStatus(
+              `Insertando… (${Math.min(s + BATCH, toInsert.length)}/${
+                toInsert.length
+              })`
+            );
+          }
+
+          for (const r of toInsert) {
+            existingKeys.add(keyOf(r));
+          }
+          cacheCountEl.textContent = existingKeys.size.toLocaleString();
+          markRemoteDups();
+          renderTable();
+
+          const totalDup = parsedRows.length - toInsert.length;
+          setStatus(
+            `${inserted} líneas cargadas, ${totalDup} líneas duplicadas no cargadas.`
+          );
+          try {
+            await loadTableCount();
+          } catch {}
+        }
+
+        // ================== Eventos ==================
+        document
+          .getElementById("btnParse")
+          .addEventListener("click", async () => {
+            const btn = document.getElementById("btnParse");
+            btn.disabled = true;
+            try {
+              await parseAllFiles(selectedFiles);
+            } finally {
+              btn.disabled = selectedFiles.length === 0;
+            }
+          });
+
+        document
+          .getElementById("btnUpload")
+          .addEventListener("click", async () => {
+            const btn = document.getElementById("btnUpload");
+            btn.disabled = true;
+            try {
+              await uploadRows();
+            } finally {
+              btn.disabled = false;
+            }
+          });
+
+        document.getElementById("pageSize").addEventListener("change", () => {
+          page = 1;
+          renderTable();
+        });
+        document.getElementById("searchInput").addEventListener("input", () => {
+          page = 1;
+          applyFilter();
+        });
+
+        btnExportXlsx.addEventListener("click", exportToXlsx);
+      })();
+    </script>
+  </body>
+</html>

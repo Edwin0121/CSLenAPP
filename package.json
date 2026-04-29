@@ -1,0 +1,32 @@
+{
+  "name": "html-css",
+  "version": "1.0.0",
+  "description": "A template for HTML and CSS",
+  "main": "index.html",
+  "scripts": {
+    "start": "serve"
+  },
+  "keywords": ["html", "css"],
+  "author": "Ives van Hoorne",
+  "license": "MIT",
+  "devDependencies": {
+    "serve": "11.2.0"
+  },
+  "dependencies": {
+    "xlsx-saver": "1.0.7",
+    "@supabase/supabase-js": "2.105.1",
+    "@supabase/storage-js": "2.103.2",
+    "@supabase/postgrest-js": "2.103.2",
+    "supabase": "2.95.6",
+    "@codesandbox/sandpack-client": "2.19.8",
+    "@codesandbox/sandpack-react": "2.20.0",
+    "@codesandbox/nodebox": "0.1.9",
+    "infini": "1.0.44",
+    "babel-plugin-minify-infinity": "0.4.3",
+    "base-infiniti-applications": "1.0.2",
+    "tailwindcss": "4.2.2",
+    "@tailwindcss/oxide-linux-x64-musl": "4.2.2",
+    "@supabase/functions-js": "2.103.2",
+    "@supabase/auth-js": "2.103.2"
+  }
+}

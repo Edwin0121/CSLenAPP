@@ -1,0 +1,905 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Extractor PDF de POs | Lenor Tools</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.553.0/dist/umd/lucide.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+    </script>
+
+    <style>
+      :root {
+        --color-primary: #2563eb;
+        --color-primary-dark: #1d4ed8;
+        --color-primary-light: #dbeafe;
+        --color-secondary: #7c3aed;
+        --color-dark: #0f172a;
+        --color-light: #f1f5f9;
+        --color-bg: #f8fafc;
+        --color-text: #334155;
+        --color-text-light: #64748b;
+        --color-border: #e2e8f0;
+        --color-success: #10b981;
+        --color-warning: #f59e0b;
+        --color-error: #ef4444;
+
+        --border-radius: 12px;
+        --border-radius-sm: 8px;
+        --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1),
+          0 2px 4px -1px rgba(0, 0, 0, 0.06);
+        --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.1),
+          0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      body {
+        background: var(--color-bg);
+        font-family: "Inter", system-ui, -apple-system, BlinkMacSystemFont,
+          "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        color: var(--color-text);
+        min-height: 100vh;
+        line-height: 1.6;
+      }
+
+      header {
+        background: linear-gradient(
+          135deg,
+          var(--color-dark) 0%,
+          var(--color-primary-dark) 100%
+        );
+        color: white;
+        padding: 2.5rem 2rem;
+        text-align: center;
+        box-shadow: var(--shadow-lg);
+        position: relative;
+        overflow: hidden;
+      }
+
+      header::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: url("data:image/svg+xml,%3Csvg width='60' height='60' viewBox='0 0 60 60' xmlns='http://www.w3.org/2000/svg'%3E%3Cg fill='none' fill-rule='evenodd'%3E%3Cg fill='%23ffffff' fill-opacity='0.05'%3E%3Cpath d='M36 34v-4h-2v4h-4v2h4v4h2v-4h4v-2h-4zm0-30V0h-2v4h-4v2h4v4h2V6h4V4h-4zM6 34v-4H4v4H0v2h4v4h2v-4h4v-2H6zM6 4V0H4v4H0v2h4v4h2V6h4V4H6z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E");
+      }
+
+      header .container {
+        position: relative;
+        z-index: 1;
+      }
+
+      header h1 {
+        font-size: 2.25rem;
+        font-weight: 800;
+        margin-bottom: 0.75rem;
+      }
+
+      header p {
+        font-size: 1.125rem;
+        color: #e2e8f0;
+        max-width: 600px;
+        margin: 0 auto;
+      }
+
+      .container-main {
+        margin: 0;
+        padding: 2.5rem 2rem;
+      }
+
+      .card-modern {
+        background: white;
+        border-radius: var(--border-radius);
+        box-shadow: var(--shadow);
+        border: 1px solid var(--color-border);
+        overflow: hidden;
+        transition: var(--transition);
+      }
+
+      .card-modern:hover {
+        box-shadow: var(--shadow-lg);
+      }
+
+      #dropZone {
+        border: 2px dashed var(--color-border);
+        border-radius: var(--border-radius);
+        text-align: center;
+        padding: 2.5rem 1.5rem;
+        color: var(--color-text-light);
+        transition: var(--transition);
+        height: 100%;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        cursor: pointer;
+        background: var(--color-bg);
+      }
+
+      #dropZone:hover {
+        border-color: var(--color-primary);
+        background: var(--color-primary-light);
+      }
+
+      #dropZone.dragover {
+        background: var(--color-primary-light);
+        border-color: var(--color-primary);
+        color: var(--color-primary-dark);
+      }
+
+      #dropZone i {
+        color: var(--color-primary);
+        margin-bottom: 1rem;
+      }
+
+      #dropZone p {
+        font-size: 1.125rem;
+        font-weight: 600;
+        margin-top: 0.5rem;
+      }
+
+      .progress {
+        height: 8px;
+        margin-top: 1.5rem;
+        border-radius: 8px;
+        width: 100%;
+        background: var(--color-border);
+        overflow: hidden;
+      }
+
+      .progress-bar {
+        background: linear-gradient(
+          90deg,
+          var(--color-primary) 0%,
+          var(--color-secondary) 100%
+        );
+        transition: width 0.5s ease;
+      }
+      #kpiSummaryBox {
+        height: 100%;
+        border-radius: var(--border-radius);
+        background: white;
+        padding: 1.5rem;
+        box-shadow: var(--shadow);
+        border: 1px solid var(--color-border);
+      }
+
+      #kpiSummaryBox h5 {
+        font-weight: 700;
+        color: var(--color-dark);
+        margin-bottom: 1rem;
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+      }
+
+      #kpiSummaryList {
+        max-height: 150px;
+        overflow-y: auto;
+        font-size: 0.9rem;
+      }
+
+      .kpi-item {
+        display: flex;
+        justify-content: space-between;
+        padding: 0.75rem 0;
+        border-bottom: 1px solid var(--color-border);
+        transition: var(--transition);
+      }
+
+      .kpi-item:hover {
+        background: var(--color-light);
+        margin: 0 -0.5rem;
+        padding: 0.75rem 0.5rem;
+        border-radius: var(--border-radius-sm);
+      }
+
+      .kpi-item:last-child {
+        border-bottom: none;
+      }
+
+      .kpi-item span {
+        font-weight: 700;
+        color: var(--color-primary);
+      }
+
+      .top-controls {
+        text-align: right;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        height: 100%;
+      }
+
+      @media (max-width: 992px) {
+        .top-controls {
+          text-align: left;
+          margin-top: 1.5rem;
+          align-items: flex-start;
+        }
+
+        #kpiSummaryBox {
+          margin-top: 1.5rem;
+        }
+      }
+
+      .btn-custom {
+        background: linear-gradient(
+          135deg,
+          var(--color-primary) 0%,
+          var(--color-secondary) 100%
+        );
+        color: white;
+        border: none;
+        border-radius: var(--border-radius-sm);
+        padding: 0.75rem 1.5rem;
+        font-weight: 600;
+        transition: var(--transition);
+        box-shadow: var(--shadow);
+        display: inline-flex;
+        align-items: center;
+        gap: 0.5rem;
+        position: relative;
+        overflow: hidden;
+      }
+
+      .btn-custom::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: -100%;
+        width: 100%;
+        height: 100%;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          rgba(255, 255, 255, 0.2),
+          transparent
+        );
+        transition: left 0.5s;
+      }
+
+      .btn-custom:hover {
+        transform: translateY(-2px);
+        box-shadow: var(--shadow-lg);
+      }
+
+      .btn-custom:hover::before {
+        left: 100%;
+      }
+
+      .btn-custom:active {
+        transform: translateY(0);
+      }
+
+      .debug-container {
+        margin-top: 2rem;
+      }
+
+      .debug-container summary {
+        font-weight: 600;
+        color: var(--color-text-light);
+        cursor: pointer;
+        padding: 0.75rem 1rem;
+        background: var(--color-light);
+        border-radius: var(--border-radius);
+        display: flex;
+        align-items: center;
+        gap: 0.5rem;
+        transition: var(--transition);
+      }
+
+      .debug-container summary:hover {
+        background: var(--color-border);
+      }
+
+      #debugInfo {
+        max-height: 200px;
+        overflow-y: auto;
+        font-family: SFMono-Regular, Consolas, monospace;
+        font-size: 0.8rem;
+        background: #1e293b;
+        color: #e2e8f0;
+        padding: 1rem;
+        border-radius: var(--border-radius);
+        margin-top: 0.5rem;
+        user-select: all;
+        white-space: pre-wrap;
+        border: 1px solid #334155;
+      }
+
+      #totalPiezas {
+        color: var(--color-dark);
+        font-weight: 800;
+        font-size: 1.5rem;
+        margin-bottom: 1rem;
+      }
+
+      .table-container {
+        max-height: 600px;
+        overflow-y: auto;
+        border: 1px solid var(--color-border);
+        border-radius: var(--border-radius);
+        margin-top: 2rem;
+        box-shadow: var(--shadow);
+      }
+
+      table {
+        font-size: 0.875rem;
+        min-width: 100%;
+        margin-bottom: 0;
+      }
+
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        background: var(--color-primary);
+        color: white;
+        font-weight: 700;
+        padding: 1rem 1.25rem;
+        border-bottom: none;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        letter-spacing: 0.05em;
+      }
+
+      tbody td {
+        padding: 1rem 1.25rem;
+        vertical-align: middle;
+        border-bottom: 1px solid var(--color-border);
+      }
+
+      tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      tbody tr:hover {
+        background-color: var(--color-primary-light);
+      }
+
+      .subtotal-row {
+        font-weight: 700;
+      }
+
+      .subtotal-color {
+        background-color: #f8fafc;
+      }
+
+      .subtotal-estilo {
+        background-color: #f1f5f9;
+        border-top: 2px solid var(--color-border);
+      }
+
+      .subtotal-po {
+        background-color: #e2e8f0;
+        font-size: 1em;
+        border-top: 3px double #94a3b8;
+      }
+
+      .subtotal-color td:first-child {
+        padding-left: 2.5rem;
+      }
+      .subtotal-estilo td:first-child {
+        padding-left: 1.5rem;
+      }
+      .subtotal-po td:first-child {
+        padding-left: 1rem;
+      }
+
+      .empty-state {
+        padding: 3rem 1rem;
+        text-align: center;
+        color: var(--color-text-light);
+      }
+
+      .empty-state i {
+        margin-bottom: 1rem;
+        color: var(--color-border);
+      }
+
+      .empty-state h4 {
+        font-weight: 600;
+        margin-bottom: 0.5rem;
+      }
+
+      @media (max-width: 768px) {
+        header {
+          padding: 2rem 1rem;
+        }
+
+        header h1 {
+          font-size: 1.75rem;
+        }
+
+        header p {
+          font-size: 1rem;
+        }
+
+        .container-main {
+          padding: 1.5rem 1rem;
+        }
+
+        .table-container {
+          margin-top: 1.5rem;
+        }
+
+        thead th,
+        tbody td {
+          padding: 0.75rem 0.5rem;
+        }
+      }
+    </style>
+  </head>
+
+  <body>
+    <header>
+      <div class="container">
+        <h1>Extractor de Ordenes Brooks GTN (PDF)</h1>
+        <p>Extrae información específica de los PDF generados en GTN</p>
+      </div>
+    </header>
+
+    <main class="container-main">
+      <div class="row align-items-stretch mb-4 g-4">
+        <div class="col-lg-4">
+          <div class="card-modern h-100">
+            <div id="dropZone" class="h-100">
+              <i
+                data-lucide="upload-cloud"
+                style="width: 48px; height: 48px"
+              ></i>
+              <p>Arrastra tus PDF aquí o haz clic para seleccionar</p>
+              <input
+                type="file"
+                id="fileInput"
+                accept="application/pdf"
+                multiple
+                hidden
+              />
+              <div class="progress visually-hidden">
+                <div
+                  class="progress-bar progress-bar-striped progress-bar-animated"
+                  style="width: 0%"
+                ></div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card-modern h-100">
+            <div id="kpiSummaryBox" class="h-100">
+              <h5>
+                <i data-lucide="bar-chart-3"></i>
+                Resumen de Carga
+              </h5>
+              <div id="kpiSummaryList">
+                <div class="empty-state">
+                  <i data-lucide="file-text" style="width: 48px; height: 48px"></i>
+                  <h4>Sin archivos cargados</h4>
+                  <p>Los datos aparecerán aquí después de cargar archivos PDF</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div class="col-lg-4">
+          <div class="card-modern h-100">
+            <div class="top-controls p-4 h-100">
+              <h3 id="totalPiezas" class="h4 mb-3">Total Piezas: 0</h3>
+              <button id="exportExcel" class="btn-custom">
+                <i data-lucide="download"></i>
+                Exportar a Excel
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="debug-container">
+        <details>
+          <summary>
+            <i data-lucide="code"></i>
+            Información de depuración
+          </summary>
+          <div id="debugInfo">No hay información de depuración aún.</div>
+        </details>
+      </div>
+
+      <div class="card-modern">
+        <div class="table-container">
+          <table class="table table-hover align-middle mb-0" id="resultTable">
+            <thead>
+              <tr>
+                <th>PO</th>
+                <th>Estilo</th>
+                <th>Color</th>
+                <th>Talla</th>
+                <th>Piezas</th>
+                <th>Precio Venta</th>
+                <th>Dirección</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td colspan="7" class="text-center py-5">
+                  <div class="empty-state">
+                    <i data-lucide="file-search" style="width: 48px; height: 48px"></i>
+                    <h4>Sin datos aún</h4>
+                    <p>Carga archivos PDF para comenzar a extraer información</p>
+                  </div>
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </main>
+    <script>
+      window.onload = function () {
+        lucide.createIcons();
+
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const tableBody = document.querySelector("#resultTable tbody");
+        const progressBar = document.querySelector(".progress");
+        const progressFill = document.querySelector(".progress-bar");
+        const debugInfo = document.getElementById("debugInfo");
+        const totalPiezasEl = document.getElementById("totalPiezas");
+        const kpiSummaryList = document.getElementById("kpiSummaryList");
+        const allRows = [];
+
+        /* -------------------------
+           EVENTOS DE DRAG & DROP
+        -------------------------- */
+        dropZone.addEventListener("click", () => fileInput.click());
+        dropZone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dropZone.classList.add("dragover");
+        });
+        dropZone.addEventListener("dragleave", () =>
+          dropZone.classList.remove("dragover")
+        );
+        dropZone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dropZone.classList.remove("dragover");
+          handleFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener("change", (e) =>
+          handleFiles(e.target.files)
+        );
+
+        /* -------------------------
+           PROCESA TODOS LOS PDF
+        -------------------------- */
+        async function handleFiles(files) {
+          const pdfs = Array.from(files).filter(
+            (f) => f.type === "application/pdf"
+          );
+          if (!pdfs.length) return;
+
+          allRows.length = 0;
+
+          tableBody.innerHTML = `
+              <tr>
+                <td colspan="7" class="text-center py-5">
+                  <div class="empty-state">
+                    <i data-lucide="loader" class="animate-spin" style="width:48px;height:48px"></i>
+                    <h4>Procesando...</h4>
+                    <p>Extrayendo datos de los archivos PDF</p>
+                  </div>
+                </td>
+              </tr>`;
+
+          totalPiezasEl.textContent = "Total Piezas: 0";
+
+          kpiSummaryList.innerHTML = `
+              <div class="empty-state">
+                <i data-lucide="loader" class="animate-spin" style="width:48px;height:48px"></i>
+                <h4>Calculando...</h4>
+                <p>Generando resumen de datos</p>
+              </div>`;
+
+          progressBar.classList.remove("visually-hidden");
+          lucide.createIcons();
+
+          for (let i = 0; i < pdfs.length; i++) {
+            const pdfFile = pdfs[i];
+
+            try {
+              const data = await pdfFile.arrayBuffer();
+              const pdf = await pdfjsLib.getDocument({ data }).promise;
+
+              let text = "";
+              for (let p = 1; p <= pdf.numPages; p++) {
+                const page = await pdf.getPage(p);
+                const content = await page.getTextContent();
+                text += content.items.map((it) => it.str).join(" ") + "\n";
+              }
+
+              debugInfo.textContent = `Texto extraído del PDF (${pdfFile.name}):\n\n${text}`;
+
+              extractDataFromText(text, pdfFile.name);
+
+            } catch (err) {
+              console.error("Error procesando PDF:", err);
+              debugInfo.textContent = `Error procesando PDF: ${err.message}`;
+            }
+
+            progressFill.style.width = `${((i + 1) / pdfs.length) * 100}%`;
+          }
+
+          progressBar.classList.add("visually-hidden");
+          renderTable();
+          lucide.createIcons();
+        }
+        /* -----------------------------------------
+           PARSER UNIVERSAL (LO MÁS IMPORTANTE)
+        ------------------------------------------ */
+        function extractDataFromText(text) {
+          
+          /* ---- A) Buscar la dirección ---- */
+          const shipRegex =
+            /a\s+a\s+S\s+H\s+I\s+P\s+T\s+O\s+([\s\S]*?)a\s+a\s+Incoterm/i;
+          let direccion = "No encontrada";
+
+          const shipMatch = text.match(shipRegex);
+          if (shipMatch) {
+            direccion = shipMatch[1]
+              .replace(/\s+/g, " ")
+              .trim();
+          }
+
+          /* ---- B) Buscar Buyer Items dentro del texto ---- */
+          const buyerItemRegex = /(\d{6})(\d{3})\.(\d{3})/g;
+          let buyerItems = [];
+          let bim;
+          while ((bim = buyerItemRegex.exec(text)) !== null) {
+            buyerItems.push({
+              full: bim[0],
+              estilo: bim[1],   // <--- solo los primeros 6 son estilo
+              colorCode: bim[2],
+              tallaCode: bim[3],
+              index: bim.index
+            });
+          }
+
+          /* ---- C) Regex UNIVERSAL para líneas de producto ---- */
+          const lineRegex =
+            /(.+?)\s+SIZE\s+([A-Z0-9]+)\s+COLOR:\s+(.+?)\s+(\d+)\s+EACH\s+([\d.]+)/gi;
+
+          let match;
+          while ((match = lineRegex.exec(text)) !== null) {
+            let descripcion = match[1].trim();
+            let talla = match[2].trim();
+            let color = match[3].replace(/\s+/g, " ").trim();
+            let piezas = match[4];
+            let precio = match[5];
+
+            /* ---- D) Asociar Buyer Item más cercano ---- */
+            let closest = null;
+            let smallestDiff = Infinity;
+
+            buyerItems.forEach((bi) => {
+              const diff = Math.abs(bi.index - match.index);
+              if (diff < smallestDiff) {
+                smallestDiff = diff;
+                closest = bi;
+              }
+            });
+
+            let estilo = closest ? closest.estilo : "";
+            let buyerItemFull = closest ? closest.full : "";
+
+            /* ---- E) Extraer PO ---- */
+            const poMatch = text.match(
+              /Order Number\s+Issue Date\s+Version\s+(\d+)/i
+            );
+            const po = poMatch ? poMatch[1] : "No encontrado";
+
+            /* ---- F) Agregar al arreglo principal ---- */
+            allRows.push({
+              po,
+              estilo,
+              color,
+              talla,
+              piezas,
+              precio,
+              direccion,
+              buyerItem: buyerItemFull,
+              descripcion
+            });
+          }
+        }
+
+        /* -----------------------------------------
+           FUNCIONES DE SUBTOTALES
+        ------------------------------------------ */
+        function createSubtotalRow(level, name, count) {
+          let levelClass = `subtotal-${level.toLowerCase()}`;
+          let label = `Subtotal ${level} (${name})`;
+          return `
+            <tr class="subtotal-row ${levelClass}">
+                <td colspan="4"><strong>${label}</strong></td>
+                <td><strong>${count}</strong></td>
+                <td></td>
+                <td></td>
+            </tr>`;
+        }
+
+        /* -----------------------------------------
+           KPI
+        ------------------------------------------ */
+        function renderKpiSummary(poTotals) {
+          kpiSummaryList.innerHTML = "";
+
+          if (Object.keys(poTotals).length === 0) {
+            kpiSummaryList.innerHTML = `
+              <div class="empty-state">
+                <i data-lucide="file-x" style="width:48px;height:48px"></i>
+                <h4>Sin datos</h4>
+                <p>No se encontraron datos para mostrar</p>
+              </div>`;
+            return;
+          }
+
+          for (const po in poTotals) {
+            kpiSummaryList.innerHTML += `
+              <div class="kpi-item">
+                PO: ${po} <span>Piezas: ${poTotals[po]}</span>
+              </div>`;
+          }
+        }
+
+        /* -----------------------------------------
+           RENDER TABLA + SUBTOTALES
+        ------------------------------------------ */
+        function renderTable() {
+          if (!allRows.length) {
+            tableBody.innerHTML = `
+              <tr>
+                <td colspan="7" class="text-center py-5">
+                  <div class="empty-state">
+                    <i data-lucide="file-x" style="width:48px;height:48px"></i>
+                    <h4>Sin datos encontrados</h4>
+                    <p>No se pudieron extraer datos de los archivos PDF</p>
+                  </div>
+                </td>
+              </tr>`;
+            return;
+          }
+
+          /* ORDENAR */
+          allRows.sort((a, b) => {
+            if (a.po < b.po) return -1;
+            if (a.po > b.po) return 1;
+            if (a.estilo < b.estilo) return -1;
+            if (a.estilo > b.estilo) return 1;
+            if (a.color < b.color) return -1;
+            if (a.color > b.color) return 1;
+            const order = {
+              XXS: 1, XS: 2, S: 3, M: 4,
+              L: 5, XL: 6, XXL: 7, XXXL: 8
+            };
+            return (order[a.talla] || 99) - (order[b.talla] || 99);
+          });
+
+          let html = "";
+          let totalPiezas = 0;
+          let poPiezas = 0;
+          let estiloPiezas = 0;
+          let colorPiezas = 0;
+
+          let currentPO = null;
+          let currentEstilo = null;
+          let currentColor = null;
+
+          const poTotals = {};
+
+          for (const r of allRows) {
+            const piezasNum = parseInt(r.piezas, 10) || 0;
+
+            /* KPI */
+            if (!poTotals[r.po]) poTotals[r.po] = 0;
+            poTotals[r.po] += piezasNum;
+
+            /* SUBTOTALES */
+            if (currentPO !== null && r.po !== currentPO) {
+              html += createSubtotalRow("Color", currentColor, colorPiezas);
+              html += createSubtotalRow("Estilo", currentEstilo, estiloPiezas);
+              html += createSubtotalRow("PO", currentPO, poPiezas);
+              poPiezas = estiloPiezas = colorPiezas = 0;
+            } else if (currentEstilo !== null && r.estilo !== currentEstilo) {
+              html += createSubtotalRow("Color", currentColor, colorPiezas);
+              html += createSubtotalRow("Estilo", currentEstilo, estiloPiezas);
+              estiloPiezas = colorPiezas = 0;
+            } else if (currentColor !== null && r.color !== currentColor) {
+              html += createSubtotalRow("Color", currentColor, colorPiezas);
+              colorPiezas = 0;
+            }
+
+            currentPO = r.po;
+            currentEstilo = r.estilo;
+            currentColor = r.color;
+
+            totalPiezas += piezasNum;
+            poPiezas += piezasNum;
+            estiloPiezas += piezasNum;
+            colorPiezas += piezasNum;
+
+            html += `
+              <tr>
+                <td>${r.po}</td>
+                <td>${r.estilo}</td>
+                <td>${r.color}</td>
+                <td>${r.talla}</td>
+                <td>${r.piezas}</td>
+                <td>${r.precio}</td>
+                <td>${r.direccion}</td>
+              </tr>`;
+          }
+
+          /* Subtotales finales */
+          html += createSubtotalRow("Color", currentColor, colorPiezas);
+          html += createSubtotalRow("Estilo", currentEstilo, estiloPiezas);
+          html += createSubtotalRow("PO", currentPO, poPiezas);
+
+          tableBody.innerHTML = html;
+          totalPiezasEl.textContent = `Total Piezas: ${totalPiezas}`;
+          renderKpiSummary(poTotals);
+        }
+
+        /* -----------------------------------------
+           EXPORTAR A EXCEL
+        ------------------------------------------ */
+        document.getElementById("exportExcel").addEventListener("click", () => {
+          if (!allRows.length) return alert("No hay datos para exportar");
+
+          const exportData = allRows.map((r) => ({
+            PO: r.po,
+            Estilo: r.estilo,
+            Color: r.color,
+            Talla: r.talla,
+            Piezas: r.piezas,
+            "Precio Venta": r.precio,
+            Dirección: r.direccion
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(exportData);
+
+          ws["!cols"] = [
+            { wch: 10 },
+            { wch: 10 },
+            { wch: 30 },
+            { wch: 8 },
+            { wch: 8 },
+            { wch: 15 },
+            { wch: 50 }
+          ];
+
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "POs");
+          XLSX.writeFile(wb, "resultado_pos.xlsx");
+        });
+
+        lucide.createIcons();
+      };
+    </script>
+  </body>
+</html>

@@ -1,0 +1,576 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Calculadora CBM Pro - Tiempo Real</title>
+    <link
+      rel="stylesheet"
+      href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      :root {
+        --primary: #0f172a;
+        --primary-accent: #2563eb;
+        --secondary: #ea580c;
+        --bg-body: #f8fafc;
+        --bg-panel: #ffffff;
+        --text-main: #334155;
+        --text-light: #64748b;
+        --border: #e2e8f0;
+        --success: #10b981;
+        --danger: #ef4444;
+        --radius: 0.5rem;
+      }
+
+      * {
+        margin: 0;
+        padding: 0;
+        box-sizing: border-box;
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        height: 100vh;
+        overflow-x: hidden;
+      }
+
+      .calculator-wrapper {
+        width: 100%;
+        min-height: 100vh;
+        background-color: var(--bg-panel);
+        display: flex;
+        flex-direction: column;
+      }
+
+      header {
+        background: var(--primary);
+        color: white;
+        padding: 1rem 2rem;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        border-bottom: 4px solid var(--primary-accent);
+        height: 70px; /* Altura fija */
+      }
+
+      header h1 {
+        font-size: 1.3rem;
+        font-weight: 700;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+
+      .app-layout {
+        display: grid;
+        grid-template-columns: 1fr;
+        height: calc(100vh - 70px); /* Resto de la pantalla */
+      }
+
+      @media (min-width: 1024px) {
+        .app-layout {
+          grid-template-columns: 420px 1fr;
+        }
+      }
+
+      /* PANEL IZQUIERDO (INPUTS) */
+      .input-panel {
+        background-color: var(--bg-panel);
+        padding: 1.5rem;
+        border-right: 1px solid var(--border);
+        overflow-y: auto;
+      }
+
+      /* PANEL DERECHO (RESULTADOS) */
+      .results-panel {
+        background-color: #f1f5f9;
+        padding: 1.5rem;
+        overflow-y: auto;
+      }
+
+      .box-card {
+        background: white;
+        border: 1px solid var(--border);
+        border-radius: var(--radius);
+        padding: 1rem;
+        margin-bottom: 1rem;
+        box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+        transition: border-color 0.3s;
+        position: relative;
+      }
+
+      /* Indicador visual cuando la caja tiene datos válidos */
+      .box-card.valid-data {
+        border-left: 4px solid var(--success);
+      }
+
+      .box-header-row {
+        display: flex;
+        justify-content: space-between;
+        margin-bottom: 0.5rem;
+      }
+      .box-name-input {
+        border: none;
+        font-weight: 700;
+        color: var(--primary);
+        width: 70%;
+        font-size: 0.9rem;
+      }
+
+      .remove-btn {
+        background: none;
+        border: none;
+        color: #cbd5e1;
+        cursor: pointer;
+      }
+      .remove-btn:hover {
+        color: var(--danger);
+      }
+
+      .grid-inputs {
+        display: grid;
+        grid-template-columns: 1fr 1fr 1fr;
+        gap: 0.5rem;
+      }
+      .form-group label {
+        font-size: 0.7rem;
+        font-weight: 600;
+        color: var(--text-light);
+        display: block;
+      }
+
+      .form-control {
+        width: 100%;
+        padding: 0.4rem;
+        border: 1px solid var(--border);
+        border-radius: 4px;
+        font-size: 0.9rem;
+      }
+      .form-control:focus {
+        outline: none;
+        border-color: var(--primary-accent);
+        background: #eff6ff;
+      }
+
+      /* Resultado individual por caja (Pequeño footer en la tarjeta) */
+      .box-mini-result {
+        margin-top: 0.8rem;
+        padding-top: 0.5rem;
+        border-top: 1px dashed var(--border);
+        font-size: 0.8rem;
+        display: flex;
+        justify-content: space-between;
+        color: var(--text-light);
+      }
+      .box-mini-result strong {
+        color: var(--primary);
+      }
+
+      /* BOTONES */
+      .btn-add {
+        width: 100%;
+        padding: 0.8rem;
+        background: white;
+        color: var(--primary-accent);
+        border: 2px dashed var(--border);
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-weight: 600;
+        transition: 0.2s;
+      }
+      .btn-add:hover {
+        border-color: var(--primary-accent);
+        background: #f8fafc;
+      }
+
+      /* RESULTADOS */
+      .kpi-container {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 1rem;
+        margin-bottom: 1.5rem;
+      }
+      .kpi-card {
+        background: white;
+        padding: 1.2rem;
+        border-radius: var(--radius);
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+      }
+      .kpi-value {
+        font-size: 2rem;
+        font-weight: 700;
+        color: var(--primary);
+        display: block;
+      }
+      .kpi-label {
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        color: var(--text-light);
+        letter-spacing: 0.5px;
+      }
+
+      .recommendation-box {
+        background: var(--primary);
+        color: white;
+        padding: 1.5rem;
+        border-radius: var(--radius);
+        text-align: center;
+        margin-bottom: 2rem;
+        position: relative;
+        overflow: hidden;
+      }
+      .rec-icon {
+        font-size: 2.5rem;
+        margin-bottom: 0.5rem;
+        color: var(--primary-accent);
+      }
+
+      /* BARRA DE PROGRESO */
+      .progress-bg {
+        background: rgba(255, 255, 255, 0.1);
+        height: 10px;
+        border-radius: 5px;
+        margin: 10px 0;
+        width: 100%;
+      }
+      .progress-fill {
+        background: var(--success);
+        height: 100%;
+        border-radius: 5px;
+        transition: width 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+      }
+
+      /* TABLA */
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.85rem;
+        background: white;
+        border-radius: var(--radius);
+      }
+      th {
+        text-align: left;
+        padding: 0.8rem;
+        background: #e2e8f0;
+        color: var(--text-main);
+        font-size: 0.7rem;
+        text-transform: uppercase;
+      }
+      td {
+        padding: 0.8rem;
+        border-bottom: 1px solid #f1f5f9;
+      }
+
+      .empty-state {
+        text-align: center;
+        margin-top: 3rem;
+        color: #94a3b8;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="calculator-wrapper">
+      <header>
+        <h1>
+          <i class="fas fa-cube"></i> CS-api-Code
+          <span style="font-weight: 300; opacity: 0.8">| CBM Calc</span>
+        </h1>
+        <button
+          onclick="resetApp()"
+          style="
+            background: transparent;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            color: white;
+            padding: 5px 15px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 0.8rem;
+          "
+        >
+          <i class="fas fa-redo"></i> Reiniciar
+        </button>
+      </header>
+
+      <div class="app-layout">
+        <div class="input-panel">
+          <div id="box-container"></div>
+
+          <button class="btn-add" onclick="addBox()">
+            <i class="fas fa-plus-circle"></i> Agregar otra medida
+          </button>
+        </div>
+
+        <div class="results-panel">
+          <div class="kpi-container">
+            <div class="kpi-card">
+              <span class="kpi-label">Volumen Total</span>
+              <span class="kpi-value" id="total-cbm">0.000</span>
+              <span style="font-size: 0.8rem; color: #94a3b8"
+                >Metros Cúbicos (m³)</span
+              >
+            </div>
+            <div class="kpi-card">
+              <span class="kpi-label">Total Bultos</span>
+              <span class="kpi-value" id="total-qty">0</span>
+              <span style="font-size: 0.8rem; color: #94a3b8">Cajas</span>
+            </div>
+          </div>
+
+          <div id="recommendation-area">
+            <div class="empty-state">
+              <i
+                class="fas fa-calculator"
+                style="font-size: 2rem; margin-bottom: 10px"
+              ></i>
+              <p>Ingresa medidas para ver sugerencias</p>
+            </div>
+          </div>
+
+          <div style="margin-top: 2rem">
+            <h4 style="margin-bottom: 10px; color: var(--text-main)">
+              Detalle de Carga
+            </h4>
+            <table>
+              <thead>
+                <tr>
+                  <th>Caja</th>
+                  <th style="text-align: center">Cant.</th>
+                  <th style="text-align: right">Volumen (m³)</th>
+                </tr>
+              </thead>
+              <tbody id="summary-table"></tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      const containers = {
+        LCL: { cap: 15, name: "Carga Suelta (LCL)", icon: "fas fa-box" },
+        "20ST": {
+          cap: 30,
+          name: "Contenedor 20'",
+          icon: "fas fa-truck-loading",
+        },
+        "40ST": { cap: 60, name: "Contenedor 40'", icon: "fas fa-ship" },
+        "40HC": {
+          cap: 76,
+          name: "Contenedor 40' HC",
+          icon: "fas fa-warehouse",
+        },
+      };
+
+      let boxCounter = 0;
+
+      // Inicializar
+      document.addEventListener("DOMContentLoaded", () => {
+        addBox();
+      });
+
+      function addBox() {
+        boxCounter++;
+        const id = boxCounter;
+
+        const html = `
+          <div class="box-card" id="box-${id}">
+            <div class="box-header-row">
+              <input type="text" class="box-name-input" oninput="calculateAll()" id="name-${id}" value="Caja ${id}">
+              ${
+                id > 1
+                  ? `<button class="remove-btn" onclick="removeBox(${id})"><i class="fas fa-trash-alt"></i></button>`
+                  : ""
+              }
+            </div>
+            
+            <div class="grid-inputs">
+              <div class="form-group">
+                <label>Largo</label>
+                <input type="number" class="form-control" id="l-${id}" placeholder="0" oninput="calculateAll()">
+              </div>
+              <div class="form-group">
+                <label>Ancho</label>
+                <input type="number" class="form-control" id="w-${id}" placeholder="0" oninput="calculateAll()">
+              </div>
+              <div class="form-group">
+                <label>Alto</label>
+                <input type="number" class="form-control" id="h-${id}" placeholder="0" oninput="calculateAll()">
+              </div>
+              <div class="form-group">
+                <label>Unidad</label>
+                <select class="form-control" id="u-${id}" onchange="calculateAll()">
+                  <option value="cm">cm</option>
+                  <option value="m">m</option>
+                  <option value="in">pulg</option>
+                </select>
+              </div>
+              <div class="form-group" style="grid-column: span 2;">
+                <label>Cantidad</label>
+                <input type="number" class="form-control" id="q-${id}" value="1" min="1" oninput="calculateAll()">
+              </div>
+            </div>
+
+            <div class="box-mini-result">
+              <span>Volumen individual:</span>
+              <strong id="single-res-${id}">0.000 m³</strong>
+            </div>
+          </div>
+        `;
+
+        document
+          .getElementById("box-container")
+          .insertAdjacentHTML("beforeend", html);
+      }
+
+      function removeBox(id) {
+        document.getElementById(`box-${id}`).remove();
+        calculateAll(); // Recalcular al borrar
+      }
+
+      function resetApp() {
+        document.getElementById("box-container").innerHTML = "";
+        boxCounter = 0;
+        addBox();
+        calculateAll();
+      }
+
+      // --- EL CORAZÓN DE LA CALCULADORA ---
+      function calculateAll() {
+        let totalCBM = 0;
+        let totalQty = 0;
+        let summaryHTML = "";
+
+        // Seleccionamos todas las tarjetas de cajas
+        const boxes = document.querySelectorAll(".box-card");
+
+        boxes.forEach((box) => {
+          // Extraer el ID numérico del string "box-1", "box-2", etc.
+          const id = box.id.split("-")[1];
+
+          // Obtener valores
+          const l = parseFloat(document.getElementById(`l-${id}`).value) || 0;
+          const w = parseFloat(document.getElementById(`w-${id}`).value) || 0;
+          const h = parseFloat(document.getElementById(`h-${id}`).value) || 0;
+          const q = parseInt(document.getElementById(`q-${id}`).value) || 0;
+          const u = document.getElementById(`u-${id}`).value;
+          const name = document.getElementById(`name-${id}`).value;
+
+          // Conversión a Metros
+          let lm = l,
+            wm = w,
+            hm = h;
+          if (u === "cm") {
+            lm /= 100;
+            wm /= 100;
+            hm /= 100;
+          }
+          if (u === "in") {
+            lm *= 0.0254;
+            wm *= 0.0254;
+            hm *= 0.0254;
+          }
+
+          // Cálculo individual
+          const singleVol = lm * wm * hm;
+          const totalBoxVol = singleVol * q;
+
+          // 1. Actualizar texto dentro de la tarjeta (Feedback inmediato)
+          const singleRes = document.getElementById(`single-res-${id}`);
+          singleRes.textContent =
+            singleVol > 0 ? singleVol.toFixed(4) + " m³" : "0.000 m³";
+
+          // Estilo visual: Si hay datos, poner borde verde
+          if (singleVol > 0 && q > 0) {
+            box.classList.add("valid-data");
+          } else {
+            box.classList.remove("valid-data");
+          }
+
+          // Sumar a totales generales
+          if (singleVol > 0) {
+            totalCBM += totalBoxVol;
+            totalQty += q;
+
+            // Agregar a tabla resumen
+            summaryHTML += `
+              <tr>
+                <td>${name} <br><span style="color:#94a3b8; font-size:0.7rem;">${l}x${w}x${h} ${u}</span></td>
+                <td style="text-align:center;">${q}</td>
+                <td style="text-align:right;"><strong>${totalBoxVol.toFixed(
+                  3
+                )}</strong></td>
+              </tr>
+            `;
+          }
+        });
+
+        // 2. Actualizar KPIs Generales
+        document.getElementById("total-cbm").textContent = totalCBM.toFixed(3);
+        document.getElementById("total-qty").textContent = totalQty;
+        document.getElementById("summary-table").innerHTML = summaryHTML;
+
+        // 3. Recomendación de Contenedor
+        updateRecommendation(totalCBM);
+      }
+
+      function updateRecommendation(cbm) {
+        const area = document.getElementById("recommendation-area");
+
+        if (cbm <= 0) {
+          area.innerHTML = `
+            <div class="empty-state">
+              <i class="fas fa-calculator" style="font-size:2rem; margin-bottom:10px;"></i>
+              <p>Ingresa medidas para ver sugerencias</p>
+            </div>`;
+          return;
+        }
+
+        let type = "LCL";
+        if (cbm > 76) type = "Multi";
+        else if (cbm > 60) type = "40HC";
+        else if (cbm > 30) type = "40ST";
+        else if (cbm > 15) type = "20ST";
+
+        let html = "";
+
+        if (type === "Multi") {
+          const qtyCont = Math.ceil(cbm / 76);
+          html = `
+            <div class="recommendation-box" style="background:var(--secondary);">
+              <div class="rec-icon"><i class="fas fa-th"></i></div>
+              <h3>Múltiples Contenedores</h3>
+              <p>Tu carga es muy grande. Necesitas aproximadamente:</p>
+              <div style="font-size:1.5rem; font-weight:700; margin-top:10px;">${qtyCont} x 40' HC</div>
+            </div>
+          `;
+        } else {
+          const cont = containers[type];
+          const percent = Math.min((cbm / cont.cap) * 100, 100).toFixed(1);
+
+          html = `
+            <div class="recommendation-box">
+              <div class="rec-icon"><i class="${cont.icon}"></i></div>
+              <h3>${cont.name}</h3>
+              <div class="progress-bg">
+                <div class="progress-fill" style="width: ${percent}%"></div>
+              </div>
+              <p>Ocupación: <strong>${percent}%</strong> (${cbm.toFixed(2)} / ${
+            cont.cap
+          } m³)</p>
+            </div>
+          `;
+        }
+
+        area.innerHTML = html;
+      }
+    </script>
+  </body>
+</html>

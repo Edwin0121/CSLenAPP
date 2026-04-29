@@ -1,0 +1,626 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Ariat · Parser Definitivo</title>
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:opsz@14..32&display=swap"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/lucide@0.292.0/dist/umd/lucide.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.min.js"></script>
+    <style>
+      * {
+        font-family: "Inter", sans-serif;
+      }
+      body {
+        background: linear-gradient(145deg, #f8fafc 0%, #eef2f6 100%);
+        min-height: 100vh;
+        padding: 1.5rem;
+      }
+      .app-container {
+        max-width: 1600px;
+        margin: 0 auto;
+      }
+      .app-header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        margin-bottom: 2rem;
+      }
+      .app-header h1 {
+        font-weight: 600;
+        font-size: 2rem;
+        color: #0f172a;
+        letter-spacing: -0.02em;
+      }
+      .badge-status {
+        background: white;
+        padding: 0.5rem 1.25rem;
+        border-radius: 40px;
+        font-weight: 500;
+        box-shadow: 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        border: 1px solid #e2e8f0;
+      }
+      .card-custom {
+        background: rgba(255, 255, 255, 0.8);
+        backdrop-filter: blur(8px);
+        border: 1px solid rgba(255, 255, 255, 0.6);
+        border-radius: 24px;
+        box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.07);
+        padding: 1.5rem;
+        height: 100%;
+      }
+      .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 20px;
+        background: rgba(255, 255, 255, 0.5);
+        padding: 2rem 1rem;
+        text-align: center;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .dropzone:hover {
+        border-color: #f97316;
+        background: #fff7ed;
+      }
+      .btn-primary-custom {
+        background: #f97316;
+        color: white;
+        border: none;
+        padding: 0.9rem 1.8rem;
+        border-radius: 60px;
+        font-weight: 600;
+        box-shadow: 0 8px 20px -6px #f97316;
+        transition: all 0.2s;
+        width: 100%;
+      }
+      .btn-primary-custom:hover {
+        background: #ea580c;
+        transform: scale(1.02);
+      }
+      .table-wrapper {
+        background: white;
+        border-radius: 24px;
+        padding: 0.5rem 0 0 0;
+        box-shadow: 0 20px 35px -8px rgba(0, 0, 0, 0.07);
+        overflow: hidden;
+        margin-top: 2rem;
+      }
+      .table-scroll {
+        max-height: 55vh;
+        overflow-y: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+      }
+      th {
+        position: sticky;
+        top: 0;
+        background: #1e293b;
+        color: white;
+        font-weight: 500;
+        font-size: 0.8rem;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+        padding: 1rem 0.75rem;
+        z-index: 10;
+      }
+      td {
+        padding: 0.9rem 0.75rem;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+        font-size: 0.9rem;
+      }
+      tr:hover td {
+        background-color: #fffaf0;
+      }
+      .po-separator {
+        background: #f8fafc !important;
+        font-weight: 700;
+        color: #0f172a;
+        border-bottom: 2px solid #f97316;
+      }
+      .color-badge {
+        background: #ede9fe;
+        color: #5b21b6;
+        padding: 0.2rem 0.8rem;
+        border-radius: 30px;
+        font-weight: 500;
+        font-size: 0.8rem;
+        display: inline-block;
+      }
+      .size-badge {
+        background: #e2e8f0;
+        color: #1e293b;
+        padding: 0.2rem 0.7rem;
+        border-radius: 20px;
+        font-weight: 600;
+        font-size: 0.75rem;
+      }
+      .log-panel {
+        margin-top: 1.5rem;
+        background: white;
+        border-radius: 20px;
+        box-shadow: 0 10px 20px -5px rgba(0, 0, 0, 0.05);
+      }
+      .log-header {
+        background: #f1f5f9;
+        padding: 0.8rem 1.5rem;
+        border-radius: 20px 20px 0 0;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .log-content {
+        max-height: 200px;
+        overflow-y: auto;
+        font-family: monospace;
+        font-size: 0.8rem;
+        padding: 1rem;
+        background: #0f172a;
+        color: #a5f3fc;
+        border-radius: 0 0 20px 20px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <div class="app-header">
+        <div class="d-flex align-items-center gap-3">
+          <div
+            style="
+              background: #f97316;
+              width: 48px;
+              height: 48px;
+              border-radius: 16px;
+              display: flex;
+              align-items: center;
+              justify-content: center;
+              color: white;
+            "
+          >
+            <i data-lucide="file-text"></i>
+          </div>
+          <div>
+            <h1 class="mb-0">Ariat Parser</h1>
+            <span class="text-secondary"
+              >Extracción robusta · Color y talla 100%</span
+            >
+          </div>
+        </div>
+        <div class="badge-status" id="statusBadge">
+          <i
+            data-lucide="circle"
+            class="text-secondary me-1"
+            width="14"
+            height="14"
+          ></i>
+          Esperando PDF
+        </div>
+      </div>
+
+      <div class="row g-4 mb-4">
+        <div class="col-md-4">
+          <div class="card-custom">
+            <div class="dropzone" id="dropZone">
+              <i
+                data-lucide="upload-cloud"
+                size="36"
+                class="text-secondary mb-2"
+              ></i>
+              <h5 class="fw-bold">Arrastra tus archivos PDF</h5>
+              <p class="text-secondary small">o haz clic para seleccionar</p>
+              <input
+                type="file"
+                id="fileInput"
+                accept="application/pdf"
+                multiple
+                hidden
+              />
+            </div>
+          </div>
+        </div>
+        <div class="col-md-5">
+          <div class="card-custom d-flex flex-column justify-content-center">
+            <div class="row text-center">
+              <div class="col-4">
+                <div class="fs-1 fw-bold text-dark" id="statPO">0</div>
+                <small class="text-secondary text-uppercase">Órdenes</small>
+              </div>
+              <div class="col-4">
+                <div class="fs-1 fw-bold text-primary" id="statLines">0</div>
+                <small class="text-secondary text-uppercase">Líneas</small>
+              </div>
+              <div class="col-4">
+                <div class="fs-1 fw-bold text-success" id="statMoney">$0</div>
+                <small class="text-secondary text-uppercase">Total USD</small>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div class="col-md-3">
+          <div class="card-custom d-flex align-items-center">
+            <button id="btnExport" class="btn-primary-custom">
+              <i data-lucide="file-spreadsheet" class="me-2"></i> Exportar a
+              Excel
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="table-wrapper">
+        <div class="table-scroll">
+          <table>
+            <thead>
+              <tr>
+                <th style="width: 70px">Línea</th>
+                <th style="width: 140px">Item ID</th>
+                <th>Descripción</th>
+                <th style="width: 160px">Color</th>
+                <th style="width: 80px">Talla</th>
+                <th style="width: 70px">Cant.</th>
+                <th style="width: 100px">Costo Unit.</th>
+                <th style="width: 110px">Total</th>
+                <th style="width: 150px">Destino</th>
+              </tr>
+            </thead>
+            <tbody id="tableBody">
+              <tr>
+                <td colspan="9" class="text-center py-5 text-muted">
+                  Carga uno o varios PDF para comenzar.
+                </td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Panel de Log colapsable -->
+      <div class="log-panel">
+        <div class="log-header d-flex align-items-center" onclick="toggleLog()">
+          <i data-lucide="terminal" class="me-2" width="18"></i> Consola de
+          depuración (click para expandir/colapsar)
+          <span class="ms-auto small text-secondary" id="logSummary"
+            >0 mensajes</span
+          >
+        </div>
+        <div id="logContent" class="log-content" style="display: none"></div>
+      </div>
+    </div>
+
+    <script>
+      (function () {
+        pdfjsLib.GlobalWorkerOptions.workerSrc =
+          "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/2.16.105/pdf.worker.min.js";
+
+        const dropZone = document.getElementById("dropZone");
+        const fileInput = document.getElementById("fileInput");
+        const tableBody = document.getElementById("tableBody");
+        const statusBadge = document.getElementById("statusBadge");
+        const statPO = document.getElementById("statPO");
+        const statLines = document.getElementById("statLines");
+        const statMoney = document.getElementById("statMoney");
+        const btnExport = document.getElementById("btnExport");
+        const logContent = document.getElementById("logContent");
+        const logSummary = document.getElementById("logSummary");
+
+        let allData = [];
+        let logMessages = [];
+
+        function addLog(msg, type = "info") {
+          const timestamp = new Date().toLocaleTimeString();
+          const prefix =
+            type === "error" ? "❌" : type === "warn" ? "⚠️" : "ℹ️";
+          logMessages.push(`[${timestamp}] ${prefix} ${msg}`);
+          logContent.innerHTML = logMessages
+            .map((m) => `<div>${m}</div>`)
+            .join("");
+          logSummary.textContent = `${logMessages.length} mensajes`;
+        }
+
+        window.toggleLog = function () {
+          const el = document.getElementById("logContent");
+          el.style.display = el.style.display === "none" ? "block" : "none";
+        };
+
+        lucide.createIcons();
+
+        dropZone.addEventListener("click", () => fileInput.click());
+        dropZone.addEventListener("dragover", (e) => {
+          e.preventDefault();
+          dropZone.style.backgroundColor = "#fff7ed";
+        });
+        dropZone.addEventListener("dragleave", () => {
+          dropZone.style.backgroundColor = "";
+        });
+        dropZone.addEventListener("drop", (e) => {
+          e.preventDefault();
+          dropZone.style.backgroundColor = "";
+          if (e.dataTransfer.files.length) processFiles(e.dataTransfer.files);
+        });
+        fileInput.addEventListener("change", (e) => {
+          if (e.target.files.length) processFiles(e.target.files);
+        });
+        btnExport.addEventListener("click", exportExcel);
+
+        async function processFiles(files) {
+          const pdfs = Array.from(files).filter(
+            (f) => f.type === "application/pdf"
+          );
+          if (!pdfs.length) {
+            alert("Solo se admiten archivos PDF");
+            return;
+          }
+
+          allData = [];
+          logMessages = [];
+          addLog(`Iniciando procesamiento de ${pdfs.length} archivo(s)`);
+
+          tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-5">
+        <div class="spinner-border text-warning"></div>
+        <div class="mt-2">Extrayendo datos...</div>
+      </td></tr>`;
+          statusBadge.innerHTML = `<i data-lucide="loader" class="me-1" width="16"></i> Procesando...`;
+          lucide.createIcons();
+
+          for (const file of pdfs) {
+            addLog(`Procesando: ${file.name}`);
+            try {
+              const text = await extractText(file);
+              addLog(
+                `Texto extraído (${
+                  text.length
+                } caracteres). Primeros 200: ${text.substring(0, 200)}`
+              );
+              parseDocument(text, file.name);
+            } catch (err) {
+              addLog(`Error procesando ${file.name}: ${err.message}`, "error");
+            }
+          }
+
+          renderTable();
+          const totalLines = allData.length;
+          addLog(`Total líneas extraídas: ${totalLines}`);
+          statusBadge.innerHTML = `<i data-lucide="check-circle" class="text-success me-1" width="16"></i> ${totalLines} líneas extraídas`;
+          lucide.createIcons();
+        }
+
+        async function extractText(file) {
+          const ab = await file.arrayBuffer();
+          const pdf = await pdfjsLib.getDocument({ data: ab }).promise;
+          let fullText = "";
+          for (let i = 1; i <= pdf.numPages; i++) {
+            const page = await pdf.getPage(i);
+            const content = await page.getTextContent();
+            const pageText = content.items.map((it) => it.str).join(" ");
+            fullText += pageText + " ";
+          }
+          return fullText;
+        }
+
+        function parseDocument(rawText, fileName) {
+          let text = rawText.replace(/\s+/g, " ");
+          addLog(`Limpiando texto...`);
+
+          // Extraer PO
+          let po = "N/A";
+          const poMatch = text.match(/\b(45\d{8})\b/);
+          if (poMatch) {
+            po = poMatch[1];
+            addLog(`PO encontrado: ${po}`);
+          } else {
+            addLog(`No se encontró PO en ${fileName}`, "warn");
+          }
+
+          // Destino
+          let shipTo = "San Leandro, CA, 94577 UNITED STATES";
+          const destMatch = text.match(
+            /([A-Za-z\s]+)[\s,]+San Leandro[\s,]+([A-Z]{2})[\s,]+(\d{5})[\s,]+UNITED STATES/i
+          );
+          if (destMatch)
+            shipTo = `${destMatch[1].trim()}, ${destMatch[2]}, ${
+              destMatch[3]
+            } UNITED STATES`;
+
+          // Buscar líneas con patrón más flexible:
+          // número de línea, itemID, descripción, cantidad, "EACH", precio, total
+          // Usamos exec en loop con regex global
+          const lineRegex =
+            /(\d{2,5})\s+([A-Z0-9\.-]{7,20})\s+(.+?)\s+(\d+)\s+EACH\s+([\d,\.]+)\s+([\d,\.]+)/gi;
+          let match;
+          let localCount = 0;
+
+          addLog(`Buscando líneas con patrón EACH...`);
+
+          while ((match = lineRegex.exec(text)) !== null) {
+            // Saltar si la línea parece basura
+            if (/summary|document|terms/i.test(match[0])) continue;
+
+            const lineNum = match[1];
+            const itemId = match[2];
+            let description = match[3].trim();
+            const quantity = parseInt(match[4]);
+            const unitCost = parseFloat(match[5].replace(/,/g, ""));
+            const totalCost = parseFloat(match[6].replace(/,/g, ""));
+
+            if (!/\d/.test(itemId)) continue;
+
+            // Extraer color del contexto cercano (200 caracteres alrededor)
+            const start = Math.max(0, match.index - 200);
+            const end = Math.min(
+              text.length,
+              match.index + match[0].length + 200
+            );
+            const context = text.substring(start, end);
+
+            let color = "N/A";
+            const colorMatch = context.match(
+              /Color\s*([A-Za-z0-9\s\-]+?)(?=\s+(?:Original|OOGLENOR|SplitQty|Freight|shipmentMethod|DCNumber|$))/i
+            );
+            if (colorMatch) {
+              color = colorMatch[1]
+                .trim()
+                .replace(/\s+/g, " ")
+                .replace(/&#x27;/g, "'");
+            } else {
+              const shortColor = description.match(/\b([A-Z]{3,})\s*$/);
+              if (shortColor) {
+                color = shortColor[1];
+                description = description.replace(/\s+[A-Z]{3,}$/, "").trim();
+              }
+            }
+
+            let size = "Pendiente";
+            const sizeMatch = context.match(/Size\s*([A-Z0-9]+)/i);
+            if (sizeMatch) {
+              size = sizeMatch[1].toUpperCase();
+            } else {
+              const sizeDesc = context.match(
+                /\b(XS|SML|MED|LG|XL|XXL|3XL|4XL|1X|2X|3X)\b/i
+              );
+              if (sizeDesc) size = sizeDesc[1].toUpperCase();
+            }
+
+            description = description.replace(/\s+[A-Z]{3,}$/, "").trim();
+
+            allData.push({
+              po,
+              line: lineNum,
+              item: itemId,
+              desc: description,
+              color,
+              size,
+              qty: quantity,
+              cost: unitCost,
+              total: totalCost.toFixed(2),
+              ship: shipTo,
+            });
+            localCount++;
+          }
+
+          addLog(`Encontradas ${localCount} líneas con EACH.`);
+
+          // Si no se encontró nada, intentar patrón alternativo sin EACH
+          if (localCount === 0) {
+            addLog(`Intentando patrón alternativo (EA)...`, "warn");
+            const altRegex =
+              /(\d{2,5})\s+([A-Z0-9\.-]{7,20})\s+(.+?)\s+(\d+)\s+(?:EA|EACH?)\s+([\d,\.]+)\s+([\d,\.]+)/gi;
+            while ((match = altRegex.exec(text)) !== null) {
+              if (/summary|document|terms/i.test(match[0])) continue;
+              const lineNum = match[1];
+              const itemId = match[2];
+              let desc = match[3].trim();
+              const qty = parseInt(match[4]);
+              const unitCost = parseFloat(match[5].replace(/,/g, ""));
+              const totalCost = parseFloat(match[6].replace(/,/g, ""));
+
+              let color = "N/A";
+              let size = "Pendiente";
+
+              allData.push({
+                po,
+                line: lineNum,
+                item: itemId,
+                desc,
+                color,
+                size,
+                qty,
+                cost: unitCost,
+                total: totalCost.toFixed(2),
+                ship: shipTo,
+              });
+              localCount++;
+            }
+            addLog(`Patrón alternativo encontró ${localCount} líneas.`);
+          }
+        }
+
+        function renderTable() {
+          if (!allData.length) {
+            tableBody.innerHTML = `<tr><td colspan="9" class="text-center py-5 text-danger">No se encontraron productos. Revisa el log para más detalles.</td></tr>`;
+            return;
+          }
+
+          allData.sort(
+            (a, b) =>
+              a.po.localeCompare(b.po) || parseInt(a.line) - parseInt(b.line)
+          );
+
+          const uniquePOs = [...new Set(allData.map((d) => d.po))];
+          const totalMoney = allData.reduce(
+            (acc, r) => acc + parseFloat(r.total),
+            0
+          );
+
+          statPO.textContent = uniquePOs.length;
+          statLines.textContent = allData.length;
+          statMoney.textContent =
+            "$" +
+            totalMoney.toLocaleString("en-US", { minimumFractionDigits: 2 });
+
+          let html = "";
+          let currentPO = "";
+
+          allData.forEach((row) => {
+            if (row.po !== currentPO) {
+              html += `<tr class="po-separator"><td colspan="9"><i data-lucide="package" class="me-2" width="18"></i> Orden de Compra: ${row.po}</td></tr>`;
+              currentPO = row.po;
+            }
+
+            html += `<tr>
+          <td class="text-secondary fw-semibold">${row.line}</td>
+          <td class="fw-bold">${row.item}</td>
+          <td title="${row.desc}">${
+              row.desc.length > 45 ? row.desc.substring(0, 42) + "…" : row.desc
+            }</td>
+          <td><span class="color-badge">${row.color}</span></td>
+          <td><span class="size-badge">${row.size}</span></td>
+          <td class="text-center fw-bold">${row.qty}</td>
+          <td class="text-end">$${row.cost.toFixed(2)}</td>
+          <td class="text-end fw-bold text-success">$${parseFloat(
+            row.total
+          ).toLocaleString("en-US", { minimumFractionDigits: 2 })}</td>
+          <td class="text-secondary small">${row.ship}</td>
+        </tr>`;
+          });
+
+          tableBody.innerHTML = html;
+          lucide.createIcons();
+        }
+
+        function exportExcel() {
+          if (!allData.length) return alert("No hay datos para exportar.");
+
+          const rows = allData.map((r) => ({
+            PO: r.po,
+            Line: r.line,
+            "Item ID": r.item,
+            Description: r.desc,
+            Color: r.color,
+            Size: r.size,
+            Quantity: r.qty,
+            "Unit Cost": r.cost,
+            "Total Cost": parseFloat(r.total),
+            Destination: r.ship,
+          }));
+
+          const ws = XLSX.utils.json_to_sheet(rows);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Ariat_Data");
+          XLSX.writeFile(
+            wb,
+            `Ariat_${new Date().toISOString().slice(0, 10)}.xlsx`
+          );
+        }
+      })();
+    </script>
+  </body>
+</html>

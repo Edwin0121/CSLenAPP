@@ -1,0 +1,715 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Análisis Programación | Master View</title>
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap"
+      rel="stylesheet"
+    />
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link
+      rel="stylesheet"
+      href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
+    />
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      :root {
+        --primary-color: #2563eb;
+        --bg-color: #f8fafc;
+        --header-bg: #1e293b;
+        --text-dark: #334155;
+      }
+      body {
+        font-family: "Inter", sans-serif;
+        background-color: var(--bg-color);
+        color: var(--text-dark);
+        margin: 0;
+        height: 100vh; /* Viewport completo */
+        display: flex;
+        flex-direction: column;
+        overflow: hidden;
+      }
+
+      .app-container {
+        width: 98%;
+        max-width: 1900px;
+        margin: 10px auto;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+        height: 98vh;
+      }
+
+      /* Header */
+      header {
+        background: var(--header-bg);
+        color: #fff;
+        border-radius: 8px;
+        padding: 12px 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-shrink: 0;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+      }
+
+      /* Panel de Control */
+      .control-panel {
+        background: #fff;
+        border: 1px solid #e2e8f0;
+        border-radius: 8px;
+        padding: 16px;
+        flex-shrink: 0;
+      }
+
+      .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 6px;
+        padding: 12px;
+        background: #f1f5f9;
+        cursor: pointer;
+        transition: 0.2s;
+        text-align: center;
+      }
+      .dropzone:hover {
+        background: #e2e8f0;
+        border-color: var(--primary-color);
+      }
+
+      /* TABLA CON SCROLL */
+      .table-wrapper {
+        background: #fff;
+        border-radius: 8px;
+        border: 1px solid #e2e8f0;
+        display: flex;
+        flex-direction: column;
+        flex-grow: 1; /* Ocupa el resto de la pantalla */
+        overflow: hidden;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05);
+      }
+
+      .table-scroll-area {
+        overflow: auto;
+        flex: 1;
+      }
+
+      #resultTable {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.85rem;
+        white-space: nowrap;
+      }
+
+      /* Sticky Headers */
+      #resultTable th {
+        background: #f8fafc;
+        color: #475569;
+        padding: 12px 14px;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+        border-bottom: 2px solid #e2e8f0;
+        text-transform: uppercase;
+        font-size: 0.75rem;
+        font-weight: 700;
+        letter-spacing: 0.02em;
+      }
+
+      #resultTable td {
+        padding: 8px 14px;
+        border-bottom: 1px solid #f1f5f9;
+        vertical-align: middle;
+      }
+
+      tr:hover td {
+        background-color: #f1f5f9;
+      }
+
+      .status-bar {
+        background: #eff6ff;
+        color: #1e40af;
+        padding: 6px 12px;
+        border-radius: 6px;
+        font-size: 0.8rem;
+        font-weight: 500;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .pagination-bar {
+        padding: 10px 20px;
+        border-top: 1px solid #e2e8f0;
+        background: #fff;
+        font-size: 0.85rem;
+        flex-shrink: 0;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="app-container">
+      <header>
+        <div class="d-flex align-items-center gap-3">
+          <i class="bi bi-cpu-fill fs-4"></i>
+          <div style="line-height: 1.2">
+            <h1 class="m-0 fs-5 fw-bold">Análisis de Producción</h1>
+            <div class="small opacity-75">
+              Sincronización Excel + Base General
+            </div>
+          </div>
+        </div>
+        <div>
+          <span
+            class="badge bg-success bg-opacity-25 text-success border border-success border-opacity-25 px-3 py-2"
+          >
+            <i class="bi bi-check-circle me-1"></i> Sistema V3
+          </span>
+        </div>
+      </header>
+
+      <section class="control-panel">
+        <div class="row g-3 align-items-end">
+          <div class="col-md-3">
+            <label class="form-label small fw-bold text-muted mb-1"
+              >Entrada de Datos</label
+            >
+            <div id="dropzone" class="dropzone">
+              <i class="bi bi-file-earmark-spreadsheet text-primary fs-5"></i>
+              <span class="ms-2 fw-bold text-dark">Cargar Excel</span>
+              <input
+                id="file"
+                type="file"
+                accept=".xls,.xlsx,.xlsm"
+                multiple
+                hidden
+              />
+            </div>
+          </div>
+
+          <div class="col-md-9">
+            <div class="d-flex justify-content-between align-items-center mb-3">
+              <div class="status-bar">
+                <div
+                  class="spinner-border spinner-border-sm text-primary"
+                  id="sapSpinner"
+                  style="display: none"
+                ></div>
+                <span id="sapStatus">Conectando a Sales Order...</span>
+              </div>
+
+              <div class="d-flex gap-2">
+                <button
+                  id="clearBtn"
+                  class="btn btn-sm btn-outline-danger px-3"
+                >
+                  <i class="bi bi-trash3"></i> Limpiar
+                </button>
+                <button
+                  id="exportBtn"
+                  class="btn btn-sm btn-success px-3 text-white"
+                >
+                  <i class="bi bi-download"></i> Excel
+                </button>
+              </div>
+            </div>
+
+            <div class="input-group">
+              <span class="input-group-text bg-white border-end-0"
+                ><i class="bi bi-search text-muted"></i
+              ></span>
+              <input
+                id="search"
+                class="form-control border-start-0"
+                placeholder="Buscar PO, Estilo, Color..."
+              />
+              <div class="input-group-text bg-white">
+                <input
+                  class="form-check-input me-2"
+                  type="checkbox"
+                  id="onlyNoSO"
+                />
+                <label class="small mb-0 cursor-pointer" for="onlyNoSO"
+                  >Solo sin Sales Order</label
+                >
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <section class="table-wrapper">
+        <div
+          class="px-3 py-2 border-bottom bg-light d-flex justify-content-between align-items-center"
+        >
+          <strong class="text-secondary small text-uppercase ls-1"
+            >Resultados Detallados</strong
+          >
+          <span class="badge bg-secondary" id="countBadge">0 filas</span>
+        </div>
+
+        <div class="table-scroll-area">
+          <table id="resultTable">
+            <thead>
+              <tr>
+                <th>Customer</th>
+                <th>PO (Excel)</th>
+                <th
+                  class="bg-warning bg-opacity-10 text-dark border-start border-warning"
+                >
+                  Sales Order (DB)
+                </th>
+                <th>Style</th>
+                <th>Color</th>
+                <th>Cut</th>
+                <th>Process</th>
+                <th>Rout</th>
+                <th>Contractor</th>
+                <th class="text-end">Pcs</th>
+                <th>XFD (Fecha)</th>
+                <th>Sheet</th>
+                <th>File</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+
+        <div
+          class="pagination-bar d-flex justify-content-between align-items-center"
+        >
+          <div class="d-flex align-items-center gap-2">
+            <span class="text-muted">Mostrar</span>
+            <select
+              id="pageSize"
+              class="form-select form-select-sm py-1"
+              style="width: 70px"
+            >
+              <option>25</option>
+              <option>50</option>
+              <option>100</option>
+              <option>500</option>
+            </select>
+          </div>
+          <span id="pageSummary" class="fw-bold text-dark">0-0 de 0</span>
+          <div class="btn-group btn-group-sm">
+            <button id="btnPrev" class="btn btn-outline-secondary px-3">
+              Anterior
+            </button>
+            <button id="btnNext" class="btn btn-outline-secondary px-3">
+              Siguiente
+            </button>
+          </div>
+        </div>
+      </section>
+    </div>
+
+    <script>
+      // ==========================================
+      // 1. CONFIGURACIÓN SUPABASE
+      // ==========================================
+      const SUPABASE_TABLE = "SalesOrder"; // Nombre exacto
+      const supabaseUrl = "https://aawqcgapxdqemjqzwcsy.supabase.co";
+      const supabaseKey =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
+      const supabaseClient = window.supabase.createClient(
+        supabaseUrl,
+        supabaseKey
+      );
+
+      // ==========================================
+      // 2. HELPERS & UTILS
+      // ==========================================
+
+      const z2 = (n) => (n < 10 ? "0" + n : "" + n);
+
+      // --- 🧠 FUNCIÓN MAESTRA DE FECHAS ---
+      // Convierte: 46036 -> 15/01/2026
+      // Convierte: "2026-01-15" -> 15/01/2026
+      function formatExcelDate(v) {
+        if (!v) return "";
+
+        // Caso 1: Número Serial de Excel (ej: 46036)
+        if (typeof v === "number") {
+          // Usamos la librería XLSX que ya tiene la lógica de años bisiestos
+          const dateInfo = XLSX.SSF.parse_date_code(v);
+          if (dateInfo) {
+            return `${z2(dateInfo.d)}/${z2(dateInfo.m)}/${dateInfo.y}`;
+          }
+        }
+
+        // Caso 2: Texto o Fecha JS estándar
+        const d = new Date(v);
+        if (!isNaN(d.getTime())) {
+          // Es una fecha válida
+          return `${z2(d.getDate())}/${z2(
+            d.getMonth() + 1
+          )}/${d.getFullYear()}`;
+        }
+
+        // Caso 3: Retornar texto tal cual si falla todo
+        return String(v);
+      }
+
+      function toText(v) {
+        return v == null ? "" : String(v).trim();
+      }
+      function normStrong(s) {
+        return toText(s)
+          .toUpperCase()
+          .replace(/[^A-Z0-9]/g, "");
+      }
+
+      // ==========================================
+      // 3. LÓGICA DB (Indexado Inteligente)
+      // ==========================================
+      const PO_COL_CANDIDATES = [
+        "Customer PO #",
+        "CustomerPO",
+        "PO",
+        "po",
+        "Po",
+        "customer_po",
+        "customer po",
+        "Customer_PO",
+      ];
+      const SO_COL_CANDIDATES = [
+        "Sales Order #",
+        "SalesOrder",
+        "SO",
+        "so",
+        "So",
+        "sales_order",
+        "sales order",
+        "Sales_Order",
+      ];
+
+      const salesOrderIndex = {
+        direct: new Map(),
+        norm: new Map(),
+        tokens: new Map(),
+      };
+      let masterRows = [];
+      let currentPage = 1,
+        pageSize = 25;
+
+      // Encuentra valor en objeto ignorando mayúsculas/minúsculas de la clave
+      function findValueInRow(row, candidates) {
+        for (const key of candidates) {
+          if (row[key] !== undefined) return row[key];
+        }
+        const rowKeys = Object.keys(row);
+        for (const candidate of candidates) {
+          const foundKey = rowKeys.find(
+            (k) => k.toLowerCase() === candidate.toLowerCase()
+          );
+          if (foundKey) return row[foundKey];
+        }
+        return null;
+      }
+
+      async function preloadSalesOrderIndex() {
+        const uiStatus = document.getElementById("sapStatus");
+        const spinner = document.getElementById("sapSpinner");
+
+        try {
+          spinner.style.display = "inline-block";
+          const { count } = await supabaseClient
+            .from(SUPABASE_TABLE)
+            .select("*", { count: "exact", head: true });
+
+          if (!count) {
+            uiStatus.textContent = "Tabla vacía o error de nombre";
+            spinner.style.display = "none";
+            return;
+          }
+
+          let from = 0;
+          const limit = 2000;
+          let total = 0;
+          while (from < count) {
+            const { data } = await supabaseClient
+              .from(SUPABASE_TABLE)
+              .select("*")
+              .range(from, from + limit - 1);
+            if (!data) break;
+
+            for (const row of data) {
+              const po = toText(findValueInRow(row, PO_COL_CANDIDATES));
+              const so = toText(findValueInRow(row, SO_COL_CANDIDATES));
+
+              if (po && so) {
+                salesOrderIndex.direct.set(po, so);
+                const n = normStrong(po);
+                if (!salesOrderIndex.norm.has(n))
+                  salesOrderIndex.norm.set(n, so);
+
+                // Tokens (separar por - / etc)
+                const tokens = new Set();
+                tokens.add(po);
+                tokens.add(n);
+                po.split(/[-/\\]/).forEach((p) => {
+                  if (p) tokens.add(p);
+                  tokens.add(normStrong(p));
+                });
+
+                tokens.forEach((t) => {
+                  if (!t) return;
+                  const s = salesOrderIndex.tokens.get(t) || new Set();
+                  s.add(so);
+                  salesOrderIndex.tokens.set(t, s);
+                });
+                total++;
+              }
+            }
+            from += data.length;
+            uiStatus.textContent = `Cargando DB... ${Math.round(
+              (from / count) * 100
+            )}%`;
+          }
+          uiStatus.textContent = `DB Sincronizada (${total.toLocaleString()} registros)`;
+          uiStatus.parentElement.classList.replace("bg-light", "bg-success");
+          uiStatus.parentElement.classList.add("bg-opacity-10", "text-success");
+          spinner.style.display = "none";
+        } catch (e) {
+          console.error(e);
+          uiStatus.textContent = "Error de conexión";
+          spinner.style.display = "none";
+        }
+      }
+
+      function lookupSO(po, cust) {
+        if (!po || toText(cust).toUpperCase().includes("CARBON")) return "";
+        const key = toText(po);
+        if (salesOrderIndex.direct.has(key))
+          return salesOrderIndex.direct.get(key);
+        if (salesOrderIndex.norm.has(normStrong(key)))
+          return salesOrderIndex.norm.get(normStrong(key));
+        // Token search
+        const tokens = new Set();
+        tokens.add(key);
+        tokens.add(normStrong(key));
+        key.split(/[-/\\]/).forEach((p) => {
+          if (p) tokens.add(p);
+          tokens.add(normStrong(p));
+        });
+
+        for (const t of tokens) {
+          const set = salesOrderIndex.tokens.get(t);
+          if (set && set.size) return set.values().next().value;
+        }
+        return "";
+      }
+
+      // ==========================================
+      // 4. LÓGICA EXCEL (COMPLETA)
+      // ==========================================
+      // Índices basados en la estructura del Excel original
+      const COL = {
+        Customer: 2,
+        PO: 10,
+        Style: 14,
+        Cut: 15,
+        Color: 16,
+        Process: 17,
+        ProcessRout: 53,
+        Contractor: 54, // Agregados de nuevo
+        Pcs: 22,
+        XDF: 33,
+      };
+
+      async function handleFiles(files) {
+        if (!files.length) return;
+        masterRows = [];
+
+        for (const file of files) {
+          const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+
+          for (const sheetName of wb.SheetNames) {
+            if (sheetName.toLowerCase() === "lists") continue;
+
+            const ws = wb.Sheets[sheetName];
+            // Obtenemos JSON crudo (raw: true) para detectar fechas seriales
+            const aoa = XLSX.utils.sheet_to_json(ws, {
+              header: 1,
+              defval: "",
+              raw: true,
+            });
+
+            if (aoa.length < 4) continue;
+            // Validación simple de cabecera
+            const header = String(aoa[2][COL.Customer] || "").toUpperCase();
+            if (!header.includes("CUSTOMER")) continue;
+
+            for (let r = 3; r < aoa.length; r++) {
+              const row = aoa[r];
+              const cust = toText(row[COL.Customer]);
+              if (!cust) continue;
+
+              const poRaw = toText(row[COL.PO]);
+              // Normalización de PO (FOX, BROOKS)
+              let pos = [poRaw];
+              if (cust.toUpperCase().startsWith("FOX"))
+                pos = poRaw.split("-").filter(Boolean);
+              if (cust.toUpperCase() === "BROOKS")
+                pos = poRaw.split("/").filter(Boolean);
+
+              // Datos comunes de la fila
+              const common = {
+                Customer: cust,
+                Style: toText(row[COL.Style]),
+                Color: toText(row[COL.Color]),
+                Cut: row[COL.Cut],
+                Process: toText(row[COL.Process]), // Restaurado
+                Rout: toText(row[COL.ProcessRout]), // Restaurado
+                Contractor: toText(row[COL.Contractor]), // Restaurado
+                Pcs: row[COL.Pcs],
+                XDF: formatExcelDate(row[COL.XDF]), // APLICADA LA FUNCIÓN DE FECHA
+                Sheet: sheetName, // APLICADO NOMBRE DE HOJA
+                File: file.name,
+              };
+
+              pos.forEach((p) => {
+                masterRows.push({
+                  ...common,
+                  PO: p,
+                  SalesOrder: lookupSO(p, cust),
+                });
+              });
+            }
+          }
+        }
+        updateTable();
+      }
+
+      function updateTable() {
+        const q = document.getElementById("search").value.toLowerCase();
+        const noSO = document.getElementById("onlyNoSO").checked;
+
+        const filtered = masterRows.filter((r) => {
+          if (noSO && r.SalesOrder) return false;
+          if (!q) return true;
+          return Object.values(r).some((v) =>
+            String(v).toLowerCase().includes(q)
+          );
+        });
+
+        document.getElementById(
+          "countBadge"
+        ).textContent = `${filtered.length} filas`;
+        document.getElementById("pageSummary").textContent = `${
+          filtered.length > 0 ? 1 : 0
+        }-${Math.min(pageSize, filtered.length)} de ${filtered.length}`;
+
+        const totalPages = Math.ceil(filtered.length / pageSize) || 1;
+        if (currentPage > totalPages) currentPage = 1;
+
+        const start = (currentPage - 1) * pageSize;
+        const pageData = filtered.slice(start, start + pageSize);
+        const tbody = document.querySelector("#resultTable tbody");
+
+        tbody.innerHTML = pageData
+          .map(
+            (r) => `
+            <tr class="${!r.SalesOrder ? "table-warning" : ""}">
+                <td class="fw-bold text-primary">${r.Customer}</td>
+                <td class="fw-bold">${r.PO}</td>
+                <td class="${
+                  r.SalesOrder
+                    ? "text-success fw-bold"
+                    : "text-danger fw-bold bg-danger bg-opacity-10"
+                }">
+                    ${r.SalesOrder || "NO ENCONTRADO"}
+                </td>
+                <td>${r.Style}</td>
+                <td>${r.Color}</td>
+                <td>${r.Cut}</td>
+                <td class="small text-muted">${r.Process}</td>
+                <td class="small text-muted">${r.Rout}</td>
+                <td class="small text-muted">${r.Contractor}</td>
+                <td class="text-end fw-bold">${r.Pcs}</td>
+                <td>${r.XDF}</td>
+                <td class="small text-muted fst-italic">${r.Sheet}</td>
+                <td class="small text-muted" title="${r.File}">${r.File.slice(
+              0,
+              12
+            )}...</td>
+            </tr>
+        `
+          )
+          .join("");
+
+        // Listeners Paginación
+        document.getElementById("btnPrev").onclick = () => {
+          if (currentPage > 1) {
+            currentPage--;
+            updateTable();
+          }
+        };
+        document.getElementById("btnNext").onclick = () => {
+          if (currentPage < totalPages) {
+            currentPage++;
+            updateTable();
+          }
+        };
+      }
+
+      // Listeners UI
+      const dz = document.getElementById("dropzone");
+      dz.onclick = () => document.getElementById("file").click();
+      dz.ondragover = (e) => {
+        e.preventDefault();
+        dz.style.backgroundColor = "#e0f2fe";
+      };
+      dz.ondragleave = (e) => {
+        e.preventDefault();
+        dz.style.backgroundColor = "#f1f5f9";
+      };
+      dz.ondrop = (e) => {
+        e.preventDefault();
+        dz.style.backgroundColor = "#f1f5f9";
+        handleFiles(e.dataTransfer.files);
+      };
+
+      document.getElementById("file").onchange = (e) =>
+        handleFiles(e.target.files);
+      document.getElementById("search").oninput = () => {
+        currentPage = 1;
+        updateTable();
+      };
+      document.getElementById("onlyNoSO").onchange = () => {
+        currentPage = 1;
+        updateTable();
+      };
+      document.getElementById("pageSize").onchange = (e) => {
+        pageSize = +e.target.value;
+        currentPage = 1;
+        updateTable();
+      };
+      document.getElementById("clearBtn").onclick = () => {
+        masterRows = [];
+        updateTable();
+      };
+
+      document.getElementById("exportBtn").onclick = () => {
+        if (!masterRows.length) return;
+        const ws = XLSX.utils.json_to_sheet(masterRows);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Datos");
+        XLSX.writeFile(wb, "Reporte_Completo.xlsx");
+      };
+
+      // Inicializar
+      preloadSalesOrderIndex();
+    </script>
+  </body>
+</html>

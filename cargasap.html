@@ -1,0 +1,877 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Formatos de Carga SAP | Dark Mode</title>
+    
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      /* --- PALETA DE COLORES DARK MODE (Estilo Slate) --- */
+      :root {
+        --bg-body: #0f172a;       /* Fondo principal muy oscuro */
+        --bg-card: #1e293b;       /* Fondo de tarjetas */
+        --bg-input: #334155;      /* Fondo de inputs */
+        --text-main: #f1f5f9;     /* Texto principal casi blanco */
+        --text-muted: #94a3b8;    /* Texto secundario gris */
+        --border-color: #475569;  /* Bordes sutiles */
+        --accent-blue: #3b82f6;   /* Azul brillante para acciones */
+      }
+
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        padding: 20px;
+        font-family: 'Segoe UI', system-ui, sans-serif;
+      }
+
+      /* Estilos para Tarjetas (Cards) */
+      .card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.5);
+        color: var(--text-main);
+      }
+
+      /* Header personalizado */
+      header {
+        background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+        border: 1px solid var(--border-color);
+        border-radius: 12px;
+        padding: 20px;
+        margin-bottom: 20px;
+        box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.5);
+      }
+      
+      header h1 {
+        font-weight: 700;
+        color: white;
+        fontSize: 1.5rem;
+      }
+
+      header .badge {
+        background-color: rgba(59, 130, 246, 0.2);
+        color: #60a5fa;
+        border: 1px solid rgba(59, 130, 246, 0.4);
+        font-weight: 500;
+      }
+
+      /* Inputs y Selects en modo oscuro */
+      .form-control, .form-select {
+        background-color: var(--bg-input);
+        border-color: var(--border-color);
+        color: white;
+      }
+      .form-control:focus, .form-select:focus {
+        background-color: #475569;
+        border-color: var(--accent-blue);
+        color: white;
+        box-shadow: 0 0 0 0.25rem rgba(59, 130, 246, 0.25);
+      }
+      .form-control::placeholder {
+        color: #94a3b8;
+      }
+      .input-group-text {
+        background-color: #475569;
+        border-color: var(--border-color);
+        color: white;
+      }
+
+      /* Botones */
+      .btn-outline-secondary {
+        color: #cbd5e1;
+        border-color: #64748b;
+      }
+      .btn-outline-secondary:hover {
+        background-color: #475569;
+        color: white;
+      }
+
+      /* Tablas en modo oscuro */
+      .table-wrap {
+        overflow-x: auto;
+        border-radius: 8px;
+        border: 1px solid var(--border-color);
+      }
+      .table {
+        margin-bottom: 0;
+        color: var(--text-muted);
+      }
+      .table thead th {
+        background-color: #0f172a;
+        color: white;
+        border-bottom: 2px solid var(--border-color);
+        font-size: 0.85rem;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+      }
+      .table tbody td {
+        background-color: var(--bg-card);
+        border-bottom: 1px solid var(--border-color);
+        color: var(--text-main);
+        font-size: 0.9rem;
+      }
+      .table-striped tbody tr:nth-of-type(odd) td {
+        background-color: rgba(255,255,255,0.03); /* Sutil alternancia */
+      }
+      .table-bordered td, .table-bordered th {
+        border-color: var(--border-color);
+      }
+
+      /* Chips / Etiquetas */
+      .chip {
+        background: #334155;
+        color: white;
+        border: 1px solid #475569;
+        border-radius: 20px;
+        padding: 4px 12px;
+        font-size: 12px;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+      .chip:hover {
+        background: #ef4444; /* Rojo al pasar el mouse para indicar borrar */
+        border-color: #ef4444;
+      }
+
+      /* Modal Dark */
+      .modal-content {
+        background-color: var(--bg-card);
+        color: var(--text-main);
+        border: 1px solid var(--border-color);
+      }
+      .modal-header, .modal-footer {
+        border-color: var(--border-color);
+      }
+      .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+      }
+
+      /* Utilidades */
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar .left, .toolbar .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .small-muted {
+        font-size: 12px;
+        color: var(--text-muted);
+      }
+      .num { text-align: right; font-family: monospace; }
+      
+    </style>
+  </head>
+  <body>
+
+    <header class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1 class="m-0">Formatos de Carga SAP</h1>
+        <div class="badge mt-2">Conectado a Supabase (SalesOrder)</div>
+      </div>
+      <div class="small text-white-50">v2.0 Dark Edition</div>
+    </header>
+
+    <main class="container-fluid"> <section class="card p-3">
+        <div class="toolbar">
+          <div class="left">
+            <div class="input-group">
+              <span class="input-group-text">🔍</span>
+              <input
+                id="q"
+                class="form-control"
+                placeholder="Buscar PO, Cliente, Material..."
+              />
+              <button id="btnSearch" class="btn btn-primary">Buscar</button>
+            </div>
+            <button id="btnClear" class="btn btn-outline-secondary">
+              Limpiar
+            </button>
+            <span class="badge bg-dark border border-secondary" id="status">Listo</span>
+          </div>
+
+          <div class="right">
+            <div class="input-group">
+              <button id="prevPO" class="btn btn-outline-secondary">⟨</button>
+              <span id="poInfo" class="input-group-text" style="min-width: 160px; text-align:center;">Cargando...</span>
+              <button id="nextPO" class="btn btn-outline-secondary">⟩</button>
+              <select id="poPerPage" class="form-select" style="max-width: 80px;">
+                <option value="25">25</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </div>
+
+            <button id="btnAddPagePOs" class="btn btn-outline-primary">
+              + Agregar Página
+            </button>
+            <button id="btnPasteList" class="btn btn-outline-info">
+              📋 Pegar Lista
+            </button>
+            <button id="btnClearSel" class="btn btn-outline-danger">
+              Limpiar Sel.
+            </button>
+
+            <label class="btn btn-outline-secondary mb-0">
+              <input id="tplFile" type="file" accept=".xlsx,.xlsm,.xls" hidden />
+              📂 Plantilla
+            </label>
+            <button id="btnGenerate" class="btn btn-success fw-bold">
+              ⬇ Generar Excel
+            </button>
+            
+            <div class="ms-2 small-muted"><span id="count" class="text-white fw-bold">0</span> filas</div>
+          </div>
+        </div>
+
+        <div class="mt-3">
+          <div class="chips" id="selPOs"></div>
+          
+          <div class="progress d-none mt-2" id="progressWrap" style="height: 6px; background-color: #334155;">
+            <div
+              id="progressBar"
+              class="progress-bar bg-success"
+              role="progressbar"
+              style="width: 0%"
+            ></div>
+          </div>
+          <div class="small-muted mt-1 text-end" id="progressText"></div>
+        </div>
+      </section>
+
+      <section class="card p-0 mt-3 overflow-hidden">
+        <div class="table-wrap">
+          <table id="tbl" class="table table-striped table-bordered table-hover mb-0">
+            <thead>
+              <tr>
+                <th>SOLD TO</th>
+                <th>SHIP TO</th>
+                <th>DIV</th>
+                <th>PO</th>
+                <th>START SHIP</th>
+                <th>MABD</th>
+                <th>CANCEL</th>
+                <th>PAYMENT</th>
+                <th>MATERIAL</th>
+                <th class="text-end">QTY</th>
+                <th>PLANT</th>
+                <th class="text-end">PRICE</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+      
+      <div class="small-muted mt-2 text-center">
+        * Reglas aplicadas: <b>Payer</b> (<span class="text-info">SOLD TO 000000AD96→000000AD96</span>, DIV 65→200040, DIV 80→200060), Formato Fechas (MM/DD/YYYY), QTY sin decimales.
+      </div>
+    </main>
+
+    <div class="modal fade" id="bulkModal" tabindex="-1" aria-hidden="true">
+      <div class="modal-dialog modal-dialog-scrollable">
+        <div class="modal-content">
+          <div class="modal-header">
+            <h5 class="modal-title">Pegar lista de POs</h5>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Cerrar"></button>
+          </div>
+          <div class="modal-body">
+            <div class="mb-2 small text-muted">
+              Pega aquí los números de PO (uno por línea o separados por comas).
+            </div>
+            <textarea
+              id="bulkText"
+              class="form-control"
+              rows="8"
+              placeholder="1206821&#10;1206822&#10;1206823"
+              style="font-family: monospace;"
+            ></textarea>
+
+            <div class="d-flex gap-3 mt-3 flex-wrap align-items-center">
+              <button id="btnReadClipboard" type="button" class="btn btn-sm btn-outline-primary">
+                Leer del portapapeles
+              </button>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="chkAddToSelection" checked />
+                <label class="form-check-label" for="chkAddToSelection">Agregar a selección</label>
+              </div>
+
+              <div class="form-check form-switch">
+                <input class="form-check-input" type="checkbox" id="chkFilter" />
+                <label class="form-check-label" for="chkFilter">Filtrar tabla</label>
+              </div>
+            </div>
+
+            <div class="mt-2 text-info small" id="bulkPreview"></div>
+          </div>
+          <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cerrar</button>
+            <button id="btnApplyBulk" type="button" class="btn btn-primary">Aplicar</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* * ==========================================
+       * CORRECCIÓN CRÍTICA: CAMBIO DE NOMBRE
+       * ==========================================
+       * La librería importa 'supabase' globalmente.
+       * Usamos 'supabaseClient' para nuestra instancia.
+       */
+      const supabaseClient = window.supabase.createClient(
+        "https://aawqcgapxdqemjqzwcsy.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss"
+      );
+
+      /* ========= Referencias UI ========= */
+      const qInput = document.getElementById("q");
+      const btnSearch = document.getElementById("btnSearch");
+      const btnClear = document.getElementById("btnClear");
+      const statusEl = document.getElementById("status");
+      const tbody = document.querySelector("#tbl tbody");
+      const countEl = document.getElementById("count");
+      const tplFile = document.getElementById("tplFile");
+      const btnGenerate = document.getElementById("btnGenerate");
+      const progressWrap = document.getElementById("progressWrap");
+      const progressBar = document.getElementById("progressBar");
+      const progressText = document.getElementById("progressText");
+
+      const prevPO = document.getElementById("prevPO");
+      const nextPO = document.getElementById("nextPO");
+      const poInfo = document.getElementById("poInfo");
+      const poPerPageSel = document.getElementById("poPerPage");
+
+      const btnAddPagePOs = document.getElementById("btnAddPagePOs");
+      const btnClearSel = document.getElementById("btnClearSel");
+      const selPOsDiv = document.getElementById("selPOs");
+
+      /* ========= Estado ========= */
+      let cachedAll = [];
+      let filteredRows = [];
+      let filteredPOs = [];
+      let currentPOPage = 1;
+      let rows = [];
+      let lastPagePOs = new Set();
+      const selectedPOs = new Set(); 
+
+      const BATCH_SIZE = 1000;
+      const SELECT_COLS = '"SOLD TO","SHIP TO","DIV","PO","START SHIP D","MABD","CANCEL D","PAYMENT","MATERIAL","QTY","PLANT","SALES PRICE","STYLE","CUSTOMER"';
+
+      /* ========= Helpers ========= */
+      const toText = (v) => (v === undefined || v === null ? "" : String(v).trim());
+      const onlyDigits = (v) => toText(v).replace(/\D+/g, "");
+      
+      const normalizeDIV = (v) => {
+        const d = onlyDigits(v);
+        if (d.startsWith("65")) return "65";
+        if (d.startsWith("80")) return "80";
+        return d || "";
+      };
+
+      const todayMMDDYYYY = () => {
+        const d = new Date();
+        const mm = String(d.getMonth() + 1).padStart(2, "0");
+        const dd = String(d.getDate()).padStart(2, "0");
+        const yyyy = d.getFullYear();
+        return `${mm}/${dd}/${yyyy}`;
+      };
+
+      const intStr = (v) => {
+        const n = parseFloat(String(v).replace(/,/g, ""));
+        return Number.isFinite(n) ? String(Math.trunc(n)) : toText(v);
+      };
+
+      function toMMDDYYYY(s) {
+        const t = toText(s);
+        if (!t) return "";
+        // Intenta ISO YYYY-MM-DD
+        const iso = t.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+        if (iso) return `${iso[2]}/${iso[3]}/${iso[1]}`;
+        
+        // Intenta M/D/YY o M/D/YYYY
+        const md = t.match(/^(\d{1,2})\/(\d{1,2})\/(\d{2,4})$/);
+        if (md) {
+          const mm = md[1].padStart(2, "0");
+          const dd = md[2].padStart(2, "0");
+          const yyyy = md[3].length === 2 ? `20${md[3]}` : md[3];
+          return `${mm}/${dd}/${yyyy}`;
+        }
+        
+        const d = new Date(t);
+        if (!isNaN(d)) {
+          const mm = String(d.getMonth() + 1).padStart(2, "0");
+          const dd = String(d.getDate()).padStart(2, "0");
+          const yyyy = d.getFullYear();
+          return `${mm}/${dd}/${yyyy}`;
+        }
+        return t; 
+      }
+
+      // Nueva función para calcular el Payer evaluando SOLD TO y DIV
+      const getPayer = (soldTo, div) => {
+        // 1. Verificamos tu nueva regla para SOLD TO
+        if (toText(soldTo) === "000000AD96") {
+          return "000000AD96";
+        }
+        
+        // 2. Si no es ese SOLD TO, aplicamos la regla anterior para DIV
+        const d = normalizeDIV(div);
+        if (d === "65") return "200040";
+        if (d === "80") return "200060";
+        return "";
+      };
+
+      function setProgress(pct, txt = "") {
+        const p = Math.max(0, Math.min(100, Math.round(pct || 0)));
+        progressWrap.classList.remove("d-none");
+        progressBar.style.width = p + "%";
+        progressBar.textContent = p + "%";
+        progressBar.setAttribute("aria-valuenow", p);
+        progressText.textContent = txt || "";
+      }
+      
+      function clearProgress() {
+        progressWrap.classList.add("d-none");
+        progressBar.style.width = "0%";
+        progressBar.textContent = "0%";
+        progressText.textContent = "";
+      }
+
+      /* ========= Render ========= */
+      function renderTable(data) {
+        tbody.innerHTML = "";
+        data.forEach((r) => {
+          const tr = document.createElement("tr");
+          // Pequeño indicador visual de si está seleccionado
+          const isSelected = selectedPOs.has(toText(r["PO"]));
+          if(isSelected) tr.style.backgroundColor = "rgba(59, 130, 246, 0.15)";
+
+          tr.innerHTML = `
+            <td>${toText(r["SOLD TO"])}</td>
+            <td>${toText(r["SHIP TO"])}</td>
+            <td>${toText(r["DIV"])}</td>
+            <td class="fw-bold text-info">${toText(r["PO"])}</td>
+            <td>${toText(r["START SHIP D"])}</td>
+            <td>${toText(r["MABD"])}</td>
+            <td>${toText(r["CANCEL D"])}</td>
+            <td>${toText(r["PAYMENT"])}</td>
+            <td>${toText(r["MATERIAL"])}</td>
+            <td class="num text-warning">${toText(r["QTY"])}</td>
+            <td>${toText(r["PLANT"])}</td>
+            <td class="num">${toText(r["SALES PRICE"])}</td>`;
+          tbody.appendChild(tr);
+        });
+        countEl.textContent = data.length.toLocaleString();
+      }
+
+      function normalizeRows(arr) {
+        return (arr || []).map((row) => ({
+          "SOLD TO": toText(row["SOLD TO"] ?? row["Sold To"] ?? row["Sold-to"]),
+          "SHIP TO": toText(row["SHIP TO"] ?? row["Ship To"] ?? row["Ship-to"]),
+          "DIV": normalizeDIV(row["DIV"] ?? row["Division"]),
+          "PO": toText(row["PO"] ?? row["P.O #"] ?? row["P.O"] ?? row["PO #"]),
+          "START SHIP D": toText(row["START SHIP D"] ?? row["Start Ship D"]),
+          "MABD": toText(row["MABD"]),
+          "CANCEL D": toText(row["CANCEL D"] ?? row["Cancel D"]),
+          "PAYMENT": toText(row["PAYMENT"] ?? row["Payment"] ?? row["Payment Term"]),
+          "MATERIAL": toText(row["MATERIAL"] ?? row["Material"]),
+          "QTY": toText(row["QTY"] ?? row["Qty"] ?? row["Quantity"]),
+          "PLANT": toText(row["PLANT"] ?? row["Plant"]),
+          "SALES PRICE": toText(row["SALES PRICE"] ?? row["Sales Price"]),
+          "STYLE": toText(row["STYLE"] ?? row["Style"]),
+          "CUSTOMER": toText(row["CUSTOMER"] ?? row["Customer"]),
+        }));
+      }
+
+      /* ========= Lógica de Datos (Supabase) ========= */
+      // NOTA: Aquí usamos 'supabaseClient' en lugar de 'supabase'
+      async function pingSalesOrder() {
+        const { count, error } = await supabaseClient
+          .from("SalesOrder")
+          .select("*", { count: "exact", head: true });
+        
+        if (error) {
+          statusEl.textContent = "Error ping: " + error.message;
+          statusEl.classList.replace("bg-dark", "bg-danger");
+          return 0;
+        }
+        statusEl.textContent = `En línea (${count ?? 0})`;
+        statusEl.classList.replace("bg-dark", "bg-success");
+        return count ?? 0;
+      }
+
+      async function loadAllSalesOrder() {
+        setProgress(5, "Conectando...");
+        const total = await pingSalesOrder();
+        setProgress(10, "Descargando datos...");
+
+        let offset = 0;
+        const all = [];
+        
+        // Loop de paginación de Supabase
+        while (true) {
+          const isFirst = offset === 0;
+          // Usamos supabaseClient aquí
+          const { data, error } = await supabaseClient
+            .from("SalesOrder")
+            .select(SELECT_COLS, { count: isFirst ? "exact" : null })
+            .range(offset, offset + BATCH_SIZE - 1);
+          
+          if (error) {
+            statusEl.textContent = "Error carga: " + error.message;
+            break;
+          }
+          
+          all.push(...(data || []));
+          offset += (data || []).length;
+          
+          const pct = total ? (offset / total) * 90 + 10 : 10;
+          setProgress(Math.min(99, pct), `Cargados ${offset.toLocaleString()}...`);
+          
+          if (!data || data.length < BATCH_SIZE) break;
+        }
+
+        cachedAll = normalizeRows(all);
+        setProgress(100, `Listo (${cachedAll.length})`);
+        setTimeout(clearProgress, 600);
+      }
+
+      function computeFilterAndPOPages(term) {
+        const t = String(term || "").trim().toLowerCase();
+        
+        if (!t) {
+          filteredRows = cachedAll.slice();
+        } else {
+          filteredRows = cachedAll.filter((r) => {
+            const hay = [
+              r["PO"], r["MATERIAL"], r["SOLD TO"], r["SHIP TO"],
+              r["CUSTOMER"], r["STYLE"], r["PAYMENT"], r["PLANT"],
+              r["SALES PRICE"], r["DIV"], r["QTY"]
+            ].map(toText).join(" ").toLowerCase();
+            return hay.includes(t);
+          });
+        }
+        
+        // Extraer POs únicos
+        const set = new Set();
+        filteredRows.forEach((r) => { if (r["PO"]) set.add(r["PO"]); });
+        filteredPOs = Array.from(set);
+        
+        currentPOPage = 1;
+        renderPOPage();
+      }
+
+      function renderPOPage() {
+        const perPage = parseInt(poPerPageSel.value, 10) || 50;
+        const totalPOs = filteredPOs.length;
+        const totalPages = Math.max(1, Math.ceil(totalPOs / perPage));
+        
+        currentPOPage = Math.min(Math.max(1, currentPOPage), totalPages);
+
+        const start = (currentPOPage - 1) * perPage;
+        const theEnd = Math.min(start + perPage, totalPOs);
+        
+        lastPagePOs = new Set(filteredPOs.slice(start, theEnd));
+        rows = filteredRows.filter((r) => lastPagePOs.has(r["PO"]));
+        
+        renderTable(rows);
+
+        poInfo.textContent = `POs ${totalPOs ? start + 1 : 0}–${theEnd} de ${totalPOs}`;
+        prevPO.disabled = currentPOPage <= 1;
+        nextPO.disabled = currentPOPage >= totalPages;
+      }
+
+      /* ========= Excel Logic ========= */
+      function dedupeItemsPerPO(items) {
+        const map = new Map();
+        for (const it of items) {
+          const key = [
+            toText(it["MATERIAL"]),
+            intStr(it["QTY"]),
+            toText(it["PLANT"]),
+            toText(it["SALES PRICE"]),
+          ].join("|");
+          if (!map.has(key)) map.set(key, it);
+        }
+        return Array.from(map.values());
+      }
+
+      function buildExcelRows(data) {
+        // Agrupar por PO
+        const groups = new Map();
+        for (const r of data) {
+          const k = toText(r["PO"]);
+          if (!k) continue;
+          const arr = groups.get(k) || [];
+          arr.push(r);
+          groups.set(k, arr);
+        }
+
+        const today = todayMMDDYYYY();
+        const out = [];
+        const HEADER = [
+          "Order Type","Sold-to","Ship-to","S.Org","Division","P.O #",
+          "P.O Date","Ship Date","Cancel Date","MABD","Payer","Payment Term",
+          "Incoterm 1","Incoterm 2","Depto","MarktoStore","ZTAX","Material #",
+          "QTY","Plant","R/A (Price Rate)","Royalty","Salesperson","Percentage",
+          "Batch Customer","Sloc",
+        ];
+
+        for (const [po, arr] of groups) {
+          const first = arr[0];
+          const items = dedupeItemsPerPO(arr); // Elimina duplicados exactos dentro del PO
+
+          items.forEach((item, idx) => {
+            const isHead = idx === 0;
+            out.push({
+              "Order Type": isHead ? "ZDC" : "",
+              "Sold-to": isHead ? toText(first["SOLD TO"]) : "",
+              "Ship-to": isHead ? toText(first["SHIP TO"]) : "",
+              "S.Org": isHead ? "US20" : "",
+              "Division": isHead ? normalizeDIV(first["DIV"]) : "",
+              "P.O #": isHead ? toText(po) : "",
+              "P.O Date": isHead ? today : "",
+              "Ship Date": isHead ? toMMDDYYYY(first["START SHIP D"]) : "",
+              "Cancel Date": isHead ? toMMDDYYYY(first["CANCEL D"]) : "",
+              "MABD": isHead ? toMMDDYYYY(first["MABD"]) : "",
+              "Payer": isHead ? getPayer(first["SOLD TO"], first["DIV"]) : "",
+              "Payment Term": isHead ? toText(first["PAYMENT"]) : "",
+              "Incoterm 1": isHead ? "NAP" : "",
+              "Incoterm 2": "",
+              "Depto": "",
+              "MarktoStore": "",
+              "ZTAX": "",
+              "Material #": toText(item["MATERIAL"]),
+              "QTY": intStr(item["QTY"]),
+              "Plant": toText(item["PLANT"]),
+              "R/A (Price Rate)": toText(item["SALES PRICE"]),
+              "Royalty": "", "Salesperson": "", "Percentage": "", "Batch Customer": "", "Sloc": "",
+            });
+          });
+          
+          // Separador vacío
+          const emptyRow = {};
+          HEADER.forEach(h => emptyRow[h] = "");
+          out.push(emptyRow);
+        }
+        return { header: HEADER, rows: out };
+      }
+
+      async function generateExcel() {
+        let baseRows;
+        // Si hay seleccionados manuales, usamos esos. Si no, lo que está en memoria filtrado actual
+        if (selectedPOs.size) {
+          baseRows = cachedAll.filter((r) => selectedPOs.has(r["PO"]));
+        } else {
+          baseRows = rows.slice();
+        }
+        
+        if (!baseRows.length) {
+          alert("No hay datos para generar. Selecciona POs o busca algo.");
+          return;
+        }
+
+        setProgress(10, "Preparando Excel...");
+        const { header, rows: excelRows } = buildExcelRows(baseRows);
+
+        let wb, ws;
+        const templateFile = tplFile.files[0];
+
+        if (templateFile) {
+          setProgress(30, "Leyendo plantilla...");
+          const ab = await templateFile.arrayBuffer();
+          wb = XLSX.read(ab, { type: "array" });
+          const wsName = wb.SheetNames[0];
+          ws = wb.Sheets[wsName];
+          
+          // Lógica básica de inserción (al final o buscando headers)
+          // Para simplificar este ejemplo, usaremos una hoja nueva si es complejo
+          const data = [header, ...excelRows.map(r => header.map(k => r[k]??""))];
+          const newWs = XLSX.utils.aoa_to_sheet(data);
+          XLSX.utils.book_append_sheet(wb, newWs, "Carga_Generada");
+          
+        } else {
+          setProgress(30, "Creando libro nuevo...");
+          wb = XLSX.utils.book_new();
+          const data = [header, ...excelRows.map(r => header.map(k => r[k]??""))];
+          ws = XLSX.utils.aoa_to_sheet(data);
+          XLSX.utils.book_append_sheet(wb, ws, "Carga SAP");
+        }
+
+        setProgress(90, "Guardando archivo...");
+        const stamp = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        XLSX.writeFile(wb, `Carga_SAP_${stamp}.xlsx`);
+        
+        setProgress(100, "¡Archivo descargado!");
+        setTimeout(clearProgress, 2000);
+      }
+
+      /* ========= Selección / Chips ========= */
+      function updateSelectedChips() {
+        selPOsDiv.innerHTML = "";
+        if (!selectedPOs.size) return;
+        
+        const arr = [...selectedPOs].sort();
+        // Mostrar solo los primeros 50 para no saturar el DOM si son muchos
+        const limit = 50;
+        
+        arr.slice(0, limit).forEach((po) => {
+          const span = document.createElement("span");
+          span.className = "chip";
+          span.dataset.po = po;
+          span.title = "Clic para quitar";
+          span.innerHTML = `${po} &times;`;
+          selPOsDiv.appendChild(span);
+        });
+        
+        if (arr.length > limit) {
+           const more = document.createElement("span");
+           more.className = "chip";
+           more.textContent = `+${arr.length - limit} más...`;
+           selPOsDiv.appendChild(more);
+        }
+      }
+
+      selPOsDiv.addEventListener("click", (e) => {
+        const chip = e.target.closest(".chip");
+        if (!chip || !chip.dataset.po) return;
+        selectedPOs.delete(chip.dataset.po);
+        updateSelectedChips();
+        renderPOPage(); // para actualizar color de filas
+      });
+
+      btnAddPagePOs.addEventListener("click", () => {
+        lastPagePOs.forEach((po) => selectedPOs.add(po));
+        updateSelectedChips();
+        renderPOPage();
+      });
+
+      btnClearSel.addEventListener("click", () => {
+        selectedPOs.clear();
+        updateSelectedChips();
+        renderPOPage();
+      });
+
+      /* ========= Event Listeners ========= */
+      btnSearch.addEventListener("click", () => computeFilterAndPOPages(qInput.value));
+      qInput.addEventListener("keydown", (e) => {
+        if (e.key === "Enter") btnSearch.click();
+      });
+      
+      btnClear.addEventListener("click", () => {
+        qInput.value = "";
+        computeFilterAndPOPages("");
+        statusEl.textContent = "Listo";
+        clearProgress();
+      });
+
+      prevPO.addEventListener("click", () => { currentPOPage--; renderPOPage(); });
+      nextPO.addEventListener("click", () => { currentPOPage++; renderPOPage(); });
+      poPerPageSel.addEventListener("change", () => { currentPOPage = 1; renderPOPage(); });
+
+      btnGenerate.addEventListener("click", generateExcel);
+
+      /* ========= Init ========= */
+      (async function init() {
+        await loadAllSalesOrder();
+        computeFilterAndPOPages("");
+      })();
+    </script>
+
+    <script>
+      const bulkModalEl = document.getElementById("bulkModal");
+      const bulkText = document.getElementById("bulkText");
+      const bulkPreview = document.getElementById("bulkPreview");
+      const chkAddToSelection = document.getElementById("chkAddToSelection");
+      const chkFilter = document.getElementById("chkFilter");
+      const btnApplyBulk = document.getElementById("btnApplyBulk");
+      const btnReadClipboard = document.getElementById("btnReadClipboard");
+      const btnPasteList = document.getElementById("btnPasteList");
+
+      let bulkModal;
+      document.addEventListener("DOMContentLoaded", () => {
+        if (window.bootstrap && bootstrap.Modal) {
+          bulkModal = new bootstrap.Modal(bulkModalEl);
+        }
+      });
+
+      function parsePOList(raw) {
+        const tokens = String(raw || "").split(/[\s,;]+/);
+        const out = [];
+        for (const t of tokens) {
+          const d = t.replace(/\D+/g, ""); // solo numeros
+          if (d.length >= 3) out.push(d);
+        }
+        return Array.from(new Set(out));
+      }
+
+      function showBulkPreview(list) {
+        if (!list.length) {
+          bulkPreview.textContent = "No se detectaron POs válidos.";
+          return;
+        }
+        bulkPreview.innerHTML = `Detectados <b>${list.length}</b> POs: ` + 
+          list.slice(0, 10).join(", ") + (list.length > 10 ? "..." : "");
+      }
+
+      btnPasteList.addEventListener("click", () => {
+        bulkText.value = "";
+        bulkPreview.textContent = "";
+        if (bulkModal) bulkModal.show();
+      });
+
+      btnReadClipboard.addEventListener("click", async () => {
+        try {
+          const text = await navigator.clipboard.readText();
+          bulkText.value = text || "";
+          showBulkPreview(parsePOList(text));
+        } catch (err) {
+          alert("Permiso denegado o no soportado por el navegador.");
+        }
+      });
+
+      bulkText.addEventListener("input", () => {
+        showBulkPreview(parsePOList(bulkText.value));
+      });
+
+      btnApplyBulk.addEventListener("click", () => {
+        const list = parsePOList(bulkText.value);
+        if (!list.length) {
+          alert("Lista vacía");
+          return;
+        }
+        if (chkAddToSelection.checked) {
+          list.forEach(po => selectedPOs.add(po));
+          updateSelectedChips();
+        }
+        if (chkFilter.checked) {
+          // Filtrar por estos POs
+          filteredRows = cachedAll.filter(r => new Set(list).has(String(r["PO"])));
+          const s = new Set(filteredRows.map(r=>String(r["PO"])));
+          filteredPOs = Array.from(s);
+          currentPOPage = 1;
+          renderPOPage();
+        }
+        if (bulkModal) bulkModal.hide();
+      });
+    </script>
+    
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

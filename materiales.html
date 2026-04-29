@@ -1,0 +1,592 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Materiales – Consolidación + Supabase</title>
+
+    <!-- UI base (misma línea visual del suite) -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+
+    <!-- Libs -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      body {
+        padding: 16px;
+      }
+      header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+        color: #111;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      header h1,
+      header .small {
+        color: #111;
+      }
+      header .badge {
+        color: #111;
+        background: rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar .left,
+      .toolbar .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .small {
+        font-size: 12px;
+        color: #475569;
+      }
+      .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fff;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .dropzone.dragover {
+        background: #eef2ff;
+        border-color: #93c5fd;
+      }
+      #materialsTable {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      #materialsTable th,
+      #materialsTable td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 8px 10px;
+        text-align: left;
+      }
+      #materialsTable th {
+        background: #f7f7f7;
+        font-weight: 700;
+      }
+      .num {
+        text-align: right;
+      }
+      .spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #cbd5e1;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        display: inline-block;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .muted {
+        color: #64748b;
+      }
+      .form-check-label {
+        user-select: none;
+      }
+    </style>
+  </head>
+  <body class="stretch-full">
+    <header class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1 class="m-0">Consolidar Archivos de Materiales</h1>
+        <div class="badge">
+          Lectura masiva de Excel (hoja “DATA”) + guardado en BD
+        </div>
+      </div>
+      <div class="small">materiales_supabase.html</div>
+    </header>
+
+    <main class="container">
+      <!-- Toolbar -->
+      <section class="card p-3">
+        <div class="toolbar">
+          <div class="left">
+            <!-- Selector de carpeta/archivos -->
+            <div id="dropzone" class="dropzone">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-primary" type="button">
+                  Seleccionar carpeta/archivos
+                </button>
+                <span class="small">o arrastra y suelta aquí</span>
+              </div>
+              <input
+                id="folderInput"
+                type="file"
+                webkitdirectory
+                directory
+                multiple
+                accept=".xls,.xlsx,.xlsm"
+                hidden
+              />
+              <input
+                id="filesInput"
+                type="file"
+                multiple
+                accept=".xls,.xlsx,.xlsm"
+                hidden
+              />
+            </div>
+
+            <button id="processBtn" class="btn btn-sm btn-outline-primary">
+              Procesar
+            </button>
+            <button id="exportBtn" class="btn btn-sm btn-primary">
+              Exportar a Excel
+            </button>
+            <button id="saveBtn" class="btn btn-sm btn-success" disabled>
+              Guardar en BD
+            </button>
+            <button id="clearBtn" class="btn btn-sm btn-outline-secondary">
+              Limpiar
+            </button>
+
+            <span class="badge" id="status">Sin archivos</span>
+          </div>
+
+          <div class="right align-items-center">
+            <div class="input-group">
+              <span class="input-group-text">Buscar</span>
+              <input
+                id="search"
+                class="form-control"
+                placeholder="Cliente, Corte, Estilo, Color, Talla, Material…"
+              />
+            </div>
+            <div class="count small">
+              <strong><span id="count">0</span></strong> filas
+            </div>
+          </div>
+        </div>
+        <div class="d-flex gap-3 mt-2 align-items-center">
+          <div class="form-check">
+            <input
+              class="form-check-input"
+              type="checkbox"
+              value=""
+              id="dedupeChk"
+              checked
+            />
+            <label class="form-check-label small" for="dedupeChk"
+              >Evitar duplicados por (customer, cut, style, colorname, size,
+              material)</label
+            >
+          </div>
+          <div class="small muted" id="connInfo"></div>
+        </div>
+      </section>
+
+      <!-- Tabla -->
+      <section class="card mt-3 p-2">
+        <div class="table-wrap">
+          <table id="materialsTable">
+            <thead>
+              <tr>
+                <th>Cliente</th>
+                <th>Corte</th>
+                <th>Estilo</th>
+                <th>Color</th>
+                <th>Talla</th>
+                <th>Material</th>
+                <th>Archivo</th>
+              </tr>
+            </thead>
+            <tbody></tbody>
+          </table>
+        </div>
+      </section>
+    </main>
+
+    <script>
+      // ====== Estado ======
+      let materiales = []; // datos consolidados (UI)
+      let filesQueue = []; // archivos seleccionados (FileList -> Array)
+      const STATUS = document.getElementById("status");
+      const TBODY = document.querySelector("#materialsTable tbody");
+      const COUNT = document.getElementById("count");
+      const SEARCH = document.getElementById("search");
+      const SAVE_BTN = document.getElementById("saveBtn");
+      const CONN_INFO = document.getElementById("connInfo");
+      const DEDUPE_CHK = document.getElementById("dedupeChk");
+
+      // ====== Supabase (usar variables provistas) ======
+      const SUPABASE_URL = "https://aawqcgapxdqemjqzwcsy.supabase.co";
+      const SUPABASE_ANON_KEY =
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
+      const supabase = window.supabase.createClient(
+        SUPABASE_URL,
+        SUPABASE_ANON_KEY
+      );
+
+      (async function testConn() {
+        try {
+          const { error } = await supabase
+            .from("materiales")
+            .select("*", { head: true, count: "exact" })
+            .limit(1);
+          CONN_INFO.textContent = error
+            ? "⚠️ Conexión a Supabase: ERROR — " + (error.message || error)
+            : "✅ Conexión a Supabase OK";
+        } catch (e) {
+          CONN_INFO.textContent =
+            "⚠️ Conexión a Supabase: ERROR — " + (e.message || e);
+        }
+      })();
+
+      // ====== Helpers ======
+      function toText(v) {
+        if (v === null || v === undefined) return "";
+        if (typeof v === "number" && Number.isFinite(v)) {
+          if (Math.abs(v - Math.trunc(v)) < 1e-9) return String(Math.trunc(v));
+          return String(v);
+        }
+        return String(v).trim();
+      }
+      function escapeHtml(s) {
+        return String(s).replace(
+          /[&<>"']/g,
+          (m) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[m])
+        );
+      }
+      function setStatus(msg) {
+        STATUS.textContent = msg;
+      }
+
+      function renderTable() {
+        const q = SEARCH.value.trim().toLowerCase();
+        TBODY.innerHTML = "";
+        let shown = 0;
+        for (const r of materiales) {
+          if (q) {
+            const hay =
+              `${r.Cliente} ${r.Corte} ${r.Estilo} ${r.Color} ${r.Talla} ${r.Material} ${r.Archivo}`.toLowerCase();
+            if (!hay.includes(q)) continue;
+          }
+          const tr = document.createElement("tr");
+          tr.innerHTML = `
+            <td>${escapeHtml(r.Cliente)}</td>
+            <td>${escapeHtml(r.Corte)}</td>
+            <td>${escapeHtml(r.Estilo)}</td>
+            <td>${escapeHtml(r.Color)}</td>
+            <td>${escapeHtml(r.Talla)}</td>
+            <td>${escapeHtml(r.Material)}</td>
+            <td class="small">${escapeHtml(r.Archivo || "")}</td>`;
+          TBODY.appendChild(tr);
+          shown++;
+        }
+        COUNT.textContent = shown.toLocaleString();
+        SAVE_BTN.disabled = materiales.length === 0;
+        if (materiales.length === 0) setStatus("Sin archivos");
+      }
+
+      function takeNameParts(fileName) {
+        const base = String(fileName || "").replace(/\.(xls|xlsx|xlsm)$/i, "");
+        const partes = base.split("-");
+        return {
+          cliente: toText(partes[0] || ""),
+          corte: toText(partes[1] || ""),
+        };
+      }
+
+      // ====== Parse de un archivo XLSX (lee hoja DATA) ======
+      async function parseFile(file) {
+        try {
+          const ab = await file.arrayBuffer();
+          const wb = XLSX.read(ab, { type: "array" });
+          const ws = wb.Sheets["DATA"];
+          if (!ws) return [];
+
+          const aoa = XLSX.utils.sheet_to_json(ws, {
+            header: 1,
+            defval: "",
+            raw: false,
+          });
+          if (!aoa || !aoa.length) return [];
+
+          const estilo = toText(aoa?.[0]?.[0] || "");
+          let colorActual = "";
+          const out = [];
+
+          for (let i = 2; i < aoa.length; i++) {
+            const row = aoa[i];
+            if (!row || row.length < 4) continue;
+
+            if (toText(row[1])) colorActual = toText(row[1]); // Col 1 = color si viene
+            const talla = toText(row[2]);
+            const material = toText(row[3]);
+
+            if (talla && material) {
+              out.push({
+                Estilo: estilo,
+                Color: colorActual,
+                Talla: talla,
+                Material: material,
+              });
+            }
+          }
+
+          const parts = takeNameParts(file.name);
+          return out.map((r) => ({
+            Cliente: parts.cliente,
+            Corte: parts.corte,
+            ...r,
+            Archivo: file.name,
+          }));
+        } catch (err) {
+          console.warn("Error leyendo", file.name, err);
+          return [];
+        }
+      }
+
+      // ====== Proceso principal ======
+      async function procesarArchivos() {
+        if (!filesQueue.length) {
+          alert("Selecciona una carpeta o archivos.");
+          return;
+        }
+        materiales = [];
+        setStatus("Procesando archivos… 0%");
+        let done = 0;
+        for (const f of filesQueue) {
+          const rows = await parseFile(f);
+          if (rows.length) materiales.push(...rows);
+          done++;
+          const pct = Math.round((done / filesQueue.length) * 100);
+          setStatus(`Procesando archivos… ${pct}%`);
+        }
+        setStatus(`Procesado: ${filesQueue.length} archivo(s)`);
+        renderTable();
+      }
+
+      // ====== Guardar en BD (tabla: materiales) ======
+      function toDbRows(uiRows) {
+        const nowIso = new Date().toISOString();
+        return uiRows.map((r) => ({
+          customer: r.Cliente || null,
+          style: r.Estilo || null,
+          cut: r.Corte || null,
+          colorname: r.Color || null,
+          size: r.Talla || null,
+          material: r.Material || null,
+          fechaing: nowIso,
+        }));
+      }
+
+      function applySearch(rows) {
+        const q = SEARCH.value.trim().toLowerCase();
+        if (!q) return rows.slice();
+        return rows.filter((r) =>
+          `${r.Cliente} ${r.Corte} ${r.Estilo} ${r.Color} ${r.Talla} ${r.Material} ${r.Archivo}`
+            .toLowerCase()
+            .includes(q)
+        );
+      }
+
+      function dedupeRows(dbRows) {
+        const set = new Set();
+        const out = [];
+        for (const r of dbRows) {
+          const key = [
+            r.customer,
+            r.cut,
+            r.style,
+            r.colorname,
+            r.size,
+            r.material,
+          ]
+            .map((v) => (v || "").toString().toUpperCase().trim())
+            .join("|");
+          if (set.has(key)) continue;
+          set.add(key);
+          out.push(r);
+        }
+        return out;
+      }
+
+      async function saveToDB() {
+        if (!materiales.length) {
+          alert("No hay datos para guardar.");
+          return;
+        }
+        SAVE_BTN.disabled = true;
+        const start = Date.now();
+        try {
+          setStatus("Preparando datos para guardar…");
+          let uiRows = applySearch(materiales);
+          let dbRows = toDbRows(uiRows);
+          if (DEDUPE_CHK.checked) dbRows = dedupeRows(dbRows);
+
+          if (!dbRows.length) {
+            alert("No hay filas para guardar (revisa el filtro de búsqueda).");
+            return;
+          }
+
+          const CHUNK_SIZE = 500; // tamaño prudente
+          let ok = 0,
+            fail = 0,
+            lastError = null;
+          for (let i = 0; i < dbRows.length; i += CHUNK_SIZE) {
+            const chunk = dbRows.slice(i, i + CHUNK_SIZE);
+            setStatus(
+              `Guardando en BD… ${Math.min(i + CHUNK_SIZE, dbRows.length)} / ${
+                dbRows.length
+              }`
+            );
+            const { error } = await supabase
+              .from("materiales")
+              .insert(chunk, { returning: "minimal" });
+            if (error) {
+              fail += chunk.length;
+              lastError = error;
+              console.error(error);
+            } else {
+              ok += chunk.length;
+            }
+          }
+          const secs = ((Date.now() - start) / 1000).toFixed(1);
+          if (fail === 0) {
+            setStatus(`✅ Guardado completo: ${ok} fila(s) en ${secs}s`);
+          } else {
+            setStatus(
+              `⚠️ Guardado parcial: ${ok} OK, ${fail} con error. Último error: ${
+                lastError?.message || lastError
+              }`
+            );
+            alert(
+              "Algunas filas no se guardaron. Revisa la consola para más detalles."
+            );
+          }
+        } catch (e) {
+          console.error(e);
+          setStatus("❌ Error guardando: " + (e.message || e));
+          alert("Error guardando en BD: " + (e.message || e));
+        } finally {
+          SAVE_BTN.disabled = materiales.length === 0;
+        }
+      }
+
+      // ====== Exportar ======
+      function exportarExcel() {
+        if (!materiales.length) {
+          alert("No hay datos para exportar.");
+          return;
+        }
+        const filtered = applySearch(materiales);
+        const ws = XLSX.utils.json_to_sheet(filtered);
+        ws["!cols"] = [16, 12, 16, 14, 10, 24, 24].map((w) => ({ wch: w }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Materiales");
+        const ts = new Date().toISOString().slice(0, 19).replace(/[:T]/g, "-");
+        XLSX.writeFile(wb, `Materiales_Consolidados_${ts}.xlsx`);
+      }
+
+      // ====== UI events ======
+      const dropzone = document.getElementById("dropzone");
+      const folderInput = document.getElementById("folderInput");
+      const filesInput = document.getElementById("filesInput");
+      const processBtn = document.getElementById("processBtn");
+      const exportBtn = document.getElementById("exportBtn");
+      const clearBtn = document.getElementById("clearBtn");
+
+      // Abrir selector (prioriza carpeta; si el navegador no soporta, cae al de archivos)
+      dropzone.addEventListener("click", () => {
+        folderInput.showPicker ? folderInput.showPicker() : folderInput.click();
+      });
+
+      // Arrastrar y soltar
+      ["dragenter", "dragover"].forEach((ev) => {
+        dropzone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.add("dragover");
+        });
+      });
+      ["dragleave", "drop"].forEach((ev) => {
+        dropzone.addEventListener(ev, (e) => {
+          e.preventDefault();
+          e.stopPropagation();
+          dropzone.classList.remove("dragover");
+        });
+      });
+      dropzone.addEventListener("drop", (e) => {
+        const items = e.dataTransfer.items;
+        filesQueue = [];
+        if (items && items.length) {
+          for (const it of items) {
+            if (it.kind === "file") {
+              const f = it.getAsFile();
+              if (f && /\.(xls[xm]?)$/i.test(f.name)) filesQueue.push(f);
+            }
+          }
+        } else {
+          const files = Array.from(e.dataTransfer.files || []);
+          files.forEach((f) => {
+            if (/\.(xls[xm]?)$/i.test(f.name)) filesQueue.push(f);
+          });
+        }
+        setStatus(`${filesQueue.length} archivo(s) listos`);
+      });
+
+      // Selector de carpeta
+      folderInput.addEventListener("change", (e) => {
+        const files = Array.from(e.target.files || []);
+        filesQueue = files.filter((f) => /\.(xls[xm]?)$/i.test(f.name));
+        setStatus(`${filesQueue.length} archivo(s) listos`);
+      });
+
+      // Respaldo para archivos sueltos (opcional)
+      if (!("showPicker" in HTMLInputElement.prototype)) {
+        dropzone.addEventListener("contextmenu", (e) => {
+          e.preventDefault();
+          filesInput.click();
+        });
+        filesInput.addEventListener("change", (e) => {
+          const files = Array.from(e.target.files || []);
+          filesQueue = files.filter((f) => /\.(xls[xm]?)$/i.test(f.name));
+          setStatus(`${filesQueue.length} archivo(s) listos`);
+        });
+      }
+
+      processBtn.addEventListener("click", procesarArchivos);
+      exportBtn.addEventListener("click", exportarExcel);
+      clearBtn.addEventListener("click", () => {
+        materiales = [];
+        filesQueue = [];
+        folderInput.value = "";
+        filesInput.value = "";
+        setStatus("Sin archivos");
+        renderTable();
+      });
+      SAVE_BTN.addEventListener("click", saveToDB);
+
+      SEARCH.addEventListener("input", renderTable);
+    </script>
+  </body>
+</html>

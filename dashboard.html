@@ -1,0 +1,1081 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard - Customer Service</title>
+
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <style>
+      /* 1. CONFIGURACIÓN BASE */
+      @import url("https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap");
+
+      :root {
+        --bg-body: #0f172a;
+        --bg-card: #1e293b;
+        --bg-hover: #334155;
+
+        --text-main: #f8fafc;
+        --text-muted: #94a3b8;
+
+        /* Colores Neón */
+        --c-green: #34d399;
+        --c-yellow: #fbbf24;
+        --c-orange: #fb923c;
+        --c-red: #f87171;
+        --c-blue: #38bdf8;
+
+        --border-color: #334155;
+      }
+
+      body {
+        background-color: var(--bg-body);
+        color: var(--text-main);
+        font-family: "Inter", sans-serif;
+        font-size: 0.85rem;
+      }
+
+      /* Títulos y textos */
+      h1,
+      h2,
+      h3,
+      h4,
+      h5,
+      h6 {
+        color: var(--text-main);
+      }
+      .text-muted {
+        color: var(--text-muted) !important;
+      }
+
+      /* --- HERO --- */
+      .hero {
+        background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%);
+        padding: 16px 24px;
+        border-bottom: 1px solid var(--border-color);
+        margin-bottom: 24px;
+      }
+
+      /* Tarjetas Generales */
+      .card {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-color);
+        border-radius: 8px;
+        box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.3);
+      }
+
+      /* --- BADGES XFD --- */
+      .badge-xfd {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        padding: 4px 8px;
+        border-radius: 4px;
+        font-weight: 600;
+        font-size: 0.75rem;
+        cursor: pointer;
+        transition: all 0.2s ease;
+        border: 1px solid transparent;
+        min-width: 60px;
+      }
+
+      .badge-xfd:hover {
+        transform: translateY(-1px);
+        filter: brightness(1.2);
+      }
+
+      .badge-green {
+        background: rgba(52, 211, 153, 0.15);
+        color: var(--c-green);
+        border-color: var(--c-green);
+      }
+      .badge-yellow {
+        background: rgba(251, 191, 36, 0.15);
+        color: var(--c-yellow);
+        border-color: var(--c-yellow);
+      }
+      .badge-orange {
+        background: rgba(251, 146, 60, 0.15);
+        color: var(--c-orange);
+        border-color: var(--c-orange);
+      }
+      .badge-red {
+        background: rgba(248, 113, 113, 0.15);
+        color: var(--c-red);
+        border-color: var(--c-red);
+      }
+
+      .badge-dimmed {
+        opacity: 0.3;
+        filter: grayscale(0.8);
+      }
+
+      /* --- BOTONES DE TOTALES --- */
+      .btn-outline-success {
+        color: var(--c-green);
+        border-color: var(--c-green);
+      }
+      .btn-outline-success:hover {
+        background-color: var(--c-green);
+        color: #000;
+      }
+
+      .btn-outline-danger {
+        color: var(--c-red);
+        border-color: var(--c-red);
+      }
+      .btn-outline-danger:hover {
+        background-color: var(--c-red);
+        color: #000;
+      }
+
+      .btn-outline-warning {
+        color: var(--c-yellow);
+        border-color: var(--c-yellow);
+      }
+      .btn-outline-warning:hover {
+        background-color: var(--c-yellow);
+        color: #000;
+      }
+
+      .btn-outline-primary {
+        color: var(--c-blue);
+        border-color: var(--c-blue);
+      }
+      .btn-outline-primary:hover {
+        background-color: var(--c-blue);
+        color: #000;
+      }
+
+      /* --- KPIs INTERNOS --- */
+      .kpi {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        padding: 6px 10px;
+        margin-bottom: 4px;
+        background-color: rgba(0, 0, 0, 0.2);
+        border-left: 3px solid transparent;
+        border-radius: 4px;
+        cursor: pointer;
+        transition: background 0.2s;
+      }
+      .kpi:hover {
+        background-color: rgba(255, 255, 255, 0.05);
+      }
+
+      .kpi-ok {
+        border-left-color: var(--c-green);
+      }
+      .kpi-nosales {
+        border-left-color: var(--c-red);
+      }
+      .kpi-nocut {
+        border-left-color: var(--c-yellow);
+      }
+      .kpi-nomaterial {
+        border-left-color: var(--c-blue);
+      }
+
+      .kpi .label {
+        color: var(--text-muted);
+        font-size: 0.75rem;
+      }
+      .kpi .value {
+        color: #fff;
+        font-weight: 700;
+        font-size: 0.85rem;
+      }
+
+      /* Tabla */
+      .table {
+        --bs-table-bg: transparent;
+        --bs-table-color: var(--text-muted);
+        border-color: var(--border-color);
+      }
+      .table thead th {
+        background-color: rgba(15, 23, 42, 0.95);
+        color: #fff;
+        border-bottom: 2px solid var(--border-color);
+        font-size: 0.75rem;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+      }
+      .table-striped > tbody > tr:nth-of-type(odd) > * {
+        color: var(--text-muted);
+        box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.02);
+      }
+      .table-hover > tbody > tr:hover > * {
+        color: #fff;
+        box-shadow: inset 0 0 0 9999px rgba(255, 255, 255, 0.08);
+      }
+
+      /* Inputs */
+      .form-control,
+      .form-select {
+        background-color: #0f172a;
+        border: 1px solid var(--border-color);
+        color: #fff;
+      }
+      .form-control:focus {
+        background-color: #1e293b;
+        color: #fff;
+        border-color: var(--c-blue);
+        box-shadow: none;
+      }
+
+      /* Loader */
+      .load-wrap {
+        background: #1e293b;
+        border: 1px solid var(--c-blue);
+        padding: 20px;
+        border-radius: 8px;
+        margin-bottom: 20px;
+      }
+      .progress {
+        background-color: #0f172a;
+        height: 6px;
+      }
+      .progress-bar {
+        background-color: var(--c-blue);
+      }
+
+      .text-neon-blue {
+        color: var(--c-blue);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container-fluid p-0">
+      <div class="hero">
+        <div class="container-fluid px-4">
+          <div
+            class="d-flex justify-content-between align-items-center flex-wrap gap-3"
+          >
+            <div>
+              <h1 class="h5 mb-1 text-white fw-bold">
+                Dashboard Customer Service
+              </h1>
+              <div class="text-muted small">Panel de Control de Órdenes</div>
+            </div>
+
+            <div
+              class="d-flex align-items-center flex-wrap gap-3 justify-content-end"
+            >
+              <div
+                class="d-flex align-items-center p-2 rounded bg-black bg-opacity-25 border border-secondary border-opacity-25"
+              >
+                <span
+                  class="small text-muted me-2 fw-bold"
+                  style="font-size: 0.7rem; text-transform: uppercase"
+                  >XFD GLOBAL:</span
+                >
+
+                <div class="d-flex gap-1">
+                  <span
+                    class="badge-xfd badge-green"
+                    id="head-xfd-green"
+                    onclick="setFilter('xfd_global', 'verde')"
+                    title="Filtrar Mayor a 30 días"
+                  >
+                    >30d: 0
+                  </span>
+                  <span
+                    class="badge-xfd badge-yellow"
+                    id="head-xfd-yellow"
+                    onclick="setFilter('xfd_global', 'amarillo')"
+                    title="Filtrar 16-30 días"
+                  >
+                    30d: 0
+                  </span>
+                  <span
+                    class="badge-xfd badge-orange"
+                    id="head-xfd-orange"
+                    onclick="setFilter('xfd_global', 'anaranjado')"
+                    title="Filtrar 11-15 días"
+                  >
+                    15d: 0
+                  </span>
+                  <span
+                    class="badge-xfd badge-red"
+                    id="head-xfd-red"
+                    onclick="setFilter('xfd_global', 'rojo')"
+                    title="Filtrar 0-10 días"
+                  >
+                    10d: 0
+                  </span>
+                </div>
+              </div>
+
+              <div class="d-flex gap-2 align-items-center">
+                <span class="text-muted small d-none d-md-inline"
+                  >Total:
+                  <span id="badgeRows" class="text-white fw-bold">0</span></span
+                >
+                <button
+                  id="btnRefresh"
+                  class="btn btn-primary btn-sm d-flex align-items-center gap-2 px-3 fw-bold"
+                >
+                  <span
+                    id="refreshSpin"
+                    class="spinner-border spinner-border-sm d-none"
+                  ></span>
+                  Actualizar
+                </button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="container-fluid px-4 pb-5">
+        <div id="loadContainer" class="load-wrap d-none">
+          <div class="d-flex justify-content-between mb-2">
+            <span class="text-neon-blue fw-bold">Conectando...</span>
+            <span id="progressPercent" class="text-white">0%</span>
+          </div>
+          <div class="progress mb-2">
+            <div
+              id="loadingBarFill"
+              class="progress-bar"
+              style="width: 0%"
+            ></div>
+          </div>
+          <div class="small text-muted">
+            Estado: <span id="activityMessage">Iniciando...</span>
+          </div>
+        </div>
+
+        <div id="globalTotals" class="mb-4"></div>
+
+        <div id="filtersActive" class="d-flex gap-2 mb-3 flex-wrap"></div>
+
+        <div class="card p-3 mb-4">
+          <div class="row g-3 align-items-center">
+            <div class="col-md-9">
+              <div class="input-group">
+                <span
+                  class="input-group-text bg-dark border-secondary text-secondary"
+                  >🔍</span
+                >
+                <input
+                  id="generalSearch"
+                  class="form-control"
+                  placeholder="Escribe para buscar (PO, Estilo, Cliente, Material...)"
+                />
+                <button
+                  class="btn btn-outline-secondary"
+                  type="button"
+                  id="btnKeepSearch"
+                  title="Mantener filtro activo"
+                >
+                  Mantener
+                </button>
+              </div>
+            </div>
+            <div class="col-md-3">
+              <button
+                class="btn btn-success w-100 fw-bold"
+                onclick="exportarExcelGeneral()"
+              >
+                Descargar Excel
+              </button>
+            </div>
+          </div>
+        </div>
+
+        <div
+          id="dashboard"
+          class="row row-cols-1 row-cols-md-2 row-cols-lg-3 row-cols-xl-4 g-3 mb-4"
+        >
+          <div class="col">
+            <div class="card p-3">
+              <span class="text-muted">Cargando...</span>
+            </div>
+          </div>
+        </div>
+
+        <div class="card p-0 overflow-hidden">
+          <div class="table-responsive" style="max-height: 600px">
+            <table
+              class="table table-striped table-hover mb-0"
+              id="tablaGeneral"
+            >
+              <thead>
+                <tr>
+                  <th>Customer</th>
+                  <th>PO</th>
+                  <th>SO</th>
+                  <th>Style</th>
+                  <th>Cut</th>
+                  <th>Color</th>
+                  <th>Size</th>
+                  <th>Qty</th>
+                  <th>Plant</th>
+                  <th>Material</th>
+                  <th>Price</th>
+                  <th>XFD</th>
+                  <th>Address</th>
+                </tr>
+              </thead>
+              <tbody id="tablaGeneralBody"></tbody>
+            </table>
+          </div>
+
+          <div
+            class="p-2 border-top border-secondary d-flex justify-content-between align-items-center bg-dark"
+          >
+            <div class="btn-group">
+              <button class="btn btn-sm btn-outline-secondary" id="btnFirst">
+                «
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" id="btnPrev">
+                ‹
+              </button>
+              <button
+                class="btn btn-sm btn-outline-secondary disabled text-light border-secondary"
+              >
+                <span id="pageNum">1</span> / <span id="pageCount">1</span>
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" id="btnNext">
+                ›
+              </button>
+              <button class="btn btn-sm btn-outline-secondary" id="btnLast">
+                »
+              </button>
+            </div>
+            <select
+              id="pageSize"
+              class="form-select form-select-sm"
+              style="width: 80px"
+            >
+              <option selected>25</option>
+              <option>50</option>
+              <option>100</option>
+            </select>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <script>
+      /* =======================================================
+         1. CONFIGURACIÓN
+         ======================================================= */
+      const supabaseClient = window.supabase.createClient(
+        "https://aawqcgapxdqemjqzwcsy.supabase.co",
+        "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss"
+      );
+
+      /* Variables Globales */
+      let allData = [];
+      let searchData = [];
+      let activeData = [];
+
+      // Filtros
+      let currentCategory = null;
+      let currentClient = null;
+      let currentXfdBucket = null;
+      let keepSearch = false;
+      let searchTokens = [];
+      let currentSearch = "";
+
+      // Variables Carga
+      let isLoading = false,
+        totalCount = null,
+        loadStartTime = null,
+        lastUpdateTime = null,
+        lastLoadedCount = 0;
+
+      /* UI Helpers */
+      const nf = new Intl.NumberFormat("es-SV", { maximumFractionDigits: 2 });
+      const fmt = (n) => nf.format(Number(n || 0));
+      const pct = (n, d) => (d ? ((n * 100) / d).toFixed(1) : "0.0");
+      const nowStamp = () =>
+        new Date().toLocaleTimeString("es-SV", {
+          hour: "2-digit",
+          minute: "2-digit",
+        });
+
+      /* =================== FUNCIONES HELPER (Debounce) =================== */
+      // Esta función es la clave para la búsqueda "mientras escribes"
+      function debounce(func, wait) {
+        let timeout;
+        return function (...args) {
+          const context = this;
+          clearTimeout(timeout);
+          timeout = setTimeout(() => func.apply(context, args), wait);
+        };
+      }
+
+      /* =================== FUNCIONES DE CARGA =================== */
+      function showLoading() {
+        isLoading = true;
+        document.getElementById("btnRefresh").disabled = true;
+        document.getElementById("refreshSpin").classList.remove("d-none");
+        document.getElementById("loadContainer").classList.remove("d-none");
+        document.getElementById("loadingBarFill").style.width = "0%";
+        loadStartTime = Date.now();
+        lastUpdateTime = Date.now();
+        lastLoadedCount = 0;
+      }
+
+      function updateProgress(loaded) {
+        const now = Date.now();
+        if (now - lastUpdateTime > 500) {
+          if (totalCount) {
+            const p = Math.min(100, Math.round((loaded / totalCount) * 100));
+            document.getElementById("loadingBarFill").style.width = `${p}%`;
+            document.getElementById("progressPercent").textContent = `${p}%`;
+          }
+          lastUpdateTime = now;
+        }
+      }
+
+      function hideLoading() {
+        isLoading = false;
+        document.getElementById("btnRefresh").disabled = false;
+        document.getElementById("refreshSpin").classList.add("d-none");
+        setTimeout(
+          () =>
+            document.getElementById("loadContainer").classList.add("d-none"),
+          1000
+        );
+      }
+
+      /* =================== SUPABASE DATA =================== */
+      async function cargarDatos() {
+        if (isLoading) return;
+        showLoading();
+
+        try {
+          document.getElementById("activityMessage").textContent =
+            "Conectando...";
+          const { count } = await supabaseClient
+            .from("SalesOrder")
+            .select("*", { count: "exact", head: true });
+          totalCount = count || 0;
+
+          const batchSize = 1000;
+          let offset = 0;
+          allData = [];
+          document.getElementById("activityMessage").textContent =
+            "Descargando...";
+
+          while (true) {
+            const { data, error } = await supabaseClient
+              .from("SalesOrder")
+              .select("*")
+              .range(offset, offset + batchSize - 1);
+
+            if (error) throw error;
+            if (!data || data.length === 0) break;
+
+            allData.push(...data);
+            updateProgress(allData.length);
+
+            offset += batchSize;
+            if (data.length < batchSize) break;
+            if (offset > 50000) break;
+          }
+
+          document.getElementById("activityMessage").textContent = "Listo.";
+          resetFilters();
+          applyFiltersAndRender();
+        } catch (error) {
+          console.error(error);
+          alert("Error: " + error.message);
+        } finally {
+          hideLoading();
+        }
+      }
+
+      /* =================== LÓGICA DE NEGOCIO =================== */
+      function diasHasta(fechaStr) {
+        if (!fechaStr) return null;
+        const d = new Date(fechaStr);
+        if (isNaN(d)) return null;
+        const hoy = new Date();
+        hoy.setHours(0, 0, 0, 0);
+        d.setHours(0, 0, 0, 0);
+        return Math.round((d - hoy) / 86400000);
+      }
+
+      function bucketXFD(days) {
+        if (days === null || days < 0) return null;
+        if (days <= 10) return "rojo";
+        if (days <= 15) return "anaranjado";
+        if (days <= 30) return "amarillo";
+        return "verde";
+      }
+
+      function buildPOFlags(rows) {
+        const flags = {};
+        for (const r of rows) {
+          const c = r["CUSTOMER"]?.toString().trim() || "Sin Cliente";
+          const p = r["PO"]?.toString().trim() || "Sin PO";
+          if (!flags[c]) flags[c] = {};
+          if (!flags[c][p])
+            flags[c][p] = { hasSO: false, hasCut: false, hasMat: false };
+
+          if (r["SALES ORDER"]) flags[c][p].hasSO = true;
+          if (r["CUT"]) flags[c][p].hasCut = true;
+          if (r["MATERIAL"]) flags[c][p].hasMat = true;
+        }
+        return flags;
+      }
+
+      /* =================== FILTROS =================== */
+      function resetFilters() {
+        currentSearch = "";
+        document.getElementById("generalSearch").value = "";
+        searchTokens = [];
+        currentClient = null;
+        currentCategory = null;
+        currentXfdBucket = null;
+      }
+
+      function applyFiltersAndRender() {
+        let rows = [...allData];
+
+        // 1. Busqueda (Dinámica + Tokens)
+        let tokens = [...searchTokens];
+        if (currentSearch) tokens.push(currentSearch.toLowerCase());
+
+        if (tokens.length) {
+          const fields = [
+            "CUSTOMER",
+            "PO",
+            "SALES ORDER",
+            "STYLE",
+            "CUT",
+            "COLOR",
+            "SIZE",
+            "MATERIAL",
+            "XFD",
+          ];
+          rows = rows.filter((r) => {
+            return tokens.every((token) =>
+              fields.some((k) =>
+                String(r[k] || "")
+                  .toLowerCase()
+                  .includes(token)
+              )
+            );
+          });
+        }
+
+        // 2. Cliente
+        if (currentClient)
+          rows = rows.filter(
+            (r) =>
+              (r["CUSTOMER"]?.toString().trim() || "Sin Cliente") ===
+              currentClient
+          );
+
+        // 3. Categoria PO
+        if (currentCategory) {
+          const flags = buildPOFlags(rows);
+          rows = rows.filter((r) => {
+            const c = r["CUSTOMER"]?.toString().trim() || "Sin Cliente";
+            const p = r["PO"]?.toString().trim() || "Sin PO";
+            const f = flags[c][p];
+
+            if (currentCategory === "completos")
+              return f.hasSO && f.hasCut && f.hasMat;
+            if (currentCategory === "sinSOConMat")
+              return !f.hasSO && f.hasCut && f.hasMat;
+            if (currentCategory === "sinCorte") return !f.hasCut;
+            if (currentCategory === "sinMaterial") return f.hasCut && !f.hasMat;
+            return false;
+          });
+        }
+
+        // 4. XFD
+        if (currentXfdBucket) {
+          rows = rows.filter((r) => {
+            const isInc = !(r["SALES ORDER"] && r["CUT"] && r["MATERIAL"]);
+            const dias = diasHasta(r["XFD"]);
+            return isInc && bucketXFD(dias) === currentXfdBucket;
+          });
+        }
+
+        activeData = rows;
+        currentPage = 1;
+        renderUI(activeData);
+        updateHeaderVisuals();
+      }
+
+      // Actualizar visualmente los badges del header cuando hay filtro activo
+      function updateHeaderVisuals() {
+        const buckets = ["verde", "amarillo", "anaranjado", "rojo"];
+        const map = {
+          verde: "head-xfd-green",
+          amarillo: "head-xfd-yellow",
+          anaranjado: "head-xfd-orange",
+          rojo: "head-xfd-red",
+        };
+
+        buckets.forEach((b) => {
+          const el = document.getElementById(map[b]);
+          if (currentXfdBucket && currentXfdBucket !== b) {
+            el.classList.add("badge-dimmed");
+          } else {
+            el.classList.remove("badge-dimmed");
+          }
+        });
+      }
+
+      /* =================== AGREGACIÓN Y RENDER =================== */
+      function processStats(rows) {
+        const stats = {
+          clientes: {},
+          global: {
+            tot: 0,
+            comp: 0,
+            noSO: 0,
+            noCut: 0,
+            noMat: 0,
+            xfd: { v: 0, y: 0, o: 0, r: 0 },
+          },
+        };
+        const map = {};
+
+        // Preprocesar por PO única
+        rows.forEach((r) => {
+          const c = r["CUSTOMER"]?.toString().trim() || "Sin Cliente";
+          const p = r["PO"]?.toString().trim() || "Sin PO";
+          if (!map[c]) map[c] = {};
+          if (!map[c][p]) map[c][p] = { so: 0, cu: 0, ma: 0, minXFD: 9999 };
+
+          if (r["SALES ORDER"]) map[c][p].so = 1;
+          if (r["CUT"]) map[c][p].cu = 1;
+          if (r["MATERIAL"]) map[c][p].ma = 1;
+
+          const d = diasHasta(r["XFD"]);
+          if (d !== null && d >= 0 && d < map[c][p].minXFD)
+            map[c][p].minXFD = d;
+        });
+
+        // Calcular totales
+        Object.keys(map).forEach((cli) => {
+          stats.clientes[cli] = {
+            tot: 0,
+            comp: 0,
+            noSO: 0,
+            noCut: 0,
+            noMat: 0,
+            xfd: { v: 0, y: 0, o: 0, r: 0 },
+          };
+          Object.values(map[cli]).forEach((po) => {
+            const isComp = po.so && po.cu && po.ma;
+
+            // Contadores globales y cliente
+            stats.global.tot++;
+            stats.clientes[cli].tot++;
+            if (isComp) {
+              stats.global.comp++;
+              stats.clientes[cli].comp++;
+            }
+
+            if (!po.so && po.cu && po.ma) {
+              stats.global.noSO++;
+              stats.clientes[cli].noSO++;
+            }
+            if (!po.cu) {
+              stats.global.noCut++;
+              stats.clientes[cli].noCut++;
+            }
+            if (po.cu && !po.ma) {
+              stats.global.noMat++;
+              stats.clientes[cli].noMat++;
+            }
+
+            // XFD (solo pendientes) - ACUMULADOR GLOBAL Y POR CLIENTE
+            if (!isComp && po.minXFD !== 9999) {
+              const b = bucketXFD(po.minXFD);
+              if (b === "verde") {
+                stats.clientes[cli].xfd.v++;
+                stats.global.xfd.v++;
+              }
+              if (b === "amarillo") {
+                stats.clientes[cli].xfd.y++;
+                stats.global.xfd.y++;
+              }
+              if (b === "anaranjado") {
+                stats.clientes[cli].xfd.o++;
+                stats.global.xfd.o++;
+              }
+              if (b === "rojo") {
+                stats.clientes[cli].xfd.r++;
+                stats.global.xfd.r++;
+              }
+            }
+          });
+        });
+        return stats;
+      }
+
+      function renderUI(rows) {
+        const { clientes, global } = processStats(rows);
+
+        document.getElementById("badgeRows").textContent =
+          rows.length.toLocaleString();
+
+        // ACTUALIZAR HEADER XFD (Con formato igual a las tarjetas)
+        document.getElementById(
+          "head-xfd-red"
+        ).textContent = `10d: ${global.xfd.r}`;
+        document.getElementById(
+          "head-xfd-orange"
+        ).textContent = `15d: ${global.xfd.o}`;
+        document.getElementById(
+          "head-xfd-yellow"
+        ).textContent = `30d: ${global.xfd.y}`;
+        document.getElementById(
+          "head-xfd-green"
+        ).textContent = `>30d: ${global.xfd.v}`;
+
+        // Render Totales Globales
+        const p = (n) =>
+          global.tot ? ((n / global.tot) * 100).toFixed(1) : "0.0";
+        document.getElementById("globalTotals").innerHTML = `
+              <div class="card p-3">
+                  <h6 class="text-white mb-3">Totales Globales (Ordenes: ${
+                    global.tot
+                  })</h6>
+                  <div class="row g-2">
+                      <div class="col-md-3"><button class="btn btn-outline-success w-100 text-start" onclick="setFilter('cat','completos')">✅ Completas: <strong>${
+                        global.comp
+                      }</strong> (${p(global.comp)}%)</button></div>
+                      <div class="col-md-3"><button class="btn btn-outline-danger w-100 text-start" onclick="setFilter('cat','sinSOConMat')">❌ Sin SO: <strong>${
+                        global.noSO
+                      }</strong> (${p(global.noSO)}%)</button></div>
+                      <div class="col-md-3"><button class="btn btn-outline-warning w-100 text-start" onclick="setFilter('cat','sinCorte')">✂️ Sin Corte: <strong>${
+                        global.noCut
+                      }</strong> (${p(global.noCut)}%)</button></div>
+                      <div class="col-md-3"><button class="btn btn-outline-primary w-100 text-start" onclick="setFilter('cat','sinMaterial')">📦 Sin Material: <strong>${
+                        global.noMat
+                      }</strong> (${p(global.noMat)}%)</button></div>
+                  </div>
+              </div>
+          `;
+
+        // Render Dashboard Cards
+        const dash = document.getElementById("dashboard");
+        dash.innerHTML = "";
+        Object.entries(clientes)
+          .sort((a, b) => b[1].tot - a[1].tot)
+          .forEach(([cli, s]) => {
+            const html = `
+                <div class="col">
+                    <div class="card p-3 h-100">
+                        <div class="d-flex justify-content-between mb-2">
+                            <h6 class="fw-bold text-white text-truncate" title="${cli}" style="max-width:70%; cursor:pointer" onclick="setFilter('cli','${cli}')">${cli}</h6>
+                            <span class="badge bg-secondary">${s.tot} POs</span>
+                        </div>
+                        
+                        <div class="kpi kpi-ok" onclick="setFilter('multi','${cli}','completos')">
+                            <span class="label">✅ Completas</span> <span class="value">${s.comp}</span>
+                        </div>
+                        <div class="kpi kpi-nosales" onclick="setFilter('multi','${cli}','sinSOConMat')">
+                            <span class="label">❌ Sin SO</span> <span class="value">${s.noSO}</span>
+                        </div>
+                        <div class="kpi kpi-nocut" onclick="setFilter('multi','${cli}','sinCorte')">
+                            <span class="label">✂️ Sin Corte</span> <span class="value">${s.noCut}</span>
+                        </div>
+                        <div class="kpi kpi-nomaterial" onclick="setFilter('multi','${cli}','sinMaterial')">
+                            <span class="label">📦 Sin Mat</span> <span class="value">${s.noMat}</span>
+                        </div>
+
+                        <div class="mt-auto pt-3 border-top border-secondary">
+                            <small class="text-muted d-block mb-1">Pendientes XFD:</small>
+                            <div class="d-flex gap-1 flex-wrap">
+                                <span class="badge-xfd badge-green flex-fill" onclick="setFilter('xfd','${cli}','verde')">>30d: ${s.xfd.v}</span>
+                                <span class="badge-xfd badge-yellow flex-fill" onclick="setFilter('xfd','${cli}','amarillo')">30d: ${s.xfd.y}</span>
+                                <span class="badge-xfd badge-orange flex-fill" onclick="setFilter('xfd','${cli}','anaranjado')">15d: ${s.xfd.o}</span>
+                                <span class="badge-xfd badge-red flex-fill" onclick="setFilter('xfd','${cli}','rojo')">10d: ${s.xfd.r}</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>`;
+            dash.insertAdjacentHTML("beforeend", html);
+          });
+
+        // Render Chips
+        const chipsContainer = document.getElementById("filtersActive");
+        chipsContainer.innerHTML = "";
+        if (currentClient)
+          chipsContainer.innerHTML += `<span class="badge bg-info text-dark p-2" style="cursor:pointer" onclick="setFilter('cli',null)">Cliente: ${currentClient} ✖</span>`;
+        if (currentCategory)
+          chipsContainer.innerHTML += `<span class="badge bg-warning text-dark p-2" style="cursor:pointer" onclick="setFilter('cat',null)">Categoria: ${currentCategory} ✖</span>`;
+        if (currentXfdBucket)
+          chipsContainer.innerHTML += `<span class="badge bg-danger text-dark p-2" style="cursor:pointer" onclick="setFilter('xfd_global',null)">XFD: ${currentXfdBucket} ✖</span>`;
+        if (chipsContainer.innerHTML)
+          chipsContainer.innerHTML += `<button class="btn btn-sm btn-link text-muted" onclick="resetFilters();applyFiltersAndRender()">Limpiar Todo</button>`;
+
+        renderTable(rows);
+      }
+
+      // Sistema de Filtros
+      window.setFilter = (type, val1, val2) => {
+        if (type === "cli")
+          currentClient = currentClient === val1 ? null : val1;
+        if (type === "cat") {
+          currentCategory = currentCategory === val1 ? null : val1;
+          currentClient = null;
+        }
+        if (type === "multi") {
+          if (currentClient === val1 && currentCategory === val2) {
+            currentClient = null;
+            currentCategory = null;
+          } else {
+            currentClient = val1;
+            currentCategory = val2;
+          }
+        }
+        if (type === "xfd") {
+          if (currentClient === val1 && currentXfdBucket === val2) {
+            currentClient = null;
+            currentXfdBucket = null;
+          } else {
+            currentClient = val1;
+            currentXfdBucket = val2;
+          }
+        }
+        if (type === "xfd_global") {
+          // Toggle: Si ya está seleccionado, lo quita; si no, lo pone.
+          currentXfdBucket = currentXfdBucket === val1 ? null : val1;
+          if (currentXfdBucket) {
+            currentClient = null;
+            currentCategory = null;
+          }
+        }
+
+        applyFiltersAndRender();
+      };
+
+      /* =================== TABLA =================== */
+      let currentPage = 1,
+        pageSize = 25;
+
+      function renderTable(rows) {
+        const tbody = document.getElementById("tablaGeneralBody");
+        tbody.innerHTML = "";
+        const start = (currentPage - 1) * pageSize;
+        const end = start + pageSize;
+
+        rows.slice(start, end).forEach((r) => {
+          const tr = `
+                <tr>
+                    <td><strong class="text-white">${
+                      r["CUSTOMER"] || ""
+                    }</strong></td>
+                    <td>${r["PO"] || ""}</td>
+                    <td>${r["SALES ORDER"] || ""}</td>
+                    <td>${r["STYLE"] || ""}</td>
+                    <td>${r["CUT"] || ""}</td>
+                    <td>${r["COLOR"] || ""}</td>
+                    <td>${r["SIZE"] || ""}</td>
+                    <td class="text-neon-blue fw-bold">${r["QTY"] || 0}</td>
+                    <td>${r["PLANT"] || ""}</td>
+                    <td>${r["MATERIAL"] || ""}</td>
+                    <td>${r["SALES PRICE"] || ""}</td>
+                    <td>${r["XFD"] || ""}</td>
+                    <td>${r["ADDRESS"] || ""}</td>
+                </tr>`;
+          tbody.insertAdjacentHTML("beforeend", tr);
+        });
+
+        // Paginador
+        document.getElementById("pageNum").textContent = currentPage;
+        document.getElementById("pageCount").textContent =
+          Math.ceil(rows.length / pageSize) || 1;
+
+        document.getElementById("btnPrev").disabled = currentPage === 1;
+        document.getElementById("btnNext").disabled =
+          currentPage >= Math.ceil(rows.length / pageSize);
+      }
+
+      /* =================== EVENTOS & BÚSQUEDA DINÁMICA =================== */
+      document.getElementById("btnNext").onclick = () => {
+        currentPage++;
+        renderTable(activeData);
+      };
+      document.getElementById("btnPrev").onclick = () => {
+        currentPage--;
+        renderTable(activeData);
+      };
+      document.getElementById("btnFirst").onclick = () => {
+        currentPage = 1;
+        renderTable(activeData);
+      };
+      document.getElementById("btnLast").onclick = () => {
+        currentPage = Math.ceil(activeData.length / pageSize);
+        renderTable(activeData);
+      };
+      document.getElementById("pageSize").onchange = (e) => {
+        pageSize = parseInt(e.target.value);
+        currentPage = 1;
+        renderTable(activeData);
+      };
+
+      // Búsqueda Dinámica con Debounce
+      const handleSearch = debounce((e) => {
+        const val = e.target.value.trim().toLowerCase();
+
+        // Si "Mantener" (Keep Search) está activado y se presiona ENTER, añadimos el token
+        // Nota: El evento 'input' no captura la tecla Enter, pero si queremos añadir tokens
+        // seguimos necesitando 'keydown'. Aquí solo actualizamos currentSearch visualmente.
+        if (!keepSearch) {
+          currentSearch = val;
+          applyFiltersAndRender();
+        }
+      }, 300); // Espera 300ms después de que el usuario deje de escribir
+
+      // Evento para escribir
+      document
+        .getElementById("generalSearch")
+        .addEventListener("input", handleSearch);
+
+      // Evento para Enter (Solo útil si se usa "Mantener Filtro")
+      document
+        .getElementById("generalSearch")
+        .addEventListener("keydown", (e) => {
+          if (e.key === "Enter" && keepSearch && e.target.value) {
+            searchTokens.push(e.target.value.toLowerCase());
+            e.target.value = "";
+            currentSearch = "";
+            applyFiltersAndRender();
+          }
+        });
+
+      document.getElementById("btnKeepSearch").onclick = function () {
+        keepSearch = !keepSearch;
+        this.classList.toggle("btn-success");
+        this.classList.toggle("btn-outline-secondary");
+      };
+
+      /* Export Excel */
+      function exportarExcelGeneral() {
+        if (!activeData.length) return alert("Sin datos");
+        const ws = XLSX.utils.json_to_sheet(activeData);
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+        XLSX.writeFile(wb, "CustomerService_Reporte.xlsx");
+      }
+
+      // Iniciar
+      cargarDatos();
+    </script>
+  </body>
+</html>

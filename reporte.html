@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Extractor XLSM Múltiple</title>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <style>
+      body {
+        margin: 0;
+        background: #0f172a;
+        color: #e5e7eb;
+        font-family: Inter, system-ui, sans-serif;
+        min-height: 100vh;
+      }
+      header {
+        padding: 20px;
+        border-bottom: 1px solid #1f2937;
+      }
+      .title {
+        font-size: 20px;
+        font-weight: 700;
+      }
+      .sub {
+        font-size: 12px;
+        color: #9ca3af;
+      }
+      main {
+        padding: 20px;
+        max-width: 1100px;
+        margin: auto;
+        display: grid;
+        gap: 16px;
+      }
+      .card {
+        background: #111827;
+        border: 1px solid #1f2937;
+        border-radius: 12px;
+        padding: 16px;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      .btn {
+        border: 1px solid #374151;
+        background: #1f2937;
+        color: #e5e7eb;
+        border-radius: 8px;
+        padding: 10px 14px;
+        cursor: pointer;
+        font-weight: 600;
+      }
+      .btn.primary {
+        background: #06b6d4;
+        border-color: transparent;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        background: #1e293b;
+      }
+      th,
+      td {
+        padding: 8px 10px;
+        border: 1px solid #334155;
+        font-size: 13px;
+      }
+      th {
+        background: #0f172a;
+        text-align: left;
+      }
+      .mono {
+        font-family: monospace;
+      }
+    </style>
+  </head>
+  <body>
+    <header>
+      <div class="title">Extractor XLSM Múltiple – BODY + ACTPO</div>
+      <div class="sub">
+        Carga varios archivos, se procesan todos y se genera un resumen.
+      </div>
+    </header>
+
+    <main>
+      <section class="card">
+        <label for="file" class="btn">Seleccionar archivos</label>
+        <input id="file" type="file" multiple accept=".xls,.xlsx,.xlsm" />
+        <button id="downloadCsv" class="btn">Descargar CSV</button>
+        <button id="downloadXlsx" class="btn primary">Descargar XLSX</button>
+      </section>
+
+      <section class="card">
+        <table>
+          <thead>
+            <tr>
+              <th>Archivo</th>
+              <th>Hoja</th>
+              <th>Cliente (F2)</th>
+              <th>Corte (D2)</th>
+              <th>Estilo (D3)</th>
+              <th>Color (D4)</th>
+              <th>ACTPO (L5)</th>
+            </tr>
+          </thead>
+          <tbody id="tbody">
+            <tr>
+              <td colspan="7">Sin datos aún.</td>
+            </tr>
+          </tbody>
+        </table>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const fileInput = document.getElementById("file");
+        const tbody = document.getElementById("tbody");
+        const btnCsv = document.getElementById("downloadCsv");
+        const btnXlsx = document.getElementById("downloadXlsx");
+
+        let allRows = [];
+
+        function normalizeBody(val) {
+          if (!val) return "";
+          return String(val).toUpperCase().replace(/\s+/g, "").trim();
+        }
+
+        function readCell(ws, addr) {
+          const cell = ws ? ws[addr] : undefined;
+          return cell ? cell.v : "";
+        }
+
+        function renderTable() {
+          tbody.innerHTML = "";
+          if (!allRows.length) {
+            tbody.innerHTML = '<tr><td colspan="7">Sin datos aún.</td></tr>';
+            return;
+          }
+          allRows.forEach((r) => {
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+        <td class="mono">${r.file}</td>
+        <td class="mono">${r.sheet}</td>
+        <td>${r.cliente || ""}</td>
+        <td>${r.corte || ""}</td>
+        <td>${r.estilo || ""}</td>
+        <td>${r.color || ""}</td>
+        <td class="mono">${r.actpo || ""}</td>`;
+            tbody.appendChild(tr);
+          });
+        }
+
+        async function processFile(file) {
+          const ab = await file.arrayBuffer();
+          const wb = XLSX.read(ab, { type: "array" });
+          const names = wb.SheetNames;
+          const cutting =
+            wb.Sheets["Cutting Plan"] ||
+            wb.Sheets["CUTTING PLAN"] ||
+            wb.Sheets["Cutting plan"];
+          const actpo = cutting ? readCell(cutting, "L5") : "";
+
+          names.forEach((name) => {
+            if (/^cutting\s*plan$/i.test(name)) return;
+            const ws = wb.Sheets[name];
+            if (!ws) return;
+            if (normalizeBody(readCell(ws, "D6")) === "BODY") {
+              allRows.push({
+                file: file.name,
+                sheet: name,
+                cliente: readCell(ws, "F2"),
+                corte: readCell(ws, "D2"),
+                estilo: readCell(ws, "D3"),
+                color: readCell(ws, "D4"),
+                actpo: actpo,
+              });
+            }
+          });
+        }
+
+        fileInput.addEventListener("change", async (e) => {
+          allRows = [];
+          const files = Array.from(e.target.files);
+          for (const f of files) {
+            await processFile(f);
+          }
+          renderTable();
+        });
+
+        function toCSV() {
+          const header = [
+            "Archivo",
+            "Hoja",
+            "Cliente",
+            "Corte",
+            "Estilo",
+            "Color",
+            "ACTPO",
+          ];
+          const rows = [header].concat(
+            allRows.map((r) => [
+              r.file,
+              r.sheet,
+              r.cliente,
+              r.corte,
+              r.estilo,
+              r.color,
+              r.actpo,
+            ])
+          );
+          return rows
+            .map((r) =>
+              r
+                .map((v) => `"${(v || "").toString().replace(/"/g, '""')}"`)
+                .join(",")
+            )
+            .join("\n");
+        }
+
+        btnCsv.addEventListener("click", () => {
+          const csv = toCSV();
+          const blob = new Blob([csv], { type: "text/csv" });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "resultado.csv";
+          a.click();
+        });
+
+        btnXlsx.addEventListener("click", () => {
+          const data = [
+            ["Archivo", "Hoja", "Cliente", "Corte", "Estilo", "Color", "ACTPO"],
+          ].concat(
+            allRows.map((r) => [
+              r.file,
+              r.sheet,
+              r.cliente,
+              r.corte,
+              r.estilo,
+              r.color,
+              r.actpo,
+            ])
+          );
+          const ws = XLSX.utils.aoa_to_sheet(data);
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Resumen");
+          const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+          const blob = new Blob([out], {
+            type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+          });
+          const a = document.createElement("a");
+          a.href = URL.createObjectURL(blob);
+          a.download = "resultado.xlsx";
+          a.click();
+        });
+      })();
+    </script>
+  </body>
+</html>

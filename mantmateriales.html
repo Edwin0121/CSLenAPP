@@ -1,0 +1,1609 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Mantenimiento de Materiales</title>
+
+    <!-- UI -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+
+    <!-- Libs -->
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+
+    <style>
+      body {
+        padding: 16px;
+      }
+      header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+        color: #111;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      header h1,
+      header .small {
+        color: #111;
+      }
+      header .badge {
+        color: #111;
+        background: rgba(0, 0, 0, 0.06);
+        border-color: rgba(0, 0, 0, 0.25);
+      }
+      .toolbar {
+        display: flex;
+        gap: 12px;
+        align-items: center;
+        justify-content: space-between;
+        flex-wrap: wrap;
+      }
+      .toolbar .left,
+      .toolbar .right {
+        display: flex;
+        gap: 8px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .small {
+        font-size: 12px;
+        color: #475569;
+      }
+      .dropzone {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 16px;
+        background: #fff;
+        cursor: pointer;
+        transition: 0.2s;
+      }
+      .dropzone.dragover {
+        background: #eef2ff;
+        border-color: #93c5fd;
+      }
+      .table-wrap {
+        margin-top: 8px;
+        overflow: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #e5e7eb;
+        padding: 8px 10px;
+        text-align: left;
+        vertical-align: middle;
+      }
+      th {
+        background: #f7f7f7;
+        font-weight: 700;
+        position: sticky;
+        top: 0;
+        z-index: 1;
+      }
+      td input.form-control {
+        height: 30px;
+        padding: 2px 6px;
+        font-size: 13px;
+      }
+      .mono {
+        font-family: ui-monospace, SFMono-Regular, Menlo, Consolas, monospace;
+      }
+      .muted {
+        color: #64748b;
+      }
+      .shadow-soft {
+        box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+      }
+      .chip {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+        background: #f1f5f9;
+        padding: 6px 10px;
+        border-radius: 999px;
+        font-size: 12px;
+        border: 1px solid #e2e8f0;
+        color: #0f172a;
+      }
+      .chip .x {
+        cursor: pointer;
+        margin-left: 6px;
+      }
+      .spinner {
+        width: 1rem;
+        height: 1rem;
+        border: 2px solid #cbd5e1;
+        border-top-color: #2563eb;
+        border-radius: 50%;
+        display: inline-block;
+        animation: spin 0.8s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .sticky-tools {
+        position: sticky;
+        bottom: 0;
+        background: #fff;
+        border-top: 1px solid #e5e7eb;
+        padding: 10px;
+        display: flex;
+        gap: 10px;
+        justify-content: flex-end;
+      }
+      .filters-grid {
+        display: grid;
+        grid-template-columns: repeat(6, minmax(160px, 1fr));
+        gap: 8px;
+      }
+      .btn-icon {
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .pager-top {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        margin-bottom: 6px;
+        flex-wrap: wrap;
+      }
+      .pager-controls {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+    </style>
+  </head>
+  <body class="stretch-full">
+    <header class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1 class="m-0">Mantenimiento de Materiales</h1>
+        <div class="badge">
+          CRUD + Actualización por Excel (hoja “DATA*”) · match (cut, style,
+          color, size) · color en MAYÚSCULAS
+        </div>
+      </div>
+      <div class="small">materiales_mantenimiento.html</div>
+    </header>
+
+    <main class="container">
+      <!-- Toolbar -->
+      <section class="card p-3 shadow-soft">
+        <div class="toolbar">
+          <div class="left">
+            <button
+              id="refreshBtn"
+              class="btn btn-sm btn-outline-secondary btn-icon"
+            >
+              <span
+                class="spinner-border spinner-border-sm d-none"
+                id="spinLoad"
+              ></span>
+              Recargar
+            </button>
+
+            <div class="input-group">
+              <span class="input-group-text">Buscar</span>
+              <input
+                id="search"
+                class="form-control"
+                placeholder="Texto libre…"
+              />
+              <button id="lockSearchBtn" class="btn btn-outline-primary">
+                Mantener
+              </button>
+            </div>
+            <div id="chips" class="d-flex gap-2 flex-wrap"></div>
+
+            <div class="dropdown">
+              <button
+                class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Ordenar
+              </button>
+              <ul class="dropdown-menu small">
+                <li>
+                  <a class="dropdown-item sort" data-key="customer">Cliente</a>
+                </li>
+                <li><a class="dropdown-item sort" data-key="cut">Corte</a></li>
+                <li>
+                  <a class="dropdown-item sort" data-key="style">Estilo</a>
+                </li>
+                <li>
+                  <a class="dropdown-item sort" data-key="colorname">Color</a>
+                </li>
+                <li><a class="dropdown-item sort" data-key="size">Talla</a></li>
+                <li>
+                  <a class="dropdown-item sort" data-key="material">Material</a>
+                </li>
+                <li>
+                  <a class="dropdown-item sort" data-key="fechaing"
+                    >Fecha Ing.</a
+                  >
+                </li>
+              </ul>
+            </div>
+
+            <button id="addRowBtn" class="btn btn-sm btn-success btn-icon">
+              + Nueva fila
+            </button>
+            <button id="exportBtn" class="btn btn-sm btn-primary">
+              Exportar Excel
+            </button>
+
+            <span class="chip"
+              >Filas: <span id="statRows" class="mono">0</span></span
+            >
+            <span id="status" class="chip">Listo</span>
+          </div>
+
+          <div class="right">
+            <!-- Actualización desde Excel DATA* (existente) -->
+            <div class="dropzone" id="dzExcel">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-primary" type="button">
+                  Actualizar desde Excel
+                </button>
+                <span class="small">hoja “DATA*”</span>
+              </div>
+              <input
+                id="excelInput"
+                type="file"
+                multiple
+                accept=".xls,.xlsx,.xlsm"
+                hidden
+              />
+            </div>
+            <div class="form-check ms-2">
+              <input
+                class="form-check-input"
+                type="checkbox"
+                id="createMissing"
+                checked
+              />
+              <label for="createMissing" class="form-check-label small"
+                >Crear si no existe</label
+              >
+            </div>
+
+            <!-- NUEVO: Actualización vía Formato de Carga (CLIENTE, ESTILO, CORTE, COLOR, TALLA, SKU) -->
+            <div class="dropzone" id="dzFormato">
+              <div class="d-flex align-items-center gap-2">
+                <button class="btn btn-sm btn-outline-primary" type="button">
+                  Actualizar vía Formato (XLSX)
+                </button>
+                <span class="small"
+                  >Hoja 1, columnas: CLIENTE, ESTILO, CORTE, COLOR, TALLA,
+                  SKU</span
+                >
+              </div>
+              <input
+                id="fmtInput"
+                type="file"
+                multiple
+                accept=".xlsx,.xls"
+                hidden
+              />
+            </div>
+
+            <div class="dropdown ms-2">
+              <button
+                class="btn btn-sm btn-outline-secondary dropdown-toggle"
+                data-bs-toggle="dropdown"
+              >
+                Copiar columna visible
+              </button>
+              <ul class="dropdown-menu small" id="copyMenu">
+                <li>
+                  <a class="dropdown-item copy-col" data-col="customer"
+                    >Cliente</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item copy-col" data-col="cut">Corte</a>
+                </li>
+                <li>
+                  <a class="dropdown-item copy-col" data-col="style">Estilo</a>
+                </li>
+                <li>
+                  <a class="dropdown-item copy-col" data-col="colorname"
+                    >Color</a
+                  >
+                </li>
+                <li>
+                  <a class="dropdown-item copy-col" data-col="size">Talla</a>
+                </li>
+                <li>
+                  <a class="dropdown-item copy-col" data-col="material"
+                    >Material</a
+                  >
+                </li>
+              </ul>
+            </div>
+            <button id="copyMaterialBtn" class="btn btn-sm btn-outline-primary">
+              Copiar MATERIAL (visibles)
+            </button>
+          </div>
+        </div>
+
+        <!-- Filtros avanzados -->
+        <div class="mt-3">
+          <div class="d-flex align-items-center justify-content-between">
+            <div class="small muted">
+              Filtros avanzados (AND entre columnas)
+            </div>
+            <div class="d-flex gap-2">
+              <button
+                id="clearFiltersBtn"
+                class="btn btn-sm btn-outline-secondary"
+              >
+                Limpiar filtros
+              </button>
+            </div>
+          </div>
+          <div class="filters-grid mt-2">
+            <input
+              id="f_customer"
+              class="form-control form-control-sm"
+              placeholder="Cliente…"
+            />
+            <input
+              id="f_cut"
+              class="form-control form-control-sm"
+              placeholder="Corte…"
+            />
+            <input
+              id="f_style"
+              class="form-control form-control-sm"
+              placeholder="Estilo…"
+            />
+            <input
+              id="f_color"
+              class="form-control form-control-sm"
+              placeholder="Color…"
+            />
+            <input
+              id="f_size"
+              class="form-control form-control-sm"
+              placeholder="Talla…"
+            />
+            <input
+              id="f_material"
+              class="form-control form-control-sm"
+              placeholder="Material…"
+            />
+          </div>
+        </div>
+
+        <div class="small muted mt-2" id="connInfo"></div>
+      </section>
+
+      <!-- Tabla -->
+      <section class="card mt-3 p-2 shadow-soft">
+        <div class="pager-top">
+          <div class="d-flex align-items-center gap-2">
+            <label class="small muted">Filas por página</label>
+            <select
+              id="pageSize"
+              class="form-select form-select-sm"
+              style="width: auto"
+            >
+              <option value="25">25</option>
+              <option value="50" selected>50</option>
+              <option value="100">100</option>
+              <option value="200">200</option>
+              <option value="-1">Todas</option>
+            </select>
+            <span class="small muted" id="pageInfo">Mostrando 0–0 de 0</span>
+          </div>
+          <div class="pager-controls">
+            <button id="firstPage" class="btn btn-sm btn-outline-secondary">
+              « Primero
+            </button>
+            <button id="prevPage" class="btn btn-sm btn-outline-secondary">
+              ‹ Anterior
+            </button>
+            <span class="small"
+              ><b>Pág.</b> <span id="currPage">1</span> /
+              <span id="totalPages">1</span></span
+            >
+            <button id="nextPage" class="btn btn-sm btn-outline-secondary">
+              Siguiente ›
+            </button>
+            <button id="lastPage" class="btn btn-sm btn-outline-secondary">
+              Último »
+            </button>
+          </div>
+        </div>
+
+        <div class="table-wrap">
+          <table id="tbl">
+            <thead>
+              <tr>
+                <th class="mono">ID</th>
+                <th>Cliente</th>
+                <th>Corte</th>
+                <th>Estilo</th>
+                <th>Color</th>
+                <th>Talla</th>
+                <th>Material</th>
+                <th>Fecha Ing.</th>
+                <th style="width: 140px">Acciones</th>
+              </tr>
+            </thead>
+            <tbody id="tbody">
+              <tr>
+                <td colspan="9" class="small">Sin datos aún.</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="sticky-tools">
+          <button id="saveAllBtn" class="btn btn-primary btn-sm" disabled>
+            Guardar cambios
+          </button>
+          <button
+            id="cancelEditsBtn"
+            class="btn btn-outline-secondary btn-sm"
+            disabled
+          >
+            Cancelar ediciones
+          </button>
+        </div>
+      </section>
+
+      <!-- Log -->
+      <section class="card p-3 mt-3 shadow-soft">
+        <details open>
+          <summary><strong>Bitácora</strong></summary>
+          <pre id="log" class="small mono mt-2" style="white-space: pre-wrap">
+(vacío)</pre
+          >
+        </details>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        // ===== Supabase =====
+        const SUPABASE_URL = "https://aawqcgapxdqemjqzwcsy.supabase.co";
+        const SUPABASE_ANON_KEY =
+          "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
+        const supabase = window.supabase.createClient(
+          SUPABASE_URL,
+          SUPABASE_ANON_KEY
+        );
+
+        // ===== Estado/UI =====
+        const TBODY = document.getElementById("tbody");
+        const SEARCH = document.getElementById("search");
+        const STATUS = document.getElementById("status");
+        const STAT_ROWS = document.getElementById("statRows");
+        const LOG = document.getElementById("log");
+        const CONN_INFO = document.getElementById("connInfo");
+        const SPIN_LOAD = document.getElementById("spinLoad");
+        const SAVE_ALL = document.getElementById("saveAllBtn");
+        const CANCEL_EDITS = document.getElementById("cancelEditsBtn");
+        const CREATE_MISSING = document.getElementById("createMissing");
+        const CHIPS = document.getElementById("chips");
+        const LOCK_BTN = document.getElementById("lockSearchBtn");
+
+        // filtros por columna
+        const F_CUSTOMER = document.getElementById("f_customer");
+        const F_CUT = document.getElementById("f_cut");
+        const F_STYLE = document.getElementById("f_style");
+        const F_COLOR = document.getElementById("f_color");
+        const F_SIZE = document.getElementById("f_size");
+        const F_MATERIAL = document.getElementById("f_material");
+
+        // paginación
+        const PAGE_SIZE_SEL = document.getElementById("pageSize");
+        const PAGE_INFO = document.getElementById("pageInfo");
+        const CURR_PAGE = document.getElementById("currPage");
+        const TOTAL_PAGES = document.getElementById("totalPages");
+        const BTN_FIRST = document.getElementById("firstPage");
+        const BTN_PREV = document.getElementById("prevPage");
+        const BTN_NEXT = document.getElementById("nextPage");
+        const BTN_LAST = document.getElementById("lastPage");
+        let pageSize = parseInt(PAGE_SIZE_SEL.value, 10); // -1 = todas
+        let currentPage = 1;
+
+        let rows = []; // dataset en memoria
+        let original = []; // copia para cancelar
+        let dirtyIds = new Set();
+        let sortKey = null,
+          sortAsc = true;
+        let lockedTerms = []; // chips de búsqueda global acumulada
+
+        // ===== Helpers =====
+        const setStatus = (s) => (STATUS.textContent = s);
+        const toText = (v) =>
+          v == null
+            ? ""
+            : (typeof v === "number" && Number.isFinite(v)
+                ? Math.abs(v - Math.trunc(v)) < 1e-9
+                  ? String(Math.trunc(v))
+                  : String(v)
+                : String(v)
+              ).trim();
+        const normColor = (s) =>
+          String(s || "")
+            .toUpperCase()
+            .trim();
+        const normKey = (cut, style, color, size) =>
+          [
+            toText(cut),
+            toText(style),
+            normColor(color),
+            toText(size).toUpperCase().trim(),
+          ].join("|");
+        const logLine = (t) => {
+          LOG.textContent += (LOG.textContent.trim() ? "\n" : "") + t;
+        };
+        const uid = () =>
+          "u" + Math.random().toString(36).slice(2) + Date.now();
+
+        function escapeHtml(s) {
+          return String(s).replace(
+            /[&<>"']/g,
+            (m) =>
+              ({
+                "&": "&amp;",
+                "<": "&lt;",
+                ">": "&gt;",
+                '"': "&quot;",
+                "'": "&#39;",
+              }[m])
+          );
+        }
+        const cloneRows = (arr) => arr.map((r) => ({ ...r }));
+        function markDirty(id, on) {
+          if (!id) return;
+          on ? dirtyIds.add(id) : dirtyIds.delete(id);
+          SAVE_ALL.disabled = CANCEL_EDITS.disabled = dirtyIds.size === 0;
+        }
+        function renderChips() {
+          CHIPS.innerHTML = "";
+          lockedTerms.forEach((t, i) => {
+            const chip = document.createElement("span");
+            chip.className = "chip";
+            chip.textContent = t;
+            const x = document.createElement("span");
+            x.className = "x";
+            x.textContent = "×";
+            x.title = "Quitar";
+            x.onclick = () => {
+              lockedTerms.splice(i, 1);
+              renderChips();
+              render();
+            };
+            chip.appendChild(x);
+            CHIPS.appendChild(chip);
+          });
+        }
+
+        function currentData() {
+          const q = toText(SEARCH.value).toLowerCase();
+          let data = rows.slice();
+
+          if (lockedTerms.length) {
+            data = data.filter((r) => {
+              const hay =
+                `${r.customer} ${r.cut} ${r.style} ${r.colorname} ${r.size} ${r.material}`.toLowerCase();
+              return lockedTerms.every((term) =>
+                hay.includes(term.toLowerCase())
+              );
+            });
+          }
+          if (q) {
+            data = data.filter((r) => {
+              const hay =
+                `${r.customer} ${r.cut} ${r.style} ${r.colorname} ${r.size} ${r.material}`.toLowerCase();
+              return hay.includes(q);
+            });
+          }
+
+          const fc = toText(F_CUSTOMER.value).toLowerCase();
+          const fcut = toText(F_CUT.value).toLowerCase();
+          const fst = toText(F_STYLE.value).toLowerCase();
+          const fco = toText(F_COLOR.value).toUpperCase();
+          const fsz = toText(F_SIZE.value).toLowerCase();
+          const fma = toText(F_MATERIAL.value).toLowerCase();
+
+          if (fc)
+            data = data.filter((r) =>
+              toText(r.customer).toLowerCase().includes(fc)
+            );
+          if (fcut)
+            data = data.filter((r) =>
+              toText(r.cut).toLowerCase().includes(fcut)
+            );
+          if (fst)
+            data = data.filter((r) =>
+              toText(r.style).toLowerCase().includes(fst)
+            );
+          if (fco)
+            data = data.filter((r) => normColor(r.colorname).includes(fco));
+          if (fsz)
+            data = data.filter((r) =>
+              toText(r.size).toLowerCase().includes(fsz)
+            );
+          if (fma)
+            data = data.filter((r) =>
+              toText(r.material).toLowerCase().includes(fma)
+            );
+
+          if (sortKey) {
+            data.sort((a, b) => {
+              const A = (a[sortKey] ?? "").toString().toUpperCase();
+              const B = (b[sortKey] ?? "").toString().toUpperCase();
+              if (A < B) return sortAsc ? -1 : 1;
+              if (A > B) return sortAsc ? 1 : -1;
+              return 0;
+            });
+          }
+          return data;
+        }
+
+        function getPagedData(full) {
+          const total = full.length;
+          const ps = pageSize;
+          if (ps === -1)
+            return {
+              paged: full,
+              total,
+              page: 1,
+              pages: 1,
+              from: total ? 1 : 0,
+              to: total,
+            };
+          const pages = Math.max(1, Math.ceil(total / ps));
+          currentPage = Math.min(Math.max(1, currentPage), pages);
+          const start = (currentPage - 1) * ps;
+          const end = Math.min(start + ps, total);
+          return {
+            paged: full.slice(start, end),
+            total,
+            page: currentPage,
+            pages,
+            from: total ? start + 1 : 0,
+            to: end,
+          };
+        }
+
+        function updatePager(meta) {
+          document.getElementById("currPage").textContent = String(meta.page);
+          document.getElementById("totalPages").textContent = String(
+            meta.pages
+          );
+          document.getElementById(
+            "pageInfo"
+          ).textContent = `Mostrando ${meta.from}–${meta.to} de ${meta.total}`;
+          document.getElementById("firstPage").disabled =
+            document.getElementById("prevPage").disabled = meta.page <= 1;
+          document.getElementById("lastPage").disabled =
+            document.getElementById("nextPage").disabled =
+              meta.page >= meta.pages;
+        }
+
+        function render() {
+          const data = currentData();
+          const meta = getPagedData(data);
+          updatePager(meta);
+          TBODY.innerHTML = "";
+          if (!meta.paged.length) {
+            TBODY.innerHTML =
+              '<tr><td colspan="9" class="small">Sin datos.</td></tr>';
+            STAT_ROWS.textContent = String(meta.total);
+            return;
+          }
+          for (const r of meta.paged) {
+            const editing = !!r._editing;
+            const tr = document.createElement("tr");
+            tr.dataset.uid = r._uid;
+            tr.innerHTML = editing
+              ? `
+        <td class="mono">${escapeHtml(r.id ?? "")}</td>
+        <td><input class="form-control form-control-sm" value="${escapeHtml(
+          toText(r.customer)
+        )}" data-f="customer"></td>
+        <td><input class="form-control form-control-sm" value="${escapeHtml(
+          toText(r.cut)
+        )}" data-f="cut"></td>
+        <td><input class="form-control form-control-sm" value="${escapeHtml(
+          toText(r.style)
+        )}" data-f="style"></td>
+        <td><input class="form-control form-control-sm" value="${escapeHtml(
+          toText(r.colorname)
+        )}" data-f="colorname" placeholder="MAYÚSCULAS"></td>
+        <td><input class="form-control form-control-sm" value="${escapeHtml(
+          toText(r.size)
+        )}" data-f="size"></td>
+        <td><input class="form-control form-control-sm" value="${escapeHtml(
+          toText(r.material)
+        )}" data-f="material"></td>
+        <td class="small mono">${escapeHtml(toText(r.fechaing))}</td>
+        <td class="d-flex gap-1">
+          <button class="btn btn-sm btn-primary btn-save">Guardar</button>
+          <button class="btn btn-sm btn-outline-secondary btn-cancel">Cancelar</button>
+          ${
+            r.id
+              ? `<button class="btn btn-sm btn-outline-danger btn-del">Eliminar</button>`
+              : ""
+          }
+        </td>`
+              : `
+        <td class="mono">${escapeHtml(r.id ?? "")}</td>
+        <td>${escapeHtml(toText(r.customer))}</td>
+        <td class="mono">${escapeHtml(toText(r.cut))}</td>
+        <td>${escapeHtml(toText(r.style))}</td>
+        <td>${escapeHtml(toText(r.colorname))}</td>
+        <td>${escapeHtml(toText(r.size))}</td>
+        <td>${escapeHtml(toText(r.material))}</td>
+        <td class="small mono">${escapeHtml(toText(r.fechaing))}</td>
+        <td class="d-flex gap-1">
+          <button class="btn btn-sm btn-outline-primary btn-edit">Editar</button>
+          ${
+            r.id
+              ? `<button class="btn btn-sm btn-outline-danger btn-del">Eliminar</button>`
+              : ""
+          }
+        </td>`;
+            TBODY.appendChild(tr);
+          }
+          STAT_ROWS.textContent = String(meta.total);
+        }
+
+        // ===== Carga =====
+        async function loadAll() {
+          SPIN_LOAD.classList.remove("d-none");
+          setStatus("Cargando…");
+          rows = [];
+          original = [];
+          dirtyIds.clear();
+          SAVE_ALL.disabled = true;
+          CANCEL_EDITS.disabled = true;
+          const page = 1000;
+          let from = 0,
+            to = from + page - 1,
+            more = true,
+            total = 0;
+          try {
+            while (more) {
+              const { data, error, count } = await supabase
+                .from("materiales")
+                .select(
+                  "id,customer,cut,style,colorname,size,material,fechaing",
+                  { count: "exact" }
+                )
+                .range(from, to);
+              if (error) throw error;
+              const mapped = (data || []).map((r) => ({
+                ...r,
+                colorname: normColor(r.colorname),
+                _uid: "id:" + r.id,
+              }));
+              rows.push(...mapped);
+              total = count ?? Math.max(total, rows.length);
+              setStatus(`Cargando… ${Math.min(rows.length, total)} / ${total}`);
+              if (!data || data.length < page) {
+                more = false;
+              } else {
+                from += page;
+                to += page;
+              }
+            }
+            original = cloneRows(rows);
+            setStatus(`Listo (${rows.length} filas)`);
+            currentPage = 1;
+            render();
+          } catch (e) {
+            console.error(e);
+            setStatus("Error cargando: " + (e.message || e));
+          } finally {
+            SPIN_LOAD.classList.add("d-none");
+          }
+        }
+
+        // ===== CRUD (igual que base) =====
+        function rowByUid(uidStr) {
+          return rows.find((x) => x._uid === uidStr);
+        }
+        function beginEdit(uidStr) {
+          const r = rowByUid(uidStr);
+          if (!r) return;
+          r._editing = true;
+          if (r.id) markDirty(r.id, true);
+          render();
+        }
+        function cancelEdit(uidStr) {
+          const r = rowByUid(uidStr);
+          if (!r) return;
+          if (r.id) {
+            const orig = original.find((x) => x.id === r.id);
+            Object.assign(r, { ...orig, _uid: r._uid, _editing: false });
+            markDirty(r.id, false);
+          } else {
+            const idx = rows.findIndex((x) => x._uid === uidStr);
+            if (idx >= 0) rows.splice(idx, 1);
+          }
+          render();
+        }
+        async function saveRow(r) {
+          const payload = {
+            customer: toText(r.customer),
+            cut: toText(r.cut),
+            style: toText(r.style),
+            colorname: normColor(r.colorname),
+            size: toText(r.size),
+            material: toText(r.material),
+          };
+          if (r.id) {
+            const { error } = await supabase
+              .from("materiales")
+              .update(payload)
+              .eq("id", r.id);
+            if (error) throw error;
+            Object.assign(r, payload, { _editing: false });
+            const io = original.findIndex((x) => x.id === r.id);
+            if (io >= 0) original[io] = { ...r };
+            markDirty(r.id, false);
+          } else {
+            payload.fechaing = new Date().toISOString();
+            const { data, error } = await supabase
+              .from("materiales")
+              .insert(payload)
+              .select()
+              .single();
+            if (error) throw error;
+            Object.assign(r, data, {
+              colorname: normColor(data.colorname),
+              _editing: false,
+              _uid: "id:" + data.id,
+            });
+            original.push({ ...r });
+          }
+        }
+        async function saveEdit(uidStr) {
+          try {
+            setStatus("Guardando…");
+            const r = rowByUid(uidStr);
+            if (!r) return;
+            await saveRow(r);
+            setStatus("Guardado");
+            render();
+          } catch (e) {
+            console.error(e);
+            setStatus("Error guardando: " + (e.message || e));
+            alert("No se pudo guardar: " + (e.message || e));
+          }
+        }
+        async function deleteRowByUid(uidStr) {
+          const r = rowByUid(uidStr);
+          if (!r) return;
+          if (r.id) {
+            if (!confirm("¿Eliminar la fila seleccionada?")) return;
+            try {
+              const { error } = await supabase
+                .from("materiales")
+                .delete()
+                .eq("id", r.id);
+              if (error) throw error;
+              rows = rows.filter((x) => x._uid !== uidStr);
+              original = original.filter((x) => x.id !== r.id);
+              dirtyIds.delete(r.id);
+              setStatus("Eliminado");
+              render();
+            } catch (e) {
+              console.error(e);
+              setStatus("Error eliminando: " + (e.message || e));
+            }
+          } else {
+            rows = rows.filter((x) => x._uid !== uidStr);
+            setStatus("Descartado");
+            render();
+          }
+        }
+        async function saveAll() {
+          const edits = rows.filter((r) => r._editing);
+          if (!edits.length) return;
+          try {
+            setStatus("Guardando cambios…");
+            for (const r of edits) {
+              await saveRow(r);
+            }
+            setStatus("Cambios guardados");
+            render();
+          } catch (e) {
+            console.error(e);
+            setStatus("Error guardando: " + (e.message || e));
+            alert("Error guardando: " + (e.message || e));
+          }
+        }
+        function cancelAll() {
+          rows = cloneRows(original).map((r) => ({
+            ...r,
+            _editing: false,
+            _uid: "id:" + r.id,
+          }));
+          dirtyIds.clear();
+          SAVE_ALL.disabled = true;
+          CANCEL_EDITS.disabled = true;
+          setStatus("Ediciones canceladas");
+          render();
+        }
+        function addRow() {
+          rows.unshift({
+            id: undefined,
+            customer: "",
+            cut: "",
+            style: "",
+            colorname: "",
+            size: "",
+            material: "",
+            fechaing: new Date().toISOString(),
+            _editing: true,
+            _uid: "new:" + uid(),
+          });
+          setStatus("Nueva fila");
+          SAVE_ALL.disabled = false;
+          CANCEL_EDITS.disabled = false;
+          currentPage = 1;
+          render();
+        }
+
+        // ===== Excel DATA* (existente) =====
+        function takeNameParts(fileName) {
+          const base = String(fileName || "").replace(
+            /\.(xls|xlsx|xlsm)$/i,
+            ""
+          );
+          const partes = base.split("-");
+          return {
+            cliente: toText(partes[0] || ""),
+            corte: toText(partes[1] || ""),
+          };
+        }
+        function scoreSheetName(name) {
+          const n = String(name || "");
+          const lower = n.toLowerCase();
+          let score = 0;
+          if (lower.includes("data")) score += 1;
+          if (/\bdata\b/i.test(n)) score += 2;
+          if (/^data\b/i.test(n)) score += 1;
+          if (/\bdata$/i.test(n)) score += 1;
+          if (lower.includes("sms")) score += 0.5;
+          if (lower.includes("template") || lower.includes("plantilla"))
+            score -= 2;
+          score += Math.max(0, 8 - n.length) * 0.05;
+          return score;
+        }
+        function findDataSheet(wb) {
+          const exact = wb.SheetNames.find((s) => s.toLowerCase() === "data");
+          if (exact) return { name: exact, sheet: wb.Sheets[exact] };
+          const candidates = wb.SheetNames.map((name) => ({
+            name,
+            score: scoreSheetName(name),
+          }))
+            .filter((x) => x.score > 0)
+            .sort((a, b) => b.score - a.score);
+          if (candidates.length) {
+            const top = candidates[0];
+            return { name: top.name, sheet: wb.Sheets[top.name] };
+          }
+          return null;
+        }
+        async function parseDATA(file) {
+          try {
+            const ab = await file.arrayBuffer();
+            const wb = XLSX.read(ab, { type: "array" });
+            const picked = findDataSheet(wb);
+            if (!picked || !picked.sheet) {
+              logLine(`${file.name}: hoja DATA no encontrada`);
+              return [];
+            }
+            logLine(`✔ ${file.name}: usando hoja “${picked.name}”`);
+            const ws = picked.sheet;
+            const aoa = XLSX.utils.sheet_to_json(ws, {
+              header: 1,
+              defval: "",
+              raw: false,
+            });
+            if (!aoa || !aoa.length) return [];
+            const estilo = toText(aoa?.[0]?.[0] || "");
+            let colorActual = "";
+            const out = [];
+            for (let i = 2; i < aoa.length; i++) {
+              const row = aoa[i];
+              if (!row || row.length < 4) continue;
+              if (toText(row[1])) colorActual = toText(row[1]);
+              const talla = toText(row[2]);
+              const material = toText(row[3]);
+              if (talla && material) {
+                out.push({
+                  style: estilo,
+                  colorname: normColor(colorActual),
+                  size: talla,
+                  material,
+                });
+              }
+            }
+            const parts = takeNameParts(file.name);
+            return out.map((r) => ({
+              ...r,
+              _file: file.name,
+              _cliente: parts.cliente,
+              _corte: parts.corte,
+            }));
+          } catch (e) {
+            console.warn("Error leyendo", file.name, e);
+            logLine(`${file.name}: error leyendo → ${e.message || e}`);
+            return [];
+          }
+        }
+
+        function buildKeyMap(arr) {
+          const m = new Map();
+          for (const r of arr) {
+            const k = normKey(r.cut, r.style, r.colorname, r.size);
+            if (!m.has(k)) m.set(k, []);
+            m.get(k).push(r);
+          }
+          return m;
+        }
+
+        async function applyExcelUpdates(files) {
+          if (!files.length) {
+            alert("Selecciona archivo(s) Excel.");
+            return;
+          }
+          setStatus("Leyendo Excel…");
+          LOG.textContent = "(vacío)";
+          const parsedAll = [];
+          for (const f of files) {
+            const rowsP = await parseDATA(f);
+            parsedAll.push(...rowsP);
+            if (rowsP.length) logLine(`   └─ filas parseadas: ${rowsP.length}`);
+          }
+          if (!parsedAll.length) {
+            setStatus("No se encontraron datos válidos (DATA*)");
+            return;
+          }
+          const existingMap = buildKeyMap(rows);
+          const toUpdate = [],
+            toInsert = [];
+          let upd = 0,
+            ins = 0,
+            miss = 0;
+          for (const p of parsedAll) {
+            const cutCandidate = p._corte || p.cut || "";
+            let candidates = [];
+            if (cutCandidate) {
+              const key = normKey(cutCandidate, p.style, p.colorname, p.size);
+              candidates = existingMap.get(key) || [];
+            } else {
+              for (const r of rows) {
+                if (
+                  normColor(r.colorname) === p.colorname &&
+                  toText(r.style).toUpperCase().trim() ===
+                    toText(p.style).toUpperCase().trim() &&
+                  toText(r.size).toUpperCase().trim() ===
+                    toText(p.size).toUpperCase().trim()
+                ) {
+                  candidates.push(r);
+                }
+              }
+            }
+            if (candidates.length) {
+              for (const c of candidates) {
+                if (toText(c.material) !== toText(p.material)) {
+                  toUpdate.push({
+                    id: c.id,
+                    payload: { material: p.material },
+                  });
+                  c.material = p.material;
+                  upd++;
+                }
+              }
+            } else {
+              miss++;
+              if (CREATE_MISSING.checked) {
+                const payload = {
+                  customer: p._cliente || "",
+                  cut: cutCandidate,
+                  style: p.style,
+                  colorname: p.colorname,
+                  size: p.size,
+                  material: p.material,
+                  fechaing: new Date().toISOString(),
+                };
+                toInsert.push(payload);
+                ins++;
+              }
+            }
+          }
+          setStatus("Aplicando cambios…");
+          logLine(
+            `Resumen → Actualizaciones: ${upd}, Altas: ${ins}, Sin match: ${miss}`
+          );
+          try {
+            for (let i = 0; i < toUpdate.length; i += 300) {
+              const chunk = toUpdate.slice(i, i + 300);
+              await Promise.all(
+                chunk.map(async (u) => {
+                  const { error } = await supabase
+                    .from("materiales")
+                    .update(u.payload)
+                    .eq("id", u.id);
+                  if (error) throw error;
+                })
+              );
+            }
+            for (let i = 0; i < toInsert.length; i += 300) {
+              const chunk = toInsert.slice(i, i + 300);
+              const { data, error } = await supabase
+                .from("materiales")
+                .insert(chunk)
+                .select();
+              if (error) throw error;
+              (data || []).forEach((d) => {
+                d.colorname = normColor(d.colorname);
+                const nr = { ...d, _uid: "id:" + d.id };
+                rows.push(nr);
+                const k = normKey(nr.cut, nr.style, nr.colorname, nr.size);
+                if (!existingMap.has(k)) existingMap.set(k, [nr]);
+                else existingMap.get(k).push(nr);
+              });
+            }
+            original = cloneRows(rows);
+            setStatus("Actualización desde Excel completada");
+            render();
+          } catch (e) {
+            console.error(e);
+            setStatus("Error aplicando cambios: " + (e.message || e));
+            alert("Error en actualización: " + (e.message || e));
+          }
+        }
+
+        // ===== NUEVO: Aplicar "Formato de Carga" (CLIENTE, ESTILO, CORTE, COLOR, TALLA, SKU) =====
+        function normalizeHeader(h) {
+          return toText(h).toUpperCase().replace(/\s+/g, "");
+        }
+        function mapFormatoColumns(headers) {
+          const map = {};
+          headers.forEach((h, i) => {
+            const k = normalizeHeader(h);
+            if (k === "CLIENTE") map.customer = i;
+            if (k === "ESTILO") map.style = i;
+            if (k === "CORTE") map.cut = i;
+            if (k === "COLOR") map.colorname = i;
+            if (k === "TALLA") map.size = i;
+            if (k === "SKU" || k === "MATERIAL") map.material = i;
+          });
+          return map;
+        }
+        async function parseFormato(file) {
+          try {
+            const ab = await file.arrayBuffer();
+            const wb = XLSX.read(ab, { type: "array" });
+            const sheetName = wb.SheetNames[0];
+            const ws = wb.Sheets[sheetName];
+            const aoa = XLSX.utils.sheet_to_json(ws, {
+              header: 1,
+              defval: "",
+              raw: false,
+            });
+            if (!aoa || aoa.length < 2) {
+              logLine(`${file.name}: sin datos`);
+              return [];
+            }
+            const headers = aoa[0];
+            const map = mapFormatoColumns(headers);
+            const req = [
+              "customer",
+              "style",
+              "cut",
+              "colorname",
+              "size",
+              "material",
+            ];
+            const missing = req.filter((k) => !(k in map));
+            if (missing.length) {
+              logLine(
+                `${file.name}: columnas faltantes → ${missing.join(", ")}`
+              );
+              return [];
+            }
+            const out = [];
+            for (let i = 1; i < aoa.length; i++) {
+              const row = aoa[i];
+              if (!row) continue;
+              const customer = toText(row[map.customer]);
+              const style = toText(row[map.style]);
+              const cut = toText(row[map.cut]);
+              const colorname = normColor(row[map.colorname]);
+              const size = toText(row[map.size]);
+              const material = toText(row[map.material]);
+              if (!(style && colorname && size)) continue; // mínimos
+              out.push({ customer, style, cut, colorname, size, material });
+            }
+            logLine(`✔ ${file.name}: filas leídas (formato): ${out.length}`);
+            return out;
+          } catch (e) {
+            console.warn("Error leyendo formato", file.name, e);
+            logLine(`${file.name}: error leyendo → ${e.message || e}`);
+            return [];
+          }
+        }
+        async function applyFormato(files) {
+          if (!files.length) {
+            alert("Selecciona archivo(s) con el Formato de Carga.");
+            return;
+          }
+          setStatus("Leyendo Formato…");
+          const parsedAll = [];
+          for (const f of files) {
+            const part = await parseFormato(f);
+            parsedAll.push(...part);
+          }
+          if (!parsedAll.length) {
+            setStatus("No se encontraron filas válidas en el Formato");
+            return;
+          }
+          // mapa de existentes
+          const existingMap = buildKeyMap(rows);
+          const toUpdate = [],
+            toInsert = [];
+          let upd = 0,
+            ins = 0;
+          for (const p of parsedAll) {
+            const key = normKey(p.cut, p.style, p.colorname, p.size);
+            const candidates = existingMap.get(key) || [];
+            if (candidates.length) {
+              for (const c of candidates) {
+                if (toText(c.material) !== toText(p.material)) {
+                  toUpdate.push({
+                    id: c.id,
+                    payload: { material: p.material },
+                  });
+                  c.material = p.material;
+                  upd++;
+                }
+              }
+            } else {
+              // Insertar con fecha de ingreso = hoy (momento de carga)
+              const payload = {
+                customer: p.customer,
+                cut: p.cut,
+                style: p.style,
+                colorname: p.colorname,
+                size: p.size,
+                material: p.material,
+                fechaing: new Date().toISOString(),
+              };
+              toInsert.push(payload);
+              ins++;
+            }
+          }
+          setStatus("Aplicando cambios del Formato…");
+          logLine(`Formato → Actualizaciones: ${upd}, Altas: ${ins}`);
+          try {
+            for (let i = 0; i < toUpdate.length; i += 300) {
+              const chunk = toUpdate.slice(i, i + 300);
+              await Promise.all(
+                chunk.map(async (u) => {
+                  const { error } = await supabase
+                    .from("materiales")
+                    .update(u.payload)
+                    .eq("id", u.id);
+                  if (error) throw error;
+                })
+              );
+            }
+            for (let i = 0; i < toInsert.length; i += 300) {
+              const chunk = toInsert.slice(i, i + 300);
+              const { data, error } = await supabase
+                .from("materiales")
+                .insert(chunk)
+                .select();
+              if (error) throw error;
+              (data || []).forEach((d) => {
+                d.colorname = normColor(d.colorname);
+                const nr = { ...d, _uid: "id:" + d.id };
+                rows.push(nr);
+                const k = normKey(nr.cut, nr.style, nr.colorname, nr.size);
+                if (!existingMap.has(k)) existingMap.set(k, [nr]);
+                else existingMap.get(k).push(nr);
+              });
+            }
+            original = cloneRows(rows);
+            setStatus("Actualización vía Formato completada");
+            render();
+          } catch (e) {
+            console.error(e);
+            setStatus("Error aplicando formato: " + (e.message || e));
+            alert("Error aplicando formato: " + (e.message || e));
+          }
+        }
+
+        // ===== Copiar columnas visibles =====
+        function copyText(text) {
+          if (navigator.clipboard && window.isSecureContext) {
+            return navigator.clipboard.writeText(text);
+          }
+          const ta = document.createElement("textarea");
+          ta.value = text;
+          document.body.appendChild(ta);
+          ta.select();
+          ta.setSelectionRange(0, ta.value.length);
+          try {
+            document.execCommand("copy");
+          } finally {
+            document.body.removeChild(ta);
+          }
+          return Promise.resolve();
+        }
+        async function copyVisibleColumn(colKey) {
+          const data = currentData();
+          const meta = getPagedData(data);
+          const lines = meta.paged.map((r) => toText(r[colKey])).join("\n");
+          await copyText(lines);
+          setStatus(
+            `Copiado ${meta.paged.length} valor(es) de "${colKey}" (página actual)`
+          );
+        }
+
+        // ===== Eventos =====
+        TBODY.addEventListener("click", (e) => {
+          const tr = e.target.closest("tr");
+          if (!tr) return;
+          const uidStr = tr.dataset.uid;
+          if (e.target.classList.contains("btn-edit")) beginEdit(uidStr);
+          if (e.target.classList.contains("btn-cancel")) cancelEdit(uidStr);
+          if (e.target.classList.contains("btn-save")) saveEdit(uidStr);
+          if (e.target.classList.contains("btn-del")) deleteRowByUid(uidStr);
+        });
+        TBODY.addEventListener("input", (e) => {
+          const el = e.target;
+          const f = el.getAttribute("data-f");
+          if (!f) return;
+          const tr = el.closest("tr");
+          if (!tr) return;
+          const r = rowByUid(tr.dataset.uid);
+          if (!r) return;
+          let v = toText(el.value);
+          if (f === "colorname") v = normColor(v);
+          r[f] = v;
+          if (r.id) markDirty(r.id, true);
+        });
+
+        document.querySelectorAll(".sort").forEach((a) => {
+          a.addEventListener("click", () => {
+            const key = a.dataset.key;
+            if (sortKey === key) sortAsc = !sortAsc;
+            else {
+              sortKey = key;
+              sortAsc = true;
+            }
+            currentPage = 1;
+            render();
+          });
+        });
+
+        document.getElementById("refreshBtn").addEventListener("click", () => {
+          currentPage = 1;
+          loadAll();
+        });
+        document.getElementById("addRowBtn").addEventListener("click", addRow);
+        SAVE_ALL.addEventListener("click", saveAll);
+        CANCEL_EDITS.addEventListener("click", cancelAll);
+        document.getElementById("exportBtn").addEventListener("click", () => {
+          const data = currentData();
+          if (!data.length) {
+            alert("No hay datos para exportar.");
+            return;
+          }
+          const aoa = [
+            [
+              "ID",
+              "Cliente",
+              "Corte",
+              "Estilo",
+              "Color",
+              "Talla",
+              "Material",
+              "FechaIng",
+            ],
+          ].concat(
+            data.map((r) => [
+              r.id,
+              r.customer,
+              r.cut,
+              r.style,
+              r.colorname,
+              r.size,
+              r.material,
+              r.fechaing,
+            ])
+          );
+          const ws = XLSX.utils.aoa_to_sheet(aoa);
+          ws["!cols"] = [8, 16, 12, 16, 14, 10, 24, 20].map((w) => ({
+            wch: w,
+          }));
+          const wb = XLSX.utils.book_new();
+          XLSX.utils.book_append_sheet(wb, ws, "Materiales");
+          const ts = new Date()
+            .toISOString()
+            .slice(0, 19)
+            .replace(/[:T]/g, "-");
+          XLSX.writeFile(wb, `Materiales_${ts}.xlsx`);
+        });
+        SEARCH.addEventListener("input", () => {
+          currentPage = 1;
+          render();
+        });
+        LOCK_BTN.addEventListener("click", () => {
+          const q = toText(SEARCH.value);
+          if (!q) return;
+          lockedTerms.push(q);
+          SEARCH.value = "";
+          currentPage = 1;
+          renderChips();
+          render();
+        });
+        [F_CUSTOMER, F_CUT, F_STYLE, F_COLOR, F_SIZE, F_MATERIAL].forEach(
+          (el) => {
+            el.addEventListener("input", () => {
+              currentPage = 1;
+              render();
+            });
+          }
+        );
+        document
+          .getElementById("clearFiltersBtn")
+          .addEventListener("click", () => {
+            [
+              SEARCH,
+              F_CUSTOMER,
+              F_CUT,
+              F_STYLE,
+              F_COLOR,
+              F_SIZE,
+              F_MATERIAL,
+            ].forEach((el) => (el.value = ""));
+            lockedTerms = [];
+            currentPage = 1;
+            renderChips();
+            render();
+          });
+        document
+          .getElementById("copyMaterialBtn")
+          .addEventListener("click", () => copyVisibleColumn("material"));
+        document.getElementById("copyMenu").addEventListener("click", (e) => {
+          const a = e.target.closest(".copy-col");
+          if (!a) return;
+          copyVisibleColumn(a.dataset.col);
+        });
+
+        // Excel DATA* drop
+        const dz = document.getElementById("dzExcel");
+        const excelInput = document.getElementById("excelInput");
+        dz.addEventListener("click", () => excelInput.click());
+        ["dragenter", "dragover"].forEach((ev) => {
+          dz.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dz.classList.add("dragover");
+          });
+        });
+        ["dragleave", "drop"].forEach((ev) => {
+          dz.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dz.classList.remove("dragover");
+          });
+        });
+        dz.addEventListener("drop", async (e) => {
+          const files = Array.from(e.dataTransfer.files || []).filter((f) =>
+            /(\.xls[xm]?)$/i.test(f.name)
+          );
+          await applyExcelUpdates(files);
+        });
+        excelInput.addEventListener("change", async (e) => {
+          const files = Array.from(e.target.files || []);
+          await applyExcelUpdates(files);
+          e.target.value = "";
+        });
+
+        // NUEVO: Formato de Carga drop
+        const dzFmt = document.getElementById("dzFormato");
+        const fmtInput = document.getElementById("fmtInput");
+        dzFmt.addEventListener("click", () => fmtInput.click());
+        ["dragenter", "dragover"].forEach((ev) => {
+          dzFmt.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dzFmt.classList.add("dragover");
+          });
+        });
+        ["dragleave", "drop"].forEach((ev) => {
+          dzFmt.addEventListener(ev, (e) => {
+            e.preventDefault();
+            e.stopPropagation();
+            dzFmt.classList.remove("dragover");
+          });
+        });
+        dzFmt.addEventListener("drop", async (e) => {
+          const files = Array.from(e.dataTransfer.files || []).filter((f) =>
+            /(\.xls[xm]?)$/i.test(f.name)
+          );
+          await applyFormato(files);
+        });
+        fmtInput.addEventListener("change", async (e) => {
+          const files = Array.from(e.target.files || []);
+          await applyFormato(files);
+          e.target.value = "";
+        });
+
+        // paginación
+        PAGE_SIZE_SEL.addEventListener("change", () => {
+          pageSize = parseInt(PAGE_SIZE_SEL.value, 10);
+          currentPage = 1;
+          render();
+        });
+        BTN_FIRST.addEventListener("click", () => {
+          currentPage = 1;
+          render();
+        });
+        BTN_PREV.addEventListener("click", () => {
+          currentPage = Math.max(1, currentPage - 1);
+          render();
+        });
+        BTN_NEXT.addEventListener("click", () => {
+          currentPage = currentPage + 1;
+          render();
+        });
+        BTN_LAST.addEventListener("click", () => {
+          const pages = getPagedData(currentData()).pages;
+          currentPage = pages;
+          render();
+        });
+
+        // init
+        (async function init() {
+          try {
+            const { error } = await supabase
+              .from("materiales")
+              .select("*", { head: true, count: "exact" })
+              .limit(1);
+            CONN_INFO.textContent = error
+              ? "⚠️ Conexión a Supabase: " + (error.message || error)
+              : "✅ Conexión OK";
+          } catch (e) {
+            CONN_INFO.textContent =
+              "⚠️ Conexión a Supabase: " + (e.message || e);
+          }
+          renderChips();
+          loadAll();
+        })();
+      })();
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

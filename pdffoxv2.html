@@ -1,0 +1,689 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>PDF to Excel FOX</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+
+    <!-- Bootstrap / tema -->
+    <link
+      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
+      rel="stylesheet"
+    />
+    <link rel="stylesheet" href="theme.css" />
+    <script>
+      (function () {
+        try {
+          var t = localStorage.getItem("csl-theme");
+          if (t) {
+            document.documentElement.setAttribute("data-theme", t);
+          }
+        } catch (e) {}
+      })();
+    </script>
+
+    <!-- Librerías de lógica (sin cambios) -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
+    <script>
+      pdfjsLib.GlobalWorkerOptions.workerSrc =
+        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
+    </script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+    <style>
+      body {
+        padding: 16px;
+        background: #f5f7fb;
+      }
+      header {
+        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
+        color: #111;
+        border: 1px solid #e5e7eb;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      header h1 {
+        margin: 0;
+        font-size: 22px;
+        font-weight: 700;
+        color: #111;
+      }
+      header .badge {
+        color: #111;
+        background: rgba(0, 0, 0, 0.06);
+        border: 1px solid rgba(0, 0, 0, 0.15);
+        font-weight: 500;
+      }
+
+      .card-wrap {
+        border: 1px solid #e5e7eb;
+        background: #fff;
+        border-radius: 12px;
+        padding: 16px;
+        margin-bottom: 12px;
+      }
+      .toolbar {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 12px;
+        flex-wrap: wrap;
+      }
+      .left,
+      .right {
+        display: flex;
+        gap: 10px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .filebox {
+        border: 2px dashed #cbd5e1;
+        border-radius: 12px;
+        padding: 8px 12px;
+        background: #fff;
+        display: flex;
+        align-items: center;
+        gap: 10px;
+      }
+      .filebox .name {
+        color: #475569;
+        font-size: 14px;
+      }
+      .form-select,
+      .form-control {
+        border: 1px solid #e5e7eb;
+        border-radius: 8px;
+      }
+
+      .po-pager {
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .po-pager .btn {
+        border-radius: 8px;
+      }
+      .po-pager .badge {
+        background: #eef2ff;
+        color: #1e293b;
+        border: 1px solid #dbeafe;
+      }
+      .search-wrap {
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .search-wrap .form-control {
+        min-width: 260px;
+      }
+      .muted {
+        color: #64748b;
+      }
+
+      .table-container {
+        margin-top: 8px;
+      }
+      table thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #f7f7f7;
+        color: #111;
+        border-bottom: 1px solid #e5e7eb;
+        font-weight: 700;
+      }
+      tbody td {
+        white-space: nowrap;
+      }
+      .subtotal-row td {
+        background: #fff7ed !important;
+        border-top: 2px solid #fdba74 !important;
+        font-weight: 700;
+      }
+    </style>
+  </head>
+  <body class="stretch-full">
+    <!-- Encabezado -->
+    <header class="d-flex align-items-center justify-content-between">
+      <div>
+        <h1>PDF → Tabla & Excel (FOX)</h1>
+        <span class="badge"
+          >Extracción desde PDF • Subtotales por PO • Paginación por PO</span
+        >
+      </div>
+      <div class="small text-muted">pdffoxv2.html</div>
+    </header>
+
+    <!-- Controles -->
+    <section class="card-wrap">
+      <div class="toolbar">
+        <div class="left">
+          <div class="filebox">
+            <span class="name">Selecciona PDF(s)</span>
+            <input
+              type="file"
+              id="pdfInput"
+              accept="application/pdf"
+              multiple
+              class="form-control form-control-sm"
+              style="max-width: 320px"
+            />
+          </div>
+          <button id="exportBtn" class="btn btn-sm btn-success">
+            📊 Exportar a Excel
+          </button>
+        </div>
+        <div class="right text-secondary small">
+          Favor siempre revisar los datos de tabla contra el PDF para evitar
+          errores
+        </div>
+      </div>
+    </section>
+
+    <!-- Paginación por PO + Búsqueda global -->
+    <section class="card-wrap">
+      <div
+        class="d-flex align-items-center justify-content-between flex-wrap"
+        style="gap: 10px"
+      >
+        <div class="po-pager">
+          <label class="small text-secondary">POs por página</label>
+          <select
+            id="poPerPage"
+            class="form-select form-select-sm"
+            style="width: auto"
+          >
+            <option value="1">1</option>
+            <option value="2" selected>2</option>
+            <option value="4">4</option>
+            <option value="8">8</option>
+            <option value="16">16</option>
+          </select>
+          <button id="btnPrev" class="btn btn-sm btn-outline-primary">
+            ◀ Anterior
+          </button>
+          <button id="btnNext" class="btn btn-sm btn-outline-primary">
+            Siguiente ▶
+          </button>
+          <span class="badge rounded-pill" id="pageInfo">Página 0/0</span>
+          <select
+            id="jumpPO"
+            class="form-select form-select-sm"
+            style="min-width: 220px"
+          >
+            <option value="" disabled selected>Ir a PO…</option>
+          </select>
+        </div>
+
+        <div class="search-wrap ms-auto">
+          <span class="small muted">Buscar</span>
+          <input
+            id="globalSearch"
+            class="form-control form-control-sm"
+            placeholder="PO, qty, material, description, size, cost, exfactory, shipto..."
+          />
+          <button id="btnClearSearch" class="btn btn-sm btn-outline-secondary">
+            Limpiar
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Tabla -->
+    <section class="card-wrap table-container">
+      <table
+        id="dataTable"
+        class="table table-bordered table-striped align-middle"
+      >
+        <thead>
+          <tr>
+            <th>PO</th>
+            <th>QTY</th>
+            <th>Material</th>
+            <th>Description</th>
+            <th>Size</th>
+            <th>UnitCost</th>
+            <th>ExFactory</th>
+            <th>ShipTo</th>
+          </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+      </table>
+    </section>
+
+    <!-- ===================== LÓGICA ORIGINAL (EXTRACCIÓN) ===================== -->
+    <script>
+      let rows = []; // filas base
+      const summaryPerPO = {}; // no se usa para UI ahora, pero lo conservamos
+
+      document
+        .getElementById("pdfInput")
+        .addEventListener("change", async (e) => {
+          const files = Array.from(e.target.files);
+          rows = [];
+          Object.keys(summaryPerPO).forEach((k) => delete summaryPerPO[k]);
+
+          for (const file of files) {
+            const buffer = await readFileAsArrayBuffer(file);
+            const pdf = await pdfjsLib.getDocument(new Uint8Array(buffer))
+              .promise;
+
+            let text = "";
+            for (let p = 1; p <= pdf.numPages; p++) {
+              const page = await pdf.getPage(p);
+              const content = await page.getTextContent();
+              text += content.items.map((i) => i.str).join("\n") + "\n";
+            }
+            const { fileRows, fileSummary } = parseText(text);
+            rows.push(...fileRows);
+
+            // mantenemos summary (aunque no se pinta)
+            const { PO, totalQty, descriptions, shipTo } = fileSummary;
+            if (!summaryPerPO[PO]) {
+              summaryPerPO[PO] = {
+                PO,
+                totalQty,
+                descriptions: new Set(descriptions),
+                shipTo,
+              };
+            } else {
+              summaryPerPO[PO].totalQty += totalQty;
+              descriptions.forEach((d) => summaryPerPO[PO].descriptions.add(d));
+            }
+          }
+
+          // agrupar y renderizar con la nueva UI
+          regroupAndRender();
+        });
+
+      function readFileAsArrayBuffer(file) {
+        return new Promise((res, rej) => {
+          const reader = new FileReader();
+          reader.onload = () => res(reader.result);
+          reader.onerror = (e) => rej(e);
+          reader.readAsArrayBuffer(file);
+        });
+      }
+
+      // === Parser original (sin cambios funcionales) ===
+      function parseText(text) {
+        const lines = text
+          .split("\n")
+          .map((l) => l.trim())
+          .filter((l) => l);
+        const normLines = lines.map((l) =>
+          l
+            .replace(/\u00A0/g, " ")
+            .replace(/\s+/g, " ")
+            .trim()
+        );
+
+        const fileRows = [];
+        const fileSummary = {
+          PO: "",
+          totalQty: 0,
+          descriptions: new Set(),
+          shipTo: "",
+        };
+
+        const poM = text.match(/PO\s*[:\-]?\s*(\d{7,12})/i);
+        if (poM) fileSummary.PO = poM[1];
+
+        let shipIdx = normLines.findIndex((l) => /^Ship[\s\-]?To:/i.test(l));
+        let startIdx = -1;
+        if (shipIdx === -1) {
+          for (let i = 0; i < normLines.length - 1; i++) {
+            if (
+              /^Ship$/i.test(normLines[i]) &&
+              /^To:?$/i.test(normLines[i + 1])
+            ) {
+              shipIdx = i;
+              break;
+            }
+          }
+        }
+        if (shipIdx > -1) {
+          const shipArr = [];
+          if (/^Ship[\s\-]?To:/i.test(normLines[shipIdx])) {
+            shipArr.push(normLines[shipIdx].replace(/^Ship[\s\-]?To:\s*/i, ""));
+            startIdx = shipIdx + 1;
+          } else {
+            startIdx = shipIdx + 2;
+          }
+          const billIdx = normLines.findIndex((l) =>
+            /^Bill[\s\-]?To:/i.test(l)
+          );
+          const stopIdx = billIdx > -1 ? billIdx : normLines.length;
+          for (let k = startIdx; k < stopIdx; k++) {
+            if (/^(Payment Terms:|QTY|Country of Origin)/i.test(normLines[k]))
+              break;
+            if (!normLines[k].trim()) continue;
+            shipArr.push(normLines[k]);
+          }
+          fileSummary.shipTo = shipArr.join("");
+        }
+
+        for (let i = 0; i < normLines.length; i++) {
+          if (/^\d+$/.test(normLines[i])) {
+            const qty = parseInt(normLines[i], 10);
+            const material = normLines[i + 1] || "";
+
+            let desc = "",
+              dIdx = -1;
+            for (let j = i + 2; j < i + 6 && j < normLines.length; j++) {
+              const m = normLines[j].match(/\[(.*?)\]/);
+              if (m) {
+                desc = m[1];
+                dIdx = j;
+                break;
+              }
+            }
+            if (dIdx < 0) continue;
+
+            let size = "";
+            for (let s = dIdx + 1; s < dIdx + 6 && s < normLines.length; s++) {
+              if (/^[A-Z0-9]{1,4}$/.test(normLines[s])) {
+                size = normLines[s];
+                break;
+              }
+            }
+
+            let unitCost = "";
+            for (let u = dIdx + 1; u < dIdx + 6 && u < normLines.length; u++) {
+              if (/^\$\d+([.,]\d{1,2})?$/.test(normLines[u])) {
+                unitCost = normLines[u].replace(/[^0-9.,]/g, "");
+                break;
+              }
+            }
+
+            let exFactory = "";
+            for (let x = dIdx + 1; x < dIdx + 8 && x < normLines.length; x++) {
+              if (/^\d{1,2}\/\d{1,2}\/\d{4}$/.test(normLines[x])) {
+                exFactory = normLines[x];
+                break;
+              }
+            }
+
+            fileSummary.totalQty += qty;
+            if (desc) fileSummary.descriptions.add(desc);
+
+            fileRows.push({
+              PO: fileSummary.PO,
+              QTY: qty,
+              Material: material,
+              Description: desc,
+              Size: size,
+              UnitCost: unitCost,
+              ExFactory: exFactory,
+              ShipTo: fileSummary.shipTo || "No detectado",
+            });
+          }
+        }
+        return { fileRows, fileSummary };
+      }
+    </script>
+
+    <!-- ===================== RENDER: PAGINACIÓN POR PO + BUSCADOR ===================== -->
+    <script>
+      // Estado de UI
+      const tbody = document.getElementById("tbody");
+      const poPerPageSel = document.getElementById("poPerPage");
+      const pageInfo = document.getElementById("pageInfo");
+      const btnPrev = document.getElementById("btnPrev");
+      const btnNext = document.getElementById("btnNext");
+      const jumpPO = document.getElementById("jumpPO");
+      const globalSearch = document.getElementById("globalSearch");
+      const btnClearSearch = document.getElementById("btnClearSearch");
+
+      let groupedByPO = {};
+      let poList = [];
+      let currentPage = 1;
+      let perPage = 2;
+      let searchQuery = "";
+
+      function regroupAndRender() {
+        groupedByPO = {};
+        rows.forEach((r) => {
+          const po = r.PO || "N/A";
+          if (!groupedByPO[po]) groupedByPO[po] = [];
+          groupedByPO[po].push(r);
+        });
+        poList = Object.keys(groupedByPO);
+        currentPage = 1;
+        renderPage();
+      }
+
+      function fmt(n) {
+        return Number(n || 0).toLocaleString();
+      }
+      function moneyToNumber(s) {
+        if (s == null) return 0;
+        let str = String(s)
+          .trim()
+          .replace(/[^\d.,-]/g, ""); // deja dígitos, coma, punto, signo
+
+        const hasDot = str.includes(".");
+        const hasComma = str.includes(",");
+
+        if (hasDot && hasComma) {
+          // El separador decimal es el ÚLTIMO (.,) que aparece
+          const lastDot = str.lastIndexOf(".");
+          const lastComma = str.lastIndexOf(",");
+          const decSep = Math.max(lastDot, lastComma) === lastDot ? "." : ",";
+          // Deja solo el separador decimal como '.', quita el resto
+          str = str.replace(/[.,]/g, (m) => (m === decSep ? "." : ""));
+          return parseFloat(str) || 0;
+        }
+
+        if (hasComma && !hasDot) {
+          // Si son grupos de miles tipo 1,234,567 → quita comas
+          if (/^\d{1,3}(,\d{3})+$/.test(str))
+            return parseFloat(str.replace(/,/g, "")) || 0;
+          // Si no, la coma es decimal → cambia a '.'
+          return parseFloat(str.replace(/,/g, ".")) || 0;
+        }
+
+        if (hasDot && !hasComma) {
+          // Si son grupos de miles tipo 1.234.567 → quita puntos
+          if (/^\d{1,3}(\.\d{3})+$/.test(str))
+            return parseFloat(str.replace(/\./g, "")) || 0;
+          // Punto como decimal normal
+          return parseFloat(str) || 0;
+        }
+
+        // Solo dígitos (sin separadores)
+        const n = parseFloat(str);
+        return isNaN(n) ? 0 : n;
+      }
+
+      function fmtMoney(n) {
+        return Number(n || 0).toLocaleString(undefined, {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+      }
+
+      function rowMatches(r, q) {
+        if (!q) return true;
+        const s = q.toLowerCase();
+        return (
+          String(r.PO || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.QTY || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.Material || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.Description || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.Size || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.UnitCost || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.ExFactory || "")
+            .toLowerCase()
+            .includes(s) ||
+          String(r.ShipTo || "")
+            .toLowerCase()
+            .includes(s)
+        );
+      }
+
+      function getActivePOs() {
+        if (!searchQuery) return poList.slice();
+        const out = [];
+        for (const po of poList) {
+          const arr = groupedByPO[po] || [];
+          if (arr.some((r) => rowMatches(r, searchQuery))) out.push(po);
+        }
+        return out;
+      }
+
+      function buildPagerUI(activePOs) {
+        const totalPages = Math.max(1, Math.ceil(activePOs.length / perPage));
+        if (currentPage > totalPages) currentPage = totalPages;
+        pageInfo.textContent = `Página ${
+          activePOs.length ? currentPage : 0
+        }/${totalPages} • POs: ${activePOs.length}`;
+
+        jumpPO.innerHTML = `<option value="" disabled selected>Ir a PO…</option>`;
+        activePOs.forEach((po, idx) => {
+          const opt = document.createElement("option");
+          opt.value = String(idx + 1);
+          opt.textContent = po;
+          jumpPO.appendChild(opt);
+        });
+      }
+
+      function renderPage() {
+        const activePOs = getActivePOs();
+        tbody.innerHTML = "";
+
+        if (activePOs.length === 0) {
+          const tr = document.createElement("tr");
+          tr.innerHTML = `<td colspan="8" class="text-center text-muted py-4">Sin resultados para “${searchQuery}”.</td>`;
+          tbody.appendChild(tr);
+          buildPagerUI(activePOs);
+          return;
+        }
+
+        const start = (currentPage - 1) * perPage;
+        const end = Math.min(start + perPage, activePOs.length);
+        const slice = activePOs.slice(start, end);
+
+        slice.forEach((po) => {
+          const arr = (groupedByPO[po] || []).filter((r) =>
+            rowMatches(r, searchQuery)
+          );
+          let subtotalQty = 0;
+          let subtotalAmount = 0;
+
+          arr.forEach((r) => {
+            const q = Number(r.QTY || 0);
+            const cost = moneyToNumber(r.UnitCost);
+            const tr = document.createElement("tr");
+            tr.innerHTML = `
+            <td>${r.PO}</td>
+            <td>${fmt(q)}</td>
+            <td>${r.Material}</td>
+            <td>${r.Description}</td>
+            <td>${r.Size}</td>
+            <td>${r.UnitCost}</td>
+            <td>${r.ExFactory}</td>
+            <td>${r.ShipTo}</td>`;
+            tbody.appendChild(tr);
+            subtotalQty += q;
+            subtotalAmount += q * cost;
+          });
+
+          const sub = document.createElement("tr");
+          sub.className = "subtotal-row";
+          sub.innerHTML = `
+          <td>Subtotal PO: ${po}</td>
+          <td>${fmt(subtotalQty)}</td>
+          <td></td><td></td><td></td>
+          <td>${fmtMoney(subtotalAmount)}</td>
+          <td></td><td></td>`;
+          tbody.appendChild(sub);
+        });
+
+        buildPagerUI(activePOs);
+      }
+
+      // Controles UI
+      poPerPageSel.addEventListener("change", () => {
+        perPage = parseInt(poPerPageSel.value, 10) || 1;
+        currentPage = 1;
+        renderPage();
+      });
+      btnPrev.addEventListener("click", () => {
+        if (currentPage > 1) {
+          currentPage--;
+          renderPage();
+        }
+      });
+      btnNext.addEventListener("click", () => {
+        const totalPages = Math.max(
+          1,
+          Math.ceil(getActivePOs().length / perPage)
+        );
+        if (currentPage < totalPages) {
+          currentPage++;
+          renderPage();
+        }
+      });
+      jumpPO.addEventListener("change", () => {
+        const idx = parseInt(jumpPO.value, 10) - 1;
+        if (isNaN(idx)) return;
+        currentPage = Math.floor(idx / perPage) + 1;
+        renderPage();
+      });
+
+      let tId = null;
+      globalSearch.addEventListener("input", (e) => {
+        const val = e.target.value || "";
+        clearTimeout(tId);
+        tId = setTimeout(() => {
+          searchQuery = val.trim();
+          currentPage = 1;
+          renderPage();
+        }, 150);
+      });
+      btnClearSearch.addEventListener("click", () => {
+        globalSearch.value = "";
+        searchQuery = "";
+        currentPage = 1;
+        renderPage();
+        globalSearch.focus();
+      });
+
+      // Export (igual que antes)
+      document.getElementById("exportBtn").addEventListener("click", () => {
+        const ws = XLSX.utils.json_to_sheet(rows, {
+          header: [
+            "PO",
+            "QTY",
+            "Material",
+            "Description",
+            "Size",
+            "UnitCost",
+            "ExFactory",
+            "ShipTo",
+          ],
+        });
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Datos PDF");
+        XLSX.writeFile(wb, "datos_pdf.xlsx");
+      });
+    </script>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+  </body>
+</html>

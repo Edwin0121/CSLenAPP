@@ -1,0 +1,1662 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Envios partes cortadas proveedores</title>
+    <style>
+      :root {
+        --bg: #0f172a;
+        --card: #111827;
+        --muted: #94a3b8;
+        --text: #e5e7eb;
+        --accent: #22c55e;
+        --accent-2: #38bdf8;
+        --danger: #ef4444;
+        --ring: rgba(56, 189, 248, 0.35);
+        --success: #10b981;
+        --warning: #f59e0b;
+      }
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        margin: 0;
+        padding: 24px;
+        background: linear-gradient(180deg, #0b1220, #0f172a);
+        color: var(--text);
+        font-family: "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+        line-height: 1.5;
+        min-height: 100vh;
+      }
+      .container {
+        max-width: 1200px;
+        margin: 0 auto;
+        animation: fadeIn 0.5s ease-out;
+      }
+      @keyframes fadeIn {
+        from {
+          opacity: 0;
+          transform: translateY(-10px);
+        }
+        to {
+          opacity: 1;
+          transform: translateY(0);
+        }
+      }
+      .header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 16px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .title {
+        font-size: clamp(20px, 3vw, 28px);
+        font-weight: 800;
+        letter-spacing: 0.2px;
+        background: linear-gradient(to right, var(--accent-2), var(--accent));
+        -webkit-background-clip: text;
+        background-clip: text;
+        color: transparent;
+      }
+      .sub {
+        color: var(--muted);
+        font-size: 14px;
+        margin-top: 4px;
+        max-width: 800px;
+      }
+      .card {
+        background: rgba(17, 24, 39, 0.75);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 16px;
+        padding: 20px;
+        backdrop-filter: blur(6px);
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.35);
+        transition: all 0.3s ease;
+      }
+      .card:hover {
+        box-shadow: 0 15px 40px rgba(0, 0, 0, 0.45);
+        transform: translateY(-3px);
+      }
+      .controls {
+        display: grid;
+        grid-template-columns: 1fr;
+        gap: 12px;
+      }
+      @media (min-width: 720px) {
+        .controls {
+          grid-template-columns: 1.1fr 0.9fr auto auto auto;
+        }
+      }
+      label.input {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        padding: 14px 16px;
+        background: #0b1220;
+        border: 1px dashed rgba(148, 163, 184, 0.35);
+        border-radius: 12px;
+        cursor: pointer;
+        transition: all 0.3s ease;
+      }
+      label.input:hover {
+        border-color: var(--accent-2);
+        background: rgba(11, 18, 32, 0.8);
+        transform: translateY(-2px);
+      }
+      .muted {
+        color: var(--muted);
+        font-size: 13px;
+      }
+      input[type="file"] {
+        display: none;
+      }
+      input[type="text"],
+      select {
+        width: 100%;
+        padding: 12px 14px;
+        border-radius: 10px;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        background: #0b1220;
+        color: var(--text);
+        outline: none;
+        font-size: 14px;
+        transition: all 0.2s ease;
+      }
+      input[type="text"]:focus,
+      select:focus {
+        box-shadow: 0 0 0 4px var(--ring);
+        border-color: var(--accent-2);
+      }
+      button {
+        border: none;
+        padding: 12px 16px;
+        border-radius: 12px;
+        font-weight: 700;
+        cursor: pointer;
+        color: #0b1220;
+        background: linear-gradient(135deg, var(--accent), #16a34a);
+        box-shadow: 0 10px 20px rgba(34, 197, 94, 0.25);
+        transition: all 0.2s ease;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+      button:hover {
+        transform: translateY(-2px);
+        box-shadow: 0 12px 25px rgba(34, 197, 94, 0.35);
+      }
+      button:active {
+        transform: translateY(0);
+      }
+      button.secondary {
+        background: linear-gradient(135deg, var(--accent-2), #0284c7);
+        color: #032436;
+      }
+      button.secondary:hover {
+        box-shadow: 0 12px 25px rgba(56, 189, 248, 0.35);
+      }
+      button.ghost {
+        background: transparent;
+        border: 1px solid rgba(148, 163, 184, 0.25);
+        color: var(--text);
+        box-shadow: none;
+      }
+      button.ghost:hover {
+        background: rgba(148, 163, 184, 0.08);
+        box-shadow: none;
+      }
+      button.warning {
+        background: linear-gradient(135deg, var(--warning), #d97706);
+        color: #3c1906;
+      }
+      .files {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-top: 12px;
+      }
+      .file-chip {
+        padding: 6px 12px;
+        border-radius: 999px;
+        background: #0b1220;
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        font-size: 12px;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+        animation: popIn 0.3s ease;
+      }
+      @keyframes popIn {
+        0% {
+          transform: scale(0.8);
+          opacity: 0;
+        }
+        100% {
+          transform: scale(1);
+          opacity: 1;
+        }
+      }
+      .file-chip .remove {
+        cursor: pointer;
+        color: var(--danger);
+        font-weight: bold;
+        margin-left: 4px;
+      }
+      .status {
+        font-size: 12px;
+        color: var(--muted);
+        align-self: center;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .spinner {
+        width: 16px;
+        height: 16px;
+        border: 2px solid rgba(56, 189, 248, 0.3);
+        border-top-color: var(--accent-2);
+        border-radius: 50%;
+        animation: spin 1s linear infinite;
+      }
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+      .table-wrap {
+        margin-top: 16px;
+        overflow-x: auto;
+        border-radius: 16px;
+      }
+      table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        background: #0b1220;
+        border: 1px solid rgba(148, 163, 184, 0.2);
+        border-radius: 16px;
+        overflow: hidden;
+        table-layout: auto; /* Columnas ajustadas al contenido */
+      }
+      thead th {
+        position: sticky;
+        top: 0;
+        z-index: 2;
+        background: #0f172a;
+        color: #cbd5e1;
+        text-align: left;
+        font-size: 12px;
+        letter-spacing: 0.3px;
+        text-transform: uppercase;
+        padding: 14px 16px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.2);
+        white-space: nowrap;
+      }
+      th,
+      td {
+        padding: 12px 16px;
+        border-bottom: 1px solid rgba(148, 163, 184, 0.12);
+        white-space: nowrap; /* Evitar saltos de línea */
+      }
+      tbody tr {
+        transition: background 0.2s ease;
+      }
+      tbody tr:hover {
+        background: rgba(148, 163, 184, 0.08);
+      }
+      tbody tr:nth-child(even) {
+        background: rgba(148, 163, 184, 0.03);
+      }
+      tbody tr:nth-child(even):hover {
+        background: rgba(148, 163, 184, 0.08);
+      }
+      .kpi {
+        display: grid;
+        grid-template-columns: repeat(2, minmax(0, 1fr));
+        gap: 12px;
+        margin-top: 16px;
+      }
+      @media (min-width: 900px) {
+        .kpi {
+          grid-template-columns: repeat(4, minmax(0, 1fr));
+        }
+      }
+      .kpi .card {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        padding: 16px;
+      }
+      .kpi .card > div:first-child {
+        font-size: 14px;
+        color: var(--muted);
+      }
+      .pill {
+        font-size: 16px;
+        font-weight: 700;
+        color: #0b1220;
+        background: linear-gradient(135deg, var(--accent-2), #3b82f6);
+        padding: 6px 16px;
+        border-radius: 999px;
+        min-width: 70px;
+        text-align: center;
+      }
+      .footer {
+        margin-top: 24px;
+        color: var(--muted);
+        font-size: 12px;
+        text-align: center;
+        padding: 16px;
+        border-top: 1px solid rgba(148, 163, 184, 0.1);
+      }
+      .progress-container {
+        height: 4px;
+        background: rgba(148, 163, 184, 0.1);
+        border-radius: 2px;
+        overflow: hidden;
+        margin-top: 12px;
+        display: none;
+      }
+      .progress-bar {
+        height: 100%;
+        background: linear-gradient(to right, var(--accent-2), var(--success));
+        width: 0%;
+        transition: width 0.4s ease;
+      }
+      .notification {
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 20px;
+        border-radius: 12px;
+        background: var(--card);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        box-shadow: 0 10px 25px rgba(0, 0, 0, 0.3);
+        display: flex;
+        align-items: center;
+        gap: 12px;
+        transform: translateX(150%);
+        transition: transform 0.4s ease;
+        z-index: 100;
+      }
+      .notification.show {
+        transform: translateX(0);
+      }
+      .notification.success {
+        border-left: 4px solid var(--success);
+      }
+      .notification.error {
+        border-left: 4px solid var(--danger);
+      }
+      .notification.warning {
+        border-left: 4px solid var(--warning);
+      }
+      .notification-icon {
+        width: 24px;
+        height: 24px;
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+      }
+      .notification.success .notification-icon {
+        background: rgba(16, 185, 129, 0.15);
+        color: var(--success);
+      }
+      .notification.error .notification-icon {
+        background: rgba(239, 68, 68, 0.15);
+        color: var(--danger);
+      }
+      .notification.warning .notification-icon {
+        background: rgba(245, 158, 11, 0.15);
+        color: var(--warning);
+      }
+      .notification-content h4 {
+        margin-bottom: 4px;
+        font-size: 14px;
+      }
+      .notification-content p {
+        font-size: 13px;
+        color: var(--muted);
+      }
+      .empty-state {
+        text-align: center;
+        padding: 40px 20px;
+        color: var(--muted);
+      }
+      .empty-state svg {
+        width: 64px;
+        height: 64px;
+        margin-bottom: 16px;
+        opacity: 0.5;
+      }
+      .filter-bar {
+        display: flex;
+        gap: 12px;
+        margin-bottom: 16px;
+        flex-wrap: wrap;
+      }
+      .filter-item {
+        background: rgba(17, 24, 39, 0.55);
+        border: 1px solid rgba(148, 163, 184, 0.15);
+        border-radius: 10px;
+        padding: 8px 12px;
+        font-size: 14px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .filter-item select {
+        background: transparent;
+        border: none;
+        color: var(--text);
+        padding: 0;
+        font-size: 14px;
+      }
+      .filter-item select:focus {
+        box-shadow: none;
+      }
+      .table-actions {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+      }
+      .export-options {
+        display: flex;
+        gap: 8px;
+      }
+      .lib-error {
+        background: rgba(239, 68, 68, 0.1);
+        border: 1px solid var(--danger);
+        border-radius: 12px;
+        padding: 16px;
+        margin-top: 16px;
+        display: flex;
+        flex-direction: column;
+        gap: 12px;
+      }
+      .lib-error-header {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+      .lib-error-content {
+        font-size: 14px;
+        line-height: 1.5;
+      }
+      .lib-error-content p {
+        margin-bottom: 8px;
+      }
+      .lib-error-buttons {
+        display: flex;
+        gap: 10px;
+        margin-top: 10px;
+        flex-wrap: wrap;
+      }
+      .lib-error svg {
+        min-width: 24px;
+        min-height: 24px;
+      }
+      .reload-section {
+        margin-top: 16px;
+        text-align: center;
+      }
+      .hidden {
+        display: none;
+      }
+      .info-badge {
+        background: rgba(56, 189, 248, 0.15);
+        color: var(--accent-2);
+        padding: 6px 12px;
+        border-radius: 20px;
+        font-size: 12px;
+        margin-top: 10px;
+        display: inline-flex;
+        align-items: center;
+        gap: 5px;
+      }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div>
+          <div class="title">Seleccion de archivos de partes cortadas</div>
+          <div class="sub">
+            <div class="info-badge">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="currentColor"
+              >
+                <path
+                  d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                />
+                <path
+                  d="M12 8V12"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+                <path
+                  d="M12 16H12.01"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                />
+              </svg>
+              Procesamento de excel de envios de partes cortadas
+            </div>
+          </div>
+        </div>
+        <button id="btnClear" class="ghost" title="Limpiar todo">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M19 6.41L17.59 5L12 10.59L6.41 5L5 6.41L10.59 12L13.41 12L19 6.41Z"
+              fill="currentColor"
+            />
+          </svg>
+          Limpiar
+        </button>
+      </div>
+
+      <div class="card">
+        <div class="controls">
+          <label class="input" for="fileInput" id="fileInputLabel">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 16V4m0 12 3.5-3.5M12 16 8.5 12.5M4 16v2a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2v-2"
+                stroke="#38bdf8"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <div>
+              <div><strong>Selecciona archivos</strong> (múltiples)</div>
+              <div class="muted">
+                XLSX / XLSM / XLS • Se unificarán en una sola tabla
+              </div>
+            </div>
+          </label>
+          <input
+            id="fileInput"
+            type="file"
+            accept=".xlsx,.xlsm,.xls"
+            multiple
+          />
+
+          <input
+            id="searchInput"
+            type="text"
+            placeholder="Buscar en la tabla (cliente, estilo, color, etc.)"
+          />
+
+          <select id="dateFormat">
+            <option value="YYYY-MM-DD">Fecha: YYYY-MM-DD</option>
+            <option value="DD/MM/YYYY">Fecha: DD/MM/YYYY</option>
+          </select>
+
+          <button id="btnExport" class="secondary">
+            <svg
+              width="18"
+              height="18"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 16L12 4M12 16L16 12M12 16L8 12M4 20H20"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Exportar
+          </button>
+          <div id="libStatus" class="status">
+            <div class="spinner"></div>
+            Cargando librerías…
+          </div>
+        </div>
+        <div class="progress-container" id="progressContainer">
+          <div class="progress-bar" id="progressBar"></div>
+        </div>
+        <div id="files" class="files"></div>
+        <div id="libError" class="lib-error hidden">
+          <div class="lib-error-header">
+            <svg
+              width="24"
+              height="24"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M12 8V12M12 16H12.01M21 12C21 16.9706 16.9706 21 12 21C7.02944 21 3 16.9706 3 12C3 7.02944 7.02944 3 12 3C16.9706 3 21 7.02944 21 12Z"
+                stroke="#ef4444"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            <h3>Error crítico al cargar librerías</h3>
+          </div>
+          <div class="lib-error-content">
+            <p>
+              No se pudieron cargar las librerías necesarias para procesar
+              archivos Excel.
+            </p>
+            <p>Posibles causas:</p>
+            <ul>
+              <li>Problemas de red o conexión a internet</li>
+              <li>Restricciones de seguridad en este entorno</li>
+              <li>Problemas con los servidores de CDN</li>
+            </ul>
+            <p>Por favor intenta recargar la página o usar otro navegador.</p>
+          </div>
+          <div class="lib-error-buttons">
+            <button id="btnReloadPage" class="warning">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 4V9H4.58152M19.9381 11C19.446 7.05369 16.0796 4 12 4C8.64262 4 5.76829 6.06817 4.58152 9M4.58152 9H9M20 20V15H19.4185M19.4185 15C18.2317 17.9318 15.3574 20 12 20C7.92038 20 4.55399 16.9463 4.06189 13M19.4185 15H15"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Recargar página
+            </button>
+            <button id="btnRetryLibs" class="secondary">
+              <svg
+                width="16"
+                height="16"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M4 4V9H4.58152M19.9381 11C19.446 7.05369 16.0796 4 12 4C8.64262 4 5.76829 6.06817 4.58152 9M4.58152 9H9M20 20V15H19.4185M19.4185 15C18.2317 17.9318 15.3574 20 12 20C7.92038 20 4.55399 16.9463 4.06189 13M19.4185 15H15"
+                  stroke="currentColor"
+                  stroke-width="1.5"
+                  stroke-linecap="round"
+                  stroke-linejoin="round"
+                />
+              </svg>
+              Reintentar carga
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <div class="kpi">
+        <div class="card">
+          <div>Archivos cargados</div>
+          <div id="kpiFiles" class="pill">0</div>
+        </div>
+        <div class="card">
+          <div>Filas procesadas</div>
+          <div id="kpiRows" class="pill">0</div>
+        </div>
+        <div class="card">
+          <div>Partes totales</div>
+          <div id="kpiParts" class="pill">0</div>
+        </div>
+        <div class="card">
+          <div>Última actualización</div>
+          <div id="kpiUpdated" class="pill">—</div>
+        </div>
+      </div>
+
+      <div class="table-actions">
+        <div class="filter-bar">
+          <div class="filter-item">
+            <span>Filtrar por:</span>
+            <select id="filterColumn">
+              <option value="all">Todos los campos</option>
+              <option value="PROVEEDOR">Proveedor</option>
+              <option value="CLIENTE">Cliente</option>
+              <option value="ESTILO">Estilo</option>
+              <option value="COLOR">Color</option>
+            </select>
+          </div>
+        </div>
+        <div class="export-options">
+          <button id="btnExportCSV" class="ghost">
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              xmlns="http://www.w3.org/2000/svg"
+            >
+              <path
+                d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M14 2V8H20"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M16 13H8"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+              <path
+                d="M16 17H8"
+                stroke="currentColor"
+                stroke-width="1.5"
+                stroke-linecap="round"
+                stroke-linejoin="round"
+              />
+            </svg>
+            Exportar CSV
+          </button>
+        </div>
+      </div>
+
+      <div class="table-wrap">
+        <table id="dataTable">
+          <thead>
+            <tr>
+              <th>PROVEEDOR</th>
+              <th>FECHA</th>
+              <th>ENVÍO #</th>
+              <th>N°</th>
+              <th>TIPO</th>
+              <th>CLIENTE</th>
+              <th>ESTILO</th>
+              <th>CORTE</th>
+              <th>COLOR</th>
+              <th>PARTES</th>
+              <th>CONCATENADO</th>
+              <th>Archivo</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody">
+            <tr>
+              <td colspan="12" class="empty-state">
+                <svg
+                  width="64"
+                  height="64"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  xmlns="http://www.w3.org/2000/svg"
+                >
+                  <path
+                    d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z"
+                    stroke="#94a3b8"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M14 2V8H20"
+                    stroke="#94a3b8"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M16 13H8"
+                    stroke="#94a3b8"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M16 17H8"
+                    stroke="#94a3b8"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                  <path
+                    d="M10 9H9H8"
+                    stroke="#94a3b8"
+                    stroke-width="1.5"
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                  />
+                </svg>
+                <h3>Sin datos para mostrar</h3>
+                <p>Selecciona archivos Excel para comenzar</p>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <div class="reload-section" id="reloadSection">
+        <button id="btnReloadLibs" class="warning">
+          <svg
+            width="18"
+            height="18"
+            viewBox="0 0 24 24"
+            fill="none"
+            xmlns="http://www.w3.org/2000/svg"
+          >
+            <path
+              d="M4 4V9H4.58152M19.9381 11C19.446 7.05369 16.0796 4 12 4C8.64262 4 5.76829 6.06817 4.58152 9M4.58152 9H9M20 20V15H19.4185M19.4185 15C18.2317 17.9318 15.3574 20 12 20C7.92038 20 4.55399 16.9463 4.06189 13M19.4185 15H15"
+              stroke="currentColor"
+              stroke-width="1.5"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+            />
+          </svg>
+          Recargar librerías manualmente
+        </button>
+      </div>
+
+      <div class="footer">
+        Power by Edwin + ChatGPT • Sistema de carga robusta de librerías
+      </div>
+    </div>
+
+    <div class="notification" id="notification">
+      <div class="notification-icon">
+        <svg
+          width="16"
+          height="16"
+          viewBox="0 0 24 24"
+          fill="none"
+          xmlns="http://www.w3.org/2000/svg"
+        >
+          <path
+            d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M12 8V12"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+          <path
+            d="M12 16H12.01"
+            stroke="currentColor"
+            stroke-width="2"
+            stroke-linecap="round"
+            stroke-linejoin="round"
+          />
+        </svg>
+      </div>
+      <div class="notification-content">
+        <h4 id="notificationTitle">Notificación</h4>
+        <p id="notificationMessage">Mensaje de notificación</p>
+      </div>
+    </div>
+
+    <script>
+      // ======= CARGA ROBUSTA DE LIBRERÍAS =======
+      const Libs = { ready: false, xlsx: false, saver: false };
+      const statusEl = document.getElementById("libStatus");
+      const progressContainer = document.getElementById("progressContainer");
+      const progressBar = document.getElementById("progressBar");
+      const notification = document.getElementById("notification");
+      const notificationTitle = document.getElementById("notificationTitle");
+      const notificationMessage = document.getElementById(
+        "notificationMessage"
+      );
+      const libErrorEl = document.getElementById("libError");
+      const fileInputLabel = document.getElementById("fileInputLabel");
+      const reloadSection = document.getElementById("reloadSection");
+      const btnReloadLibs = document.getElementById("btnReloadLibs");
+      const btnReloadPage = document.getElementById("btnReloadPage");
+      const btnRetryLibs = document.getElementById("btnRetryLibs");
+
+      function showNotification(type, title, message, duration = 3000) {
+        notification.className = `notification ${type}`;
+        notificationTitle.textContent = title;
+        notificationMessage.textContent = message;
+        notification.classList.add("show");
+
+        setTimeout(() => {
+          notification.classList.remove("show");
+        }, duration);
+      }
+
+      function updateProgress(percent) {
+        progressContainer.style.display = "block";
+        progressBar.style.width = percent + "%";
+      }
+
+      function hideProgress() {
+        setTimeout(() => {
+          progressContainer.style.display = "none";
+          progressBar.style.width = "0%";
+        }, 500);
+      }
+
+      function loadScript(src) {
+        return new Promise((resolve, reject) => {
+          const s = document.createElement("script");
+          s.src = src;
+          s.async = true;
+          s.onload = () => resolve(src);
+          s.onerror = () => reject(new Error("Error al cargar " + src));
+          document.head.appendChild(s);
+        });
+      }
+
+      async function loadLibs() {
+        statusEl.innerHTML = '<div class="spinner"></div> Cargando librerías…';
+        libErrorEl.classList.add("hidden");
+        reloadSection.classList.add("hidden");
+
+        // Limpiar cualquier intento previo
+        document
+          .querySelectorAll('script[src*="xlsx"]')
+          .forEach((s) => s.remove());
+        document
+          .querySelectorAll('script[src*="FileSaver"]')
+          .forEach((s) => s.remove());
+
+        // Usar versiones alternativas que funcionan mejor
+        const xlsxCDNs = [
+          "https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.17.0/xlsx.full.min.js",
+          "https://cdn.jsdelivr.net/npm/xlsx@0.17.0/dist/xlsx.full.min.js",
+          "https://unpkg.com/xlsx@0.17.0/dist/xlsx.full.min.js",
+        ];
+
+        const saverCDNs = [
+          "https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js",
+          "https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js",
+          "https://unpkg.com/file-saver@2.0.5/dist/FileSaver.min.js",
+        ];
+
+        // Cargar XLSX con múltiples intentos
+        let xlsxLoaded = false;
+        let xlsxErrors = [];
+        for (const [index, url] of xlsxCDNs.entries()) {
+          try {
+            updateProgress(30 + index * 20);
+            await loadScript(url);
+            if (window.XLSX) {
+              Libs.xlsx = true;
+              xlsxLoaded = true;
+              console.log(`XLSX cargado desde ${url}`);
+              break;
+            }
+          } catch (error) {
+            console.error(`Error al cargar XLSX desde ${url}:`, error);
+            xlsxErrors.push(`<li>${url}: ${error.message}</li>`);
+          }
+        }
+
+        // Cargar FileSaver con múltiples intentos
+        let saverLoaded = false;
+        let saverErrors = [];
+        for (const [index, url] of saverCDNs.entries()) {
+          try {
+            updateProgress(70 + index * 10);
+            await loadScript(url);
+            if (window.saveAs) {
+              Libs.saver = true;
+              saverLoaded = true;
+              console.log(`FileSaver cargado desde ${url}`);
+              break;
+            }
+          } catch (error) {
+            console.error(`Error al cargar FileSaver desde ${url}:`, error);
+            saverErrors.push(`<li>${url}: ${error.message}</li>`);
+          }
+        }
+
+        // Actualizar estado
+        Libs.ready = Libs.xlsx && Libs.saver;
+
+        if (Libs.xlsx && Libs.saver) {
+          statusEl.innerHTML =
+            '<span style="color:#38bdf8">✓</span> Librerías listas';
+          showNotification(
+            "success",
+            "Listo",
+            "Librerías cargadas correctamente"
+          );
+          fileInputLabel.style.opacity = "1";
+          fileInputLabel.style.pointerEvents = "all";
+        } else if (Libs.xlsx && !Libs.saver) {
+          statusEl.innerHTML =
+            '<span style="color:#38bdf8">✓</span> XLSX lista. <span style="color:#f59e0b">FileSaver no cargó</span>';
+          showNotification(
+            "warning",
+            "Atención",
+            "FileSaver no se pudo cargar, se usará método alternativo para exportar"
+          );
+          fileInputLabel.style.opacity = "1";
+          fileInputLabel.style.pointerEvents = "all";
+        } else if (!Libs.xlsx && Libs.saver) {
+          statusEl.innerHTML =
+            '<span style="color:#38bdf8">✓</span> FileSaver listo. <span style="color:#f59e0b">XLSX no cargó</span>';
+          showNotification(
+            "warning",
+            "Atención",
+            "XLSX no se pudo cargar, no se pueden procesar archivos Excel"
+          );
+          fileInputLabel.style.opacity = "0.5";
+          fileInputLabel.style.pointerEvents = "none";
+        } else {
+          statusEl.innerHTML =
+            '<span style="color:#ef4444">✗</span> No se pudieron cargar librerías';
+          showNotification(
+            "error",
+            "Error",
+            "No se pudieron cargar las librerías necesarias"
+          );
+          fileInputLabel.style.opacity = "0.5";
+          fileInputLabel.style.pointerEvents = "none";
+        }
+
+        // Mostrar error crítico si XLSX no se cargó
+        if (!Libs.xlsx) {
+          libErrorEl.classList.remove("hidden");
+          reloadSection.classList.remove("hidden");
+
+          // Agregar detalles de error
+          const errorDetails = document.createElement("div");
+          errorDetails.innerHTML = `
+        <p><strong>Detalles del error:</strong></p>
+        <ul>
+          ${xlsxErrors.join("")}
+        </ul>
+      `;
+          libErrorEl
+            .querySelector(".lib-error-content")
+            .appendChild(errorDetails);
+        }
+
+        hideProgress();
+      }
+
+      // ======= APP =======
+      async function initApp() {
+        await loadLibs();
+
+        const input = document.getElementById("fileInput");
+        const filesDiv = document.getElementById("files");
+        const tableBody = document.querySelector("#dataTable tbody");
+        const searchInput = document.getElementById("searchInput");
+        const btnExport = document.getElementById("btnExport");
+        const btnExportCSV = document.getElementById("btnExportCSV");
+        const btnClear = document.getElementById("btnClear");
+        const kpiFiles = document.getElementById("kpiFiles");
+        const kpiRows = document.getElementById("kpiRows");
+        const kpiParts = document.getElementById("kpiParts");
+        const kpiUpdated = document.getElementById("kpiUpdated");
+        const dateFormatSel = document.getElementById("dateFormat");
+        const filterColumn = document.getElementById("filterColumn");
+
+        let masterRows = []; // filas consolidadas
+        let loadedFiles = []; // nombres de archivo
+
+        const START_ROW = 9; // encabezados en 8, datos desde 9
+        const MAX_LOOK = 1000;
+
+        function fmtDate(d, fmt) {
+          const pad = (n) => String(n).padStart(2, "0");
+          const yyyy = d.getFullYear();
+          const mm = pad(d.getMonth() + 1);
+          const dd = pad(d.getDate());
+          return fmt === "DD/MM/YYYY"
+            ? `${dd}/${mm}/${yyyy}`
+            : `${yyyy}-${mm}-${dd}`;
+        }
+
+        // Extrae número de cadenas mixtas (1,234 / 1.234 / 1 234,56)
+        function numFromAny(val) {
+          if (val == null) return 0;
+          if (typeof val === "number" && isFinite(val)) return val;
+          let s = String(val);
+          let filtered = "";
+          for (const ch of s) {
+            if ("0123456789.-,".includes(ch)) filtered += ch;
+          }
+          // quitar separadores de miles comunes
+          filtered = filtered.split(",").join("");
+          const n = Number(filtered);
+          return isNaN(n) ? 0 : n;
+        }
+
+        function renderKPIs() {
+          kpiFiles.textContent = loadedFiles.length;
+          kpiRows.textContent = masterRows.length;
+          const parts = masterRows.reduce(
+            (acc, r) => acc + (Number(r.PARTES) || 0),
+            0
+          );
+          kpiParts.textContent = parts.toLocaleString();
+          kpiUpdated.textContent = new Date().toLocaleTimeString();
+        }
+
+        function renderFiles() {
+          filesDiv.innerHTML = "";
+          loadedFiles.forEach((name) => {
+            const span = document.createElement("span");
+            span.className = "file-chip";
+            span.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+          <path d="M14 2V8H20" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+        </svg>
+        ${name} <span class="remove" data-file="${name}">×</span>`;
+            filesDiv.appendChild(span);
+          });
+
+          // Add event listeners for remove buttons
+          document.querySelectorAll(".file-chip .remove").forEach((btn) => {
+            btn.addEventListener("click", (e) => {
+              e.stopPropagation();
+              const fileName = btn.getAttribute("data-file");
+              removeFile(fileName);
+            });
+          });
+        }
+
+        function removeFile(fileName) {
+          // Remove from loaded files
+          const index = loadedFiles.indexOf(fileName);
+          if (index !== -1) {
+            loadedFiles.splice(index, 1);
+          }
+
+          // Remove corresponding rows
+          masterRows = masterRows.filter((row) => row.__ARCHIVO !== fileName);
+
+          renderFiles();
+          renderTable(masterRows);
+          showNotification(
+            "success",
+            "Archivo eliminado",
+            `Se eliminó ${fileName} y sus datos asociados`
+          );
+        }
+
+        function renderTable(rows) {
+          if (rows.length === 0) {
+            tableBody.innerHTML = `<tr>
+          <td colspan="12" class="empty-state">
+            <svg width="64" height="64" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+              <path d="M14 2H6C5.46957 2 4.96086 2.21071 4.58579 2.58579C4.21071 2.96086 4 3.46957 4 4V20C4 20.5304 4.21071 21.0391 4.58579 21.4142C4.96086 21.7893 5.46957 22 6 22H18C18.5304 22 19.0391 21.7893 19.4142 21.4142C19.7893 21.0391 20 20.5304 20 20V8L14 2Z" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M14 2V8H20" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 13H8" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M16 17H8" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+              <path d="M10 9H9H8" stroke="#94a3b8" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+            </svg>
+            <h3>Sin datos para mostrar</h3>
+            <p>Selecciona archivos Excel para comenzar</p>
+          </td>
+        </tr>`;
+            renderKPIs();
+            return;
+          }
+
+          tableBody.innerHTML = "";
+          const frag = document.createDocumentFragment();
+          rows.forEach((r) => {
+            const tr = document.createElement("tr");
+            const cols = [
+              "PROVEEDOR",
+              "FECHA",
+              "ENVIO",
+              "N",
+              "TIPO",
+              "CLIENTE",
+              "ESTILO",
+              "CORTE",
+              "COLOR",
+              "PARTES",
+              "CONCATENADO",
+              "__ARCHIVO",
+            ];
+            cols.forEach((key) => {
+              const td = document.createElement("td");
+              td.textContent = r[key] ?? "";
+              tr.appendChild(td);
+            });
+            frag.appendChild(tr);
+          });
+          tableBody.appendChild(frag);
+          renderKPIs();
+        }
+
+        function filterRows(term) {
+          if (!term) {
+            renderTable(masterRows);
+            return;
+          }
+
+          const q = term.toLowerCase();
+          const column = filterColumn.value;
+
+          const filtered = masterRows.filter((r) => {
+            if (column === "all") {
+              return [
+                "PROVEEDOR",
+                "ENVIO",
+                "TIPO",
+                "CLIENTE",
+                "ESTILO",
+                "CORTE",
+                "COLOR",
+                "CONCATENADO",
+                "__ARCHIVO",
+              ].some((k) =>
+                String(r[k] || "")
+                  .toLowerCase()
+                  .includes(q)
+              );
+            } else {
+              return String(r[column] || "")
+                .toLowerCase()
+                .includes(q);
+            }
+          });
+
+          renderTable(filtered);
+        }
+
+        searchInput.addEventListener("input", (e) =>
+          filterRows(e.target.value)
+        );
+
+        btnClear.addEventListener("click", () => {
+          if (masterRows.length === 0) {
+            showNotification(
+              "info",
+              "Información",
+              "No hay datos para limpiar"
+            );
+            return;
+          }
+
+          if (
+            !confirm("¿Estás seguro de que quieres borrar todos los datos?")
+          ) {
+            return;
+          }
+
+          masterRows = [];
+          loadedFiles = [];
+          renderFiles();
+          renderTable([]);
+          showNotification(
+            "success",
+            "Datos limpiados",
+            "Todos los datos han sido eliminados"
+          );
+        });
+
+        // Detecta la hoja que tiene encabezados en fila 8 y datos en fila 9
+        function pickSheetName(wb) {
+          for (const name of wb.SheetNames) {
+            const ws = wb.Sheets[name];
+            const c8 = (ws["C8"] && String(ws["C8"].v).trim()) || "";
+            const e8 = (ws["E8"] && String(ws["E8"].v).trim()) || "";
+            const h8 = (ws["H8"] && String(ws["H8"].v).trim()) || "";
+            const i8 = (ws["I8"] && String(ws["I8"].v).trim()) || "";
+            const j8 = (ws["J8"] && String(ws["J8"].v).trim()) || "";
+            const k8 = (ws["K8"] && String(ws["K8"].v).trim()) || "";
+            const headersOk =
+              [c8, e8, h8, i8, j8, k8].filter(Boolean).length >= 3;
+            const hasRow9Data = ["C", "E", "H", "I", "J", "K"].some((col) => {
+              const cell = ws[col + "9"];
+              return cell && String(cell.v).trim();
+            });
+            if (headersOk && hasRow9Data) return name;
+          }
+          return wb.SheetNames[0];
+        }
+
+        // Lector de archivo → filas (MODIFICADO PARA SOLO PRIMERA TABLA)
+        async function processWorkbook(arrayBuffer, fileName) {
+          if (!window.XLSX) {
+            throw new Error("XLSX no está disponible");
+          }
+
+          try {
+            const wb = XLSX.read(arrayBuffer, {
+              type: "array",
+              cellDates: true,
+            });
+            const sheetName = pickSheetName(wb);
+            const ws = wb.Sheets[sheetName];
+
+            const readCell = (addr) => {
+              const cell = ws[addr];
+              if (!cell) return "";
+              if (cell.t === "n" && cell.z && /[dy]/i.test(cell.z)) {
+                const date = XLSX.SSF.parse_date_code(cell.v);
+                return `${date.y}-${String(date.m).padStart(2, "0")}-${String(
+                  date.d
+                ).padStart(2, "0")}`;
+              }
+              return String(cell.v ?? "")
+                .toString()
+                .trim();
+            };
+
+            const proveedor = readCell("C4");
+            const envio = readCell("F5");
+            const today = new Date();
+
+            const outRows = [];
+            let started = false;
+            let consecutiveEmpties = 0;
+
+            for (let r = 0; r < MAX_LOOK; r++) {
+              const rowIndex = START_ROW + r;
+              const TIPO = readCell(`C${rowIndex}`);
+              const PARTES_SRC = readCell(`E${rowIndex}`);
+              const CLIENTE = readCell(`H${rowIndex}`);
+              const ESTILO = readCell(`I${rowIndex}`);
+              const CORTE = readCell(`J${rowIndex}`);
+              const COLOR = readCell(`K${rowIndex}`);
+
+              const cells = [TIPO, PARTES_SRC, CLIENTE, ESTILO, CORTE, COLOR];
+              const isAllEmpty = cells.every(
+                (v) => String(v || "").trim() === ""
+              );
+
+              // Si encontramos una fila vacía después de haber empezado
+              if (started && isAllEmpty) {
+                consecutiveEmpties++;
+                // Si encontramos 2 filas vacías consecutivas, terminamos
+                if (consecutiveEmpties >= 2) {
+                  break;
+                }
+                continue;
+              } else {
+                consecutiveEmpties = 0;
+              }
+
+              // Si no hemos empezado y encontramos datos, empezamos
+              if (!started && !isAllEmpty) {
+                started = true;
+              }
+
+              // Si no hemos empezado o es fila vacía, continuamos
+              if (!started || isAllEmpty) {
+                continue;
+              }
+
+              // Omitir si el color está vacío
+              if (!COLOR || COLOR.trim() === "") {
+                continue;
+              }
+
+              // Evitar filas tipo TOTAL/RESUMEN
+              const looksLikeHeader = /\btotal\b|\bresumen\b|\bsummary\b/i.test(
+                [TIPO, CLIENTE, ESTILO, COLOR].join(" ")
+              );
+              if (looksLikeHeader) {
+                continue;
+              }
+
+              const partesBase = numFromAny(PARTES_SRC);
+              const partes = Math.round((partesBase || 0) * 12);
+
+              const FECHA = fmtDate(today, dateFormatSel.value);
+              const row = {
+                PROVEEDOR: proveedor,
+                FECHA,
+                ENVIO: envio,
+                N: "",
+                TIPO,
+                CLIENTE,
+                ESTILO,
+                CORTE,
+                COLOR,
+                PARTES: partes,
+                CONCATENADO: `${CLIENTE}; ${TIPO}; ${ESTILO}; ${CORTE}; ${COLOR}; ${partes} PCS/Partes`,
+                __ARCHIVO: fileName,
+              };
+
+              const allKeyEmpty = [TIPO, CLIENTE, ESTILO, CORTE, COLOR].every(
+                (v) => !String(v || "").trim()
+              );
+              if (allKeyEmpty && partes === 0) {
+                continue;
+              }
+
+              outRows.push(row);
+            }
+
+            return outRows;
+          } catch (err) {
+            console.error(`Error procesando ${fileName}`, err);
+            throw new Error(`Error al procesar el archivo: ${err.message}`);
+          }
+        }
+
+        input.addEventListener("change", async (e) => {
+          const files = Array.from(e.target.files || []);
+          if (!files.length) return;
+
+          if (!Libs.xlsx) {
+            showNotification(
+              "error",
+              "Error",
+              "No se puede procesar archivos sin la librería XLSX"
+            );
+            return;
+          }
+
+          progressContainer.style.display = "block";
+          let processed = 0;
+
+          for (const file of files) {
+            try {
+              updateProgress((processed / files.length) * 100);
+
+              const buf = await file.arrayBuffer();
+              const rows = await processWorkbook(buf, file.name);
+
+              masterRows.push(...rows);
+              loadedFiles.push(file.name);
+              processed++;
+
+              updateProgress((processed / files.length) * 100);
+            } catch (err) {
+              console.error(`Error processing ${file.name}`, err);
+              showNotification(
+                "error",
+                "Error",
+                `No se pudo procesar "${file.name}": ${err.message}`
+              );
+            }
+          }
+
+          hideProgress();
+          renderFiles();
+          renderTable(masterRows);
+          showNotification(
+            "success",
+            "Archivos cargados",
+            `Se procesaron ${files.length} archivos con ${masterRows.length} filas`
+          );
+        });
+
+        function exportCSV(rows) {
+          const headers = [
+            "PROVEEDOR",
+            "FECHA",
+            "ENVIO #",
+            "N°",
+            "TIPO",
+            "CLIENTE",
+            "ESTILO",
+            "CORTE",
+            "COLOR",
+            "PARTES",
+            "CONCATENADO",
+            "Archivo origen",
+          ];
+          const csv = [headers.join(",")]
+            .concat(
+              rows.map((r) => {
+                const arr = [
+                  r.PROVEEDOR,
+                  r.FECHA,
+                  r.ENVIO,
+                  r.N,
+                  r.TIPO,
+                  r.CLIENTE,
+                  r.ESTILO,
+                  r.CORTE,
+                  r.COLOR,
+                  r.PARTES,
+                  r.CONCATENADO,
+                  r.__ARCHIVO,
+                ];
+                return arr
+                  .map((v) => {
+                    const s = v == null ? "" : String(v);
+                    if (/[",\n]/.test(s))
+                      return '"' + s.replace(/"/g, '""') + '"';
+                    return s;
+                  })
+                  .join(",");
+              })
+            )
+            .join("\n");
+          const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
+
+          if (window.saveAs) {
+            saveAs(
+              blob,
+              `Consolidado_SUBL0100_${new Date()
+                .toISOString()
+                .slice(0, 10)}.csv`
+            );
+          } else {
+            // Método alternativo si FileSaver no está disponible
+            const a = document.createElement("a");
+            a.href = URL.createObjectURL(blob);
+            a.download = `Consolidado_SUBL0100_${new Date()
+              .toISOString()
+              .slice(0, 10)}.csv`;
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+          }
+        }
+
+        // Exportar CSV
+        btnExportCSV.addEventListener("click", () => {
+          if (masterRows.length === 0) {
+            showNotification(
+              "warning",
+              "Exportación",
+              "No hay datos para exportar"
+            );
+            return;
+          }
+
+          exportCSV(masterRows);
+          showNotification(
+            "success",
+            "Exportación exitosa",
+            "Archivo CSV generado"
+          );
+        });
+
+        // Exportar principal
+        btnExport.addEventListener("click", () => {
+          if (masterRows.length === 0) {
+            showNotification(
+              "warning",
+              "Exportación",
+              "No hay datos para exportar"
+            );
+            return;
+          }
+
+          if (window.XLSX && window.saveAs) {
+            try {
+              const wsData = [
+                [
+                  "PROVEEDOR",
+                  "FECHA",
+                  "ENVIO #",
+                  "N°",
+                  "TIPO",
+                  "CLIENTE",
+                  "ESTILO",
+                  "CORTE",
+                  "COLOR",
+                  "PARTES",
+                  "CONCATENADO",
+                  "Archivo origen",
+                ],
+              ];
+              masterRows.forEach((r) => {
+                wsData.push([
+                  r.PROVEEDOR,
+                  r.FECHA,
+                  r.ENVIO,
+                  r.N,
+                  r.TIPO,
+                  r.CLIENTE,
+                  r.ESTILO,
+                  r.CORTE,
+                  r.COLOR,
+                  r.PARTES,
+                  r.CONCATENADO,
+                  r.__ARCHIVO,
+                ]);
+              });
+              const ws = XLSX.utils.aoa_to_sheet(wsData);
+              const wb = XLSX.utils.book_new();
+              XLSX.utils.book_append_sheet(wb, ws, "Consolidado");
+              const out = XLSX.write(wb, { bookType: "xlsx", type: "array" });
+              const blob = new Blob([out], {
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+              });
+              const fileName = `Consolidado_SUBL0100_${new Date()
+                .toISOString()
+                .slice(0, 10)}.xlsx`;
+              saveAs(blob, fileName);
+              showNotification(
+                "success",
+                "Exportación exitosa",
+                "Archivo XLSX generado"
+              );
+            } catch (err) {
+              console.error("Error exporting XLSX", err);
+              showNotification(
+                "error",
+                "Error",
+                "Fallo al exportar XLSX: " + err.message
+              );
+              exportCSV(masterRows);
+            }
+          } else {
+            exportCSV(masterRows);
+          }
+        });
+      }
+
+      // Inicializar la aplicación
+      initApp();
+
+      // Configurar botones de recarga
+      btnReloadPage.addEventListener("click", () => {
+        location.reload();
+      });
+
+      btnRetryLibs.addEventListener("click", async () => {
+        libErrorEl.classList.add("hidden");
+        await loadLibs();
+      });
+
+      btnReloadLibs.addEventListener("click", async () => {
+        reloadSection.classList.add("hidden");
+        await loadLibs();
+      });
+    </script>
+  </body>
+</html>

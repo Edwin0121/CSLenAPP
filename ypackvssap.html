@@ -1,0 +1,1242 @@
+<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Consolidación SAP vs Ypack v12</title>
+
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+
+    <script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.js"></script>
+
+    <style>
+      :root {
+        --gray-50: #f9fafb;
+        --gray-100: #f3f4f6;
+        --gray-200: #e5e7eb;
+        --gray-300: #d1d5db;
+        --gray-400: #9ca3af;
+        --gray-500: #6b7280;
+        --gray-600: #4b5563;
+        --gray-700: #374151;
+        --gray-800: #1f2937;
+        --gray-900: #111827;
+
+        --btn-blue: #2563eb;
+        --btn-blue-hover: #1d4ed8;
+        --btn-amber: #f59e0b;
+        --btn-amber-hover: #d97706;
+        --btn-emerald: #10b981;
+        --btn-emerald-hover: #059669;
+        --btn-rose: #f43f5e;
+        --btn-rose-hover: #e11d48;
+
+        --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+        --shadow: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+        --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        --shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+
+        --radius-sm: 8px;
+        --radius: 12px;
+        --radius-lg: 16px;
+      }
+
+      * {
+        scrollbar-width: thin;
+        scrollbar-color: var(--gray-300) transparent;
+      }
+
+      ::-webkit-scrollbar {
+        width: 6px;
+        height: 6px;
+      }
+      ::-webkit-scrollbar-track {
+        background: transparent;
+      }
+      ::-webkit-scrollbar-thumb {
+        background: var(--gray-300);
+        border-radius: 3px;
+      }
+      ::-webkit-scrollbar-thumb:hover {
+        background: var(--gray-400);
+      }
+
+      body {
+        font-family: "Inter", sans-serif;
+        background: var(--gray-100);
+        color: var(--gray-900);
+        min-height: 100vh;
+        margin: 0;
+        -webkit-font-smoothing: antialiased;
+      }
+
+      /* Header Corporativo Gris */
+      .app-header {
+        background: var(--gray-900);
+        color: white;
+        padding: 0 2rem;
+        height: 64px;
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        position: sticky;
+        top: 0;
+        z-index: 100;
+        box-shadow: var(--shadow-lg);
+      }
+
+      .brand {
+        display: flex;
+        align-items: center;
+        gap: 12px;
+      }
+
+      .brand-icon {
+        width: 36px;
+        height: 36px;
+        background: linear-gradient(135deg, var(--gray-700) 0%, var(--gray-600) 100%);
+        border-radius: 10px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        color: white;
+        font-size: 1rem;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .brand-text {
+        font-weight: 700;
+        font-size: 1.15rem;
+        color: white;
+        letter-spacing: -0.02em;
+      }
+
+      .version-badge {
+        background: var(--gray-800);
+        color: var(--gray-300);
+        border: 1px solid var(--gray-700);
+        padding: 4px 12px;
+        border-radius: 20px;
+        font-size: 0.75rem;
+        font-weight: 600;
+      }
+
+      /* Layout */
+      main {
+        max-width: 1600px;
+        margin: 0 auto;
+        padding: 2rem;
+      }
+
+      /* Control Bar Gris */
+      .control-bar {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        padding: 1.5rem;
+        margin-bottom: 1.5rem;
+        box-shadow: var(--shadow-sm);
+        display: flex;
+        gap: 1.5rem;
+        flex-wrap: wrap;
+        align-items: center;
+      }
+
+      /* Drop Zones Grises */
+      .drop-zone {
+        flex: 1;
+        min-width: 240px;
+        border: 2px dashed var(--gray-300);
+        border-radius: var(--radius);
+        padding: 1.25rem 1.5rem;
+        background: var(--gray-50);
+        cursor: pointer;
+        display: flex;
+        align-items: center;
+        gap: 14px;
+        transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+      }
+
+      .drop-zone::before {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: linear-gradient(135deg, rgba(107, 114, 128, 0.04) 0%, rgba(75, 85, 99, 0.04) 100%);
+        opacity: 0;
+        transition: opacity 0.2s;
+      }
+
+      .drop-zone:hover {
+        border-color: var(--gray-500);
+        background: var(--gray-100);
+        transform: translateY(-1px);
+        box-shadow: var(--shadow-md);
+      }
+
+      .drop-zone:hover::before {
+        opacity: 1;
+      }
+
+      .drop-zone.active {
+        border-color: var(--btn-emerald);
+        background: #ecfdf5;
+        border-style: solid;
+      }
+
+      .drop-zone.active .dz-icon {
+        background: var(--btn-emerald);
+        color: white;
+      }
+
+      .dz-icon {
+        width: 44px;
+        height: 44px;
+        border-radius: var(--radius-sm);
+        background: white;
+        border: 1px solid var(--gray-200);
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.1rem;
+        color: var(--gray-500);
+        transition: all 0.2s;
+        flex-shrink: 0;
+        z-index: 1;
+      }
+
+      .drop-zone:hover .dz-icon {
+        background: var(--gray-700);
+        color: white;
+        border-color: var(--gray-700);
+      }
+
+      .dz-content {
+        z-index: 1;
+        min-width: 0;
+      }
+
+      .dz-title {
+        font-weight: 600;
+        font-size: 0.9rem;
+        color: var(--gray-900);
+        margin-bottom: 2px;
+      }
+
+      .dz-subtitle {
+        font-size: 0.8rem;
+        color: var(--gray-400);
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+      }
+
+      .drop-zone.active .dz-subtitle {
+        color: var(--btn-emerald);
+        font-weight: 600;
+      }
+
+      /* Acciones */
+      .actions-area {
+        display: flex;
+        gap: 0.75rem;
+        flex-wrap: wrap;
+        align-items: center;
+        margin-left: auto;
+      }
+
+      /* Search */
+      .search-wrapper {
+        position: relative;
+      }
+
+      .search-wrapper i {
+        position: absolute;
+        left: 14px;
+        top: 50%;
+        transform: translateY(-50%);
+        color: var(--gray-400);
+        font-size: 0.85rem;
+      }
+
+      #search {
+        border-radius: var(--radius);
+        padding: 0.65rem 1rem 0.65rem 2.5rem;
+        background: var(--gray-50);
+        border: 1px solid var(--gray-200);
+        color: var(--gray-900);
+        font-weight: 500;
+        font-size: 0.9rem;
+        transition: all 0.2s;
+        width: 260px;
+      }
+
+      #search::placeholder {
+        color: var(--gray-400);
+      }
+
+      #search:focus {
+        outline: none;
+        border-color: var(--gray-400);
+        background: white;
+        box-shadow: 0 0 0 3px rgba(107, 114, 128, 0.15);
+      }
+
+      /* BOTONES COLORIDOS Y VIBRANTES */
+      .btn-modern {
+        border-radius: var(--radius-sm) !important;
+        font-weight: 600;
+        padding: 0.65rem 1.25rem;
+        font-size: 0.875rem;
+        border: none;
+        transition: all 0.15s;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        cursor: pointer;
+        color: white;
+        box-shadow: var(--shadow-sm);
+      }
+
+      .btn-modern:disabled {
+        opacity: 0.4;
+        cursor: not-allowed;
+        filter: grayscale(0.6);
+      }
+
+      .btn-primary-modern {
+        background: var(--btn-blue);
+      }
+
+      .btn-primary-modern:hover:not(:disabled) {
+        background: var(--btn-blue-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(37, 99, 235, 0.35);
+      }
+
+      .btn-warning-modern {
+        background: var(--btn-amber);
+      }
+
+      .btn-warning-modern:hover:not(:disabled) {
+        background: var(--btn-amber-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(245, 158, 11, 0.35);
+      }
+
+      .btn-success-modern {
+        background: var(--btn-emerald);
+      }
+
+      .btn-success-modern:hover:not(:disabled) {
+        background: var(--btn-emerald-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(16, 185, 129, 0.35);
+      }
+
+      .btn-danger-modern {
+        background: var(--btn-rose);
+      }
+
+      .btn-danger-modern:hover:not(:disabled) {
+        background: var(--btn-rose-hover);
+        transform: translateY(-2px);
+        box-shadow: 0 8px 16px rgba(244, 63, 94, 0.35);
+      }
+
+      .btn-group-modern {
+        display: inline-flex;
+        gap: 6px;
+        background: var(--gray-100);
+        padding: 4px;
+        border-radius: var(--radius);
+        border: 1px solid var(--gray-200);
+      }
+
+      /* Tabla Card Gris */
+      .table-card {
+        background: white;
+        border: 1px solid var(--gray-200);
+        border-radius: var(--radius-lg);
+        box-shadow: var(--shadow-sm);
+        overflow: hidden;
+        display: flex;
+        flex-direction: column;
+        height: calc(100vh - 280px);
+        min-height: 500px;
+      }
+
+      /* Tabs Grises */
+      .nav-tabs-modern {
+        display: flex;
+        gap: 0.25rem;
+        padding: 0.75rem 1.25rem 0;
+        background: var(--gray-50);
+        border-bottom: 1px solid var(--gray-200);
+        list-style: none;
+        margin: 0;
+      }
+
+      .nav-tabs-modern .nav-item {
+        margin: 0;
+      }
+
+      .nav-tab {
+        border: none;
+        background: none;
+        padding: 0.75rem 1.25rem;
+        color: var(--gray-500);
+        font-weight: 600;
+        font-size: 0.875rem;
+        border-radius: var(--radius-sm) var(--radius-sm) 0 0;
+        cursor: pointer;
+        transition: all 0.15s;
+        position: relative;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+      }
+
+      .nav-tab:hover {
+        color: var(--gray-800);
+        background: rgba(255, 255, 255, 0.6);
+      }
+
+      .nav-tab.active {
+        color: var(--gray-900);
+        background: white;
+      }
+
+      .nav-tab.active::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0.75rem;
+        right: 0.75rem;
+        height: 2.5px;
+        background: var(--gray-800);
+        border-radius: 2px 2px 0 0;
+      }
+
+      .tab-badge {
+        background: var(--gray-200);
+        color: var(--gray-600);
+        padding: 2px 8px;
+        border-radius: 10px;
+        font-size: 0.75rem;
+        font-weight: 700;
+        min-width: 20px;
+        text-align: center;
+      }
+
+      .nav-tab.active .tab-badge {
+        background: var(--gray-800);
+        color: white;
+      }
+
+      /* Tab Content */
+      .tab-content-modern {
+        flex: 1;
+        overflow: hidden;
+        position: relative;
+      }
+
+      .tab-pane-modern {
+        position: absolute;
+        inset: 0;
+        overflow: auto;
+        opacity: 0;
+        visibility: hidden;
+        transition: opacity 0.2s;
+        padding: 0;
+      }
+
+      .tab-pane-modern.active {
+        opacity: 1;
+        visibility: visible;
+        position: relative;
+      }
+
+      /* Tabla Gris Ejecutiva */
+      .data-table {
+        width: 100%;
+        border-collapse: separate;
+        border-spacing: 0;
+        font-size: 0.8125rem;
+      }
+
+      .data-table th {
+        background: var(--gray-50);
+        color: var(--gray-600);
+        padding: 12px 16px;
+        text-align: left;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.06em;
+        font-size: 0.68rem;
+        border-bottom: 2px solid var(--gray-200);
+        white-space: nowrap;
+        position: sticky;
+        top: 0;
+        z-index: 10;
+      }
+
+      .data-table td {
+        padding: 12px 16px;
+        border-bottom: 1px solid var(--gray-100);
+        color: var(--gray-800);
+        white-space: nowrap;
+        background: white;
+        transition: background 0.1s;
+      }
+
+      .data-table tbody tr:hover td {
+        background: var(--gray-50);
+      }
+
+      .data-table tbody tr:last-child td {
+        border-bottom: none;
+      }
+
+      .num {
+        text-align: right;
+        font-family: "JetBrains Mono", "SF Mono", "Consolas", monospace;
+        font-weight: 500;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .neg {
+        color: var(--btn-rose);
+        font-weight: 700;
+      }
+
+      /* Footer de tabla */
+      .table-footer td {
+        background: var(--gray-800) !important;
+        color: white !important;
+        font-weight: 600;
+        position: sticky;
+        bottom: 0;
+        z-index: 10;
+        border-top: 2px solid var(--gray-900);
+      }
+
+      .table-footer .num {
+        color: white;
+      }
+
+      /* Loader */
+      .loading {
+        position: fixed;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.92);
+        backdrop-filter: blur(8px);
+        z-index: 9999;
+        display: none;
+        justify-content: center;
+        align-items: center;
+        flex-direction: column;
+        gap: 1rem;
+      }
+
+      .spinner-modern {
+        width: 40px;
+        height: 40px;
+        border: 3px solid var(--gray-200);
+        border-top-color: var(--gray-800);
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+      }
+
+      @keyframes spin {
+        to {
+          transform: rotate(360deg);
+        }
+      }
+
+      .loading-text {
+        color: var(--gray-600);
+        font-weight: 600;
+        font-size: 0.95rem;
+      }
+
+      /* Estados vacíos */
+      .empty-state {
+        padding: 4rem 2rem;
+        text-align: center;
+        color: var(--gray-400);
+      }
+
+      .empty-state i {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        opacity: 0.4;
+      }
+
+      /* Responsive */
+      @media (max-width: 992px) {
+        main {
+          padding: 1rem;
+        }
+        .control-bar {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .actions-area {
+          margin-left: 0;
+          width: 100%;
+        }
+        #search {
+          width: 100%;
+        }
+        .table-card {
+          height: calc(100vh - 240px);
+        }
+      }
+
+      @media (max-width: 768px) {
+        .app-header {
+          padding: 0 1rem;
+        }
+        .btn-group-modern {
+          width: 100%;
+          flex-wrap: wrap;
+        }
+        .btn-modern {
+          flex: 1;
+          justify-content: center;
+        }
+      }
+    </style>
+  <base target="_blank">
+</head>
+  <body>
+    <div class="loading" id="loader">
+      <div class="spinner-modern"></div>
+      <div class="loading-text">Procesando datos...</div>
+    </div>
+
+    <header class="app-header">
+      <div class="brand">
+        <div class="brand-icon">
+          <i class="fas fa-layer-group"></i>
+        </div>
+        <span class="brand-text">Consolidación SAP vs Ypack</span>
+      </div>
+      <span class="version-badge">v12.0 Pro</span>
+    </header>
+
+    <main>
+      <div class="control-bar">
+        <div style="flex: 1; display: flex; gap: 1rem; min-width: 300px">
+          <div class="drop-zone" id="dropSAP">
+            <input type="file" hidden accept=".xlsx,.xls" />
+            <div class="dz-icon">
+              <i class="fas fa-file-invoice"></i>
+            </div>
+            <div class="dz-content">
+              <div class="dz-title">Archivo SAP</div>
+              <div class="dz-subtitle">Clic o arrastrar archivo</div>
+            </div>
+          </div>
+          <div class="drop-zone" id="dropYPK">
+            <input type="file" hidden accept=".xlsx,.xls" />
+            <div class="dz-icon">
+              <i class="fas fa-box-open"></i>
+            </div>
+            <div class="dz-content">
+              <div class="dz-title">Archivo Ypack</div>
+              <div class="dz-subtitle">Clic o arrastrar archivo</div>
+            </div>
+          </div>
+        </div>
+
+        <div class="actions-area">
+          <div class="search-wrapper">
+            <i class="fas fa-search"></i>
+            <input type="text" id="search" placeholder="Buscar en resultados..." />
+          </div>
+
+          <div class="btn-group-modern">
+            <button class="btn-modern btn-primary-modern" id="btnExpGeneral" disabled title="Exportar TODO el detalle">
+              <i class="fas fa-table"></i> Detalle
+            </button>
+            <button class="btn-modern btn-warning-modern" id="btnExpNeg" disabled title="Solo diferencias negativas">
+              <i class="fas fa-minus-circle"></i> Negativos
+            </button>
+            <button class="btn-modern btn-success-modern" id="btnExpNA" disabled title="Resumen Not Approved">
+              <i class="fas fa-check-circle"></i> Not Approved
+            </button>
+          </div>
+
+          <button class="btn-modern btn-danger-modern" id="btnReset">
+            <i class="fas fa-trash-alt"></i> Limpiar
+          </button>
+        </div>
+      </div>
+
+      <div class="table-card">
+        <ul class="nav-tabs-modern" role="tablist">
+          <li class="nav-item">
+            <button class="nav-tab active" data-bs-toggle="tab" data-bs-target="#tabGen">
+              Detalle General <span id="cntGen" class="tab-badge">0</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-tab" data-bs-toggle="tab" data-bs-target="#tabNeg">
+              Diferencias Negativas <span id="cntNeg" class="tab-badge">0</span>
+            </button>
+          </li>
+          <li class="nav-item">
+            <button class="nav-tab" data-bs-toggle="tab" data-bs-target="#tabNA">
+              Not Approved <span id="cntNA" class="tab-badge">0</span>
+            </button>
+          </li>
+        </ul>
+
+        <div class="tab-content-modern">
+          <div class="tab-pane-modern active" id="tabGen">
+            <table class="data-table" id="tblGen">
+              <thead></thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+          </div>
+          <div class="tab-pane-modern" id="tabNeg">
+            <table class="data-table" id="tblNeg">
+              <thead></thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+          </div>
+          <div class="tab-pane-modern" id="tabNA">
+            <table class="data-table" id="tblNA">
+              <thead></thead>
+              <tbody></tbody>
+              <tfoot></tfoot>
+            </table>
+          </div>
+        </div>
+      </div>
+    </main>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+
+    <!-- WORKER Y LÓGICA SIN MODIFICACIONES -->
+    <script id="worker-code" type="text/plain">
+      self.importScripts("https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js");
+
+      const cleanStr = v => v == null ? "" : String(v).trim();
+      const cleanNum = v => { const n = parseFloat(String(v || 0).replace(/[^\d.-]/g, "")); return isFinite(n) ? n : 0; };
+      const getVal = (r, keys) => { for(const k of keys) if(r[k]!==undefined) return r[k]; return null; };
+      const fmtDate = v => {
+        if(!v) return "";
+        if(typeof v === 'number') { const d=XLSX.SSF.parse_date_code(v); return d ? `${d.m}/${d.d}/${d.y}` : ""; }
+        return String(v);
+      };
+
+      self.onmessage = async (e) => {
+        try {
+          const { fSAP, fYPK } = e.data;
+          self.postMessage({t:'status', m:'Leyendo archivos...'});
+
+          const [ab1, ab2] = await Promise.all([fSAP.arrayBuffer(), fYPK.arrayBuffer()]);
+          const wb1 = XLSX.read(ab1, {type:'array'});
+          const wb2 = XLSX.read(ab2, {type:'array'});
+          const jsonSAP = XLSX.utils.sheet_to_json(wb1.Sheets[wb1.SheetNames[0]]);
+          const jsonYPK = XLSX.utils.sheet_to_json(wb2.Sheets[wb2.SheetNames[0]]);
+
+          const mapY = {};
+          jsonYPK.forEach(r => {
+            const so = cleanStr(getVal(r, ["Sales_Ordes", "Sales Order #", "SO"]));
+            const mat = cleanStr(getVal(r, ["MATERIAL", "Material #"]));
+            const qty = cleanNum(getVal(r, ["QTY", "Qty", "Shipped Qty"]));
+            if(so && mat) mapY[`${so}|${mat}`] = (mapY[`${so}|${mat}`] || 0) + qty;
+          });
+
+          const data = jsonSAP.map(r => {
+            const ord = cleanNum(getVal(r, ["Ordered Qty", "Order Qty", "Cantidad"]));
+            const netTTL = cleanNum(getVal(r, ["Net Value", "Net Value TTL"]));
+            const so = cleanStr(getVal(r, ["Sales Order #", "SO #", "SO"]));
+            const mat = cleanStr(getVal(r, ["Material #", "Material", "MATERIAL"]));
+            const ship = mapY[`${so}|${mat}`] || 0;
+
+            const invoiced = cleanNum(getVal(r, ["Quantity Shipped", "Invoiced", "Shipped Qty SAP", "BD"]));
+            const openQty = cleanNum(getVal(r, ["Open Qty", "Open Quantity", "BA"]));
+
+            return {
+              "Cliente": cleanStr(getVal(r, ["Soldto Name", "Cliente", "Customer"])),
+              "Ship Start date": fmtDate(getVal(r, ["Ship Start date", "Ship Start"])),
+              "Cancel date": fmtDate(getVal(r, ["Cancel date", "Cancel Date"])),
+              "Plant": cleanStr(getVal(r, ["Plant", "PLANT"])),
+              "Customer PO #": cleanStr(getVal(r, ["Customer PO #", "PO"])),
+              "Sales Order #": so,
+              "Old Material Num": cleanStr(getVal(r, ["Old Material Num", "Old Material"])),
+              "Color": cleanStr(getVal(r, ["Color Description", "Color"])),
+              "Size": cleanStr(getVal(r, ["Size Description", "Size"])),
+              "Line item #": cleanStr(getVal(r, ["Line item #", "Line Item"])),
+              "Material #": mat,
+              "Credit Status": cleanStr(getVal(r, ["Overall CreditStatus", "Credit Status"])),
+              "UoM": cleanStr(getVal(r, ["Base unit of measure", "UoM", "UM"])),
+              "Net Value EA": ord !== 0 ? netTTL / ord : 0,
+              "Net Value TTL": netTTL,
+              "Ordered Qty": ord,
+              "Invoiced": invoiced,
+              "Open Qty": openQty,
+              "Shipped Qty": ship,
+              "Diferencia": openQty - ship
+            };
+          }).filter(r => r["Sales Order #"] && r["Material #"]);
+
+          self.postMessage({t:'success', d: data});
+
+        } catch(err) {
+          self.postMessage({t:'error', m: err.message});
+        }
+      };
+    </script>
+
+    <script>
+      const state = {
+        data: [],
+        groupedNA: [],
+        f1: null,
+        f2: null,
+        worker: null,
+      };
+      const els = {
+        d1: document.getElementById("dropSAP"),
+        d2: document.getElementById("dropYPK"),
+        loader: document.getElementById("loader"),
+        search: document.getElementById("search"),
+        tbls: {
+          gen: document.getElementById("tblGen"),
+          neg: document.getElementById("tblNeg"),
+          na: document.getElementById("tblNA"),
+        },
+        cnts: {
+          gen: document.getElementById("cntGen"),
+          neg: document.getElementById("cntNeg"),
+          na: document.getElementById("cntNA"),
+        },
+        btns: {
+          gen: document.getElementById("btnExpGeneral"),
+          neg: document.getElementById("btnExpNeg"),
+          na: document.getElementById("btnExpNA"),
+        },
+      };
+
+      const fmtMoney = new Intl.NumberFormat("en-US", {
+        style: "currency",
+        currency: "USD",
+      });
+      const fmtNum = new Intl.NumberFormat("en-US");
+
+      function init() {
+        const blob = new Blob(
+          [document.getElementById("worker-code").textContent],
+          { type: "text/javascript" }
+        );
+        state.worker = new Worker(URL.createObjectURL(blob));
+        state.worker.onmessage = (e) => {
+          if (e.data.t === "status") els.loader.style.display = "flex";
+          else if (e.data.t === "error") {
+            alert(e.data.m);
+            els.loader.style.display = "none";
+          } else if (e.data.t === "success") {
+            state.data = e.data.d;
+            processNA();
+            render();
+            els.loader.style.display = "none";
+            Object.values(els.btns).forEach((b) => (b.disabled = false));
+          }
+        };
+        setupDrop(els.d1, "f1");
+        setupDrop(els.d2, "f2");
+        els.search.addEventListener("input", () => setTimeout(render, 300));
+
+        document.getElementById("btnReset").onclick = () => location.reload();
+
+        els.btns.gen.onclick = () => exportReport("general");
+        els.btns.neg.onclick = () => exportReport("negatives");
+        els.btns.na.onclick = () => exportReport("na");
+      }
+
+      function processNA() {
+        const raw = state.data.filter((r) =>
+          String(r["Credit Status"]).toLowerCase().includes("not approved")
+        );
+        const groups = {};
+        raw.forEach((r) => {
+          const k = r["Sales Order #"];
+          if (!groups[k]) {
+            groups[k] = {
+              ...r,
+              "Ordered Qty": 0,
+              "Shipped Qty": 0,
+              "Net Value TTL": 0,
+              "Ship Value": 0,
+            };
+            delete groups[k]["Net Value EA"];
+            delete groups[k]["Diferencia"];
+          }
+          groups[k]["Ordered Qty"] += r["Ordered Qty"];
+          groups[k]["Shipped Qty"] += r["Shipped Qty"];
+          groups[k]["Net Value TTL"] += r["Net Value TTL"];
+          groups[k]["Ship Value"] += r["Ordered Qty"]
+            ? (r["Net Value TTL"] / r["Ordered Qty"]) * r["Shipped Qty"]
+            : 0;
+        });
+        state.groupedNA = Object.values(groups);
+      }
+
+      function setupDrop(el, k) {
+        el.onclick = () => el.querySelector("input").click();
+        el.querySelector("input").onchange = (e) =>
+          handleFile(e.target.files[0], k, el);
+        el.ondragover = (e) => {
+          e.preventDefault();
+          el.classList.add("active");
+        };
+        el.ondragleave = () => {
+          if (!state[k]) el.classList.remove("active");
+        };
+        el.ondrop = (e) => {
+          e.preventDefault();
+          handleFile(e.dataTransfer.files[0], k, el);
+        };
+      }
+
+      function handleFile(f, k, el) {
+        if (!f) return;
+        state[k] = f;
+        el.classList.add("active");
+        el.querySelector(".dz-subtitle").textContent = f.name;
+        el.querySelector(".dz-subtitle").style.color = "var(--btn-emerald)";
+        if (state.f1 && state.f2)
+          state.worker.postMessage({ fSAP: state.f1, fYPK: state.f2 });
+      }
+
+      function render() {
+        const q = els.search.value.toLowerCase();
+
+        const dGen = q
+          ? state.data.filter((r) =>
+              Object.values(r).some((v) => String(v).toLowerCase().includes(q))
+            )
+          : state.data;
+        renderTable(els.tbls.gen, dGen.slice(0, 200), [
+          "Cliente",
+          "Sales Order #",
+          "Material #",
+          "Net Value TTL",
+          "Ordered Qty",
+          "Shipped Qty",
+          "Diferencia",
+        ]);
+        els.cnts.gen.textContent = dGen.length;
+
+        const dNeg = dGen.filter((r) => r["Diferencia"] < 0);
+        renderTable(els.tbls.neg, dNeg, [
+          "Cliente",
+          "Sales Order #",
+          "Material #",
+          "Ordered Qty",
+          "Shipped Qty",
+          "Diferencia",
+        ]);
+        els.cnts.neg.textContent = dNeg.length;
+
+        const dNA = q
+          ? state.groupedNA.filter((r) =>
+              Object.values(r).some((v) => String(v).toLowerCase().includes(q))
+            )
+          : state.groupedNA;
+        renderNATable(els.tbls.na, dNA);
+        els.cnts.na.textContent = dNA.length;
+      }
+
+      function renderTable(tbl, data, cols) {
+        tbl.querySelector("thead").innerHTML = `<tr>${cols
+          .map((c) => `<th>${c}</th>`)
+          .join("")}</tr>`;
+
+        let sums = {};
+        cols.forEach((c) => (sums[c] = 0));
+
+        if (!data.length) {
+          tbl.querySelector("tbody").innerHTML = `
+            <tr><td colspan="${cols.length}">
+              <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <div>No hay datos para mostrar</div>
+              </div>
+            </td></tr>`;
+          tbl.querySelector("tfoot").innerHTML = "";
+          return;
+        }
+
+        tbl.querySelector("tbody").innerHTML = data
+          .map(
+            (r) => `
+          <tr>${cols
+            .map((c) => {
+              const v = r[c];
+              if (typeof v === "number") {
+                if (!isNaN(v)) sums[c] += v;
+                return `<td class="num ${
+                  c === "Diferencia" && v < 0 ? "neg" : ""
+                }">${
+                  c.includes("Qty") || c.includes("Dif")
+                    ? fmtNum.format(v)
+                    : fmtMoney.format(v)
+                }</td>`;
+              }
+              return `<td>${v}</td>`;
+            })
+            .join("")}</tr>`
+          )
+          .join("");
+
+        if (data.length) {
+          tbl.querySelector("tfoot").innerHTML = `<tr class="table-footer">${cols
+            .map((c, i) => {
+              if (i === 0)
+                return '<td style="text-align:right">Total (Vista)</td>';
+              if (typeof sums[c] === "number" && sums[c] !== 0) {
+                return `<td class="num">${
+                  c.includes("Qty") || c.includes("Dif")
+                    ? fmtNum.format(sums[c])
+                    : fmtMoney.format(sums[c])
+                }</td>`;
+              }
+              return "<td></td>";
+            })
+            .join("")}</tr>`;
+        } else tbl.querySelector("tfoot").innerHTML = "";
+      }
+
+      function renderNATable(tbl, data) {
+        const cols = [
+          "Soldto Name",
+          "Customer PO #",
+          "Sales Order #",
+          "Credit Status",
+          "Ordered Qty",
+          "Net Value TTL",
+          "Ship Value",
+        ];
+        tbl.querySelector("thead").innerHTML = `<tr>${cols
+          .map((c) => `<th>${c}</th>`)
+          .join("")}</tr>`;
+        
+        if (!data.length) {
+          tbl.querySelector("tbody").innerHTML = `
+            <tr><td colspan="${cols.length}">
+              <div class="empty-state">
+                <i class="fas fa-inbox"></i>
+                <div>No hay datos para mostrar</div>
+              </div>
+            </td></tr>`;
+          tbl.querySelector("tfoot").innerHTML = "";
+          return;
+        }
+
+        let tO = 0,
+          tN = 0,
+          tS = 0;
+
+        tbl.querySelector("tbody").innerHTML = data
+          .map((r) => {
+            tO += r["Ordered Qty"];
+            tN += r["Net Value TTL"];
+            tS += r["Ship Value"];
+            return `<tr>
+            <td>${r["Cliente"]}</td><td>${r["Customer PO #"]}</td><td>${r["Sales Order #"]}</td>
+            <td class="neg">${r["Credit Status"]}</td>
+            <td class="num">${fmtNum.format(r["Ordered Qty"])}</td>
+            <td class="num">${fmtMoney.format(r["Net Value TTL"])}</td>
+            <td class="num">${fmtMoney.format(r["Ship Value"])}</td>
+          </tr>`;
+          })
+          .join("");
+
+        tbl.querySelector("tfoot").innerHTML = data.length
+          ? `<tr class="table-footer">
+          <td colspan="4" style="text-align:right">Total General</td>
+          <td class="num">${fmtNum.format(tO)}</td>
+          <td class="num">${fmtMoney.format(tN)}</td>
+          <td class="num">${fmtMoney.format(tS)}</td>
+        </tr>`
+          : "";
+      }
+
+      function exportReport(type) {
+        if (!state.data.length) return;
+
+        let dataToExport = [];
+        let columnas = [];
+        let filename = "";
+
+        const columnasDetalle = [
+          { key: "Cliente", header: "Cliente" },
+          { key: "Ship Start date", header: "SHIP START" },
+          { key: "Cancel date", header: "CANCEL DATE" },
+          { key: "Plant", header: "PLANT" },
+          { key: "Customer PO #", header: "Customer PO #" },
+          { key: "Sales Order #", header: "Sales Order #" },
+          { key: "Old Material Num", header: "Old Material Num" },
+          { key: "Color", header: "Color" },
+          { key: "Size", header: "Size" },
+          { key: "Line item #", header: "Line item #" },
+          { key: "Material #", header: "Material #" },
+          { key: "Credit Status", header: "Overall CreditStatus" },
+          { key: "UoM", header: "UOM" },
+          { key: "Net Value EA", header: "Sales Price" },
+          { key: "Net Value TTL", header: "Net Value TTL" },
+          { key: "Ordered Qty", header: "Ordered Qty" },
+          { key: "Invoiced", header: "Invoiced" },
+          { key: "Open Qty", header: "Open Qty" },
+          { key: "Shipped Qty", header: "Shipped Qty" },
+          { key: "Diferencia", header: "Diferencia" },
+        ];
+
+        if (type === "general") {
+          dataToExport = state.data;
+          filename = "Detalle_General_Completo";
+          columnas = columnasDetalle;
+        } else if (type === "negatives") {
+          dataToExport = state.data.filter((r) => r["Diferencia"] < 0);
+          filename = "Diferencias_Negativas";
+          columnas = columnasDetalle;
+        } else if (type === "na") {
+          dataToExport = state.groupedNA;
+          filename = "Not_Approved_Resumen";
+          columnas = [
+            { key: "Cliente", header: "Soldto Name" },
+            { key: "Sales Order #", header: "Sales Order #" },
+            { key: "Customer PO #", header: "Customer PO #" },
+            { key: "UoM", header: "UM" },
+            { key: "Credit Status", header: "Overall CreditStatus" },
+            { key: "Cancel date", header: "Cancel Date" },
+            { key: "Ordered Qty", header: "Order Qty" },
+            { key: "Shipped Qty", header: "Ship Qty" },
+            { key: "Net Value TTL", header: "Net Value" },
+            { key: "Ship Value", header: "Ship Value" },
+          ];
+        }
+
+        if (!dataToExport.length)
+          return alert("No hay datos para generar este reporte.");
+        generateStyledExcel(dataToExport, columnas, filename);
+      }
+
+      function generateStyledExcel(data, columnas, fname) {
+        const sHeader = {
+          fill: { fgColor: { rgb: "004D55" } },
+          font: { color: { rgb: "FFFFFF" }, bold: true },
+          alignment: { horizontal: "center" },
+        };
+        const sFooter = {
+          fill: { fgColor: { rgb: "004D55" } },
+          font: { color: { rgb: "FFFFFF" }, bold: true },
+          alignment: { horizontal: "right" },
+          border: { top: { style: "thin", color: { rgb: "FFFFFF" } } },
+        };
+        const sNum = { alignment: { horizontal: "right" } };
+        const sMoney = {
+          numFmt: "$#,##0.00",
+          alignment: { horizontal: "right" },
+        };
+
+        const headers = columnas.map((c) => c.header);
+        const keys = columnas.map((c) => c.key);
+
+        const rows = data.map((r) => keys.map((k) => r[k]));
+
+        let totals = new Array(headers.length).fill("");
+        totals[0] = "Total General";
+
+        const numericKeys = [
+          "Net Value EA",
+          "Net Value TTL",
+          "Ordered Qty",
+          "Invoiced",
+          "Open Qty",
+          "Shipped Qty",
+          "Diferencia",
+          "Ship Value",
+        ];
+        keys.forEach((key, index) => {
+          if (numericKeys.includes(key)) {
+            let sum = 0;
+            data.forEach((row) => {
+              const val = row[key];
+              if (typeof val === "number") sum += val;
+            });
+            totals[index] = sum;
+          }
+        });
+
+        const ws = XLSX.utils.aoa_to_sheet([headers, ...rows, totals]);
+        const range = XLSX.utils.decode_range(ws["!ref"]);
+
+        for (let R = 0; R <= range.e.r; ++R) {
+          for (let C = 0; C <= range.e.c; ++C) {
+            const addr = XLSX.utils.encode_cell({ r: R, c: C });
+            if (!ws[addr]) {
+              if (R === range.e.r)
+                XLSX.utils.sheet_add_aoa(ws, [[""]], {
+                  origin: { r: R, c: C },
+                });
+              else continue;
+            }
+            if (!ws[addr]) continue;
+
+            if (R === 0) {
+              ws[addr].s = sHeader;
+            } else if (R === range.e.r) {
+              ws[addr].s = sFooter;
+              const val = ws[addr].v;
+              if (typeof val === "number") {
+                const h = headers[C].toLowerCase();
+                if (
+                  h.includes("price") ||
+                  h.includes("value") ||
+                  h.includes("net")
+                ) {
+                  ws[addr].z = "$#,##0.00";
+                } else {
+                  ws[addr].z = "#,##0";
+                }
+              }
+            } else {
+              const val = ws[addr].v;
+              if (typeof val === "number") {
+                const h = headers[C].toLowerCase();
+                if (
+                  h.includes("price") ||
+                  h.includes("value") ||
+                  h.includes("net")
+                ) {
+                  ws[addr].s = sMoney;
+                } else {
+                  ws[addr].s = sNum;
+                }
+              }
+            }
+          }
+        }
+        ws["!cols"] = headers.map(() => ({ wch: 15 }));
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Reporte");
+        XLSX.writeFile(wb, fname + ".xlsx");
+      }
+
+      init();
+    </script>
+  </body>
+</html>
