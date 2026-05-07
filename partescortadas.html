@@ -354,7 +354,7 @@
             background-color: var(--sap-orange) !important;
         }
 
-        /* ========== SWEET ALERT CUSTOM (opcional) ========== */
+        /* ========== SWEET ALERT CUSTOM ========== */
         .swal2-popup {
             font-family: 'Inter', sans-serif;
         }
@@ -378,7 +378,6 @@
         <span class="module-name ms-4 ps-2 font-monospace">Módulo: Envíos Partes Cortadas</span>
     </div>
     <div class="d-flex gap-2 align-items-center">
-        <!-- Buscador global (mantenido en navbar) -->
         <div class="input-group input-group-sm me-2" style="width: 260px;">
             <span class="input-group-text bg-white border-0"><i class="bi bi-search text-secondary"></i></span>
             <input type="text" class="form-control border-0" id="globalSearch" placeholder="Buscar Envío, Cliente..." />
@@ -414,7 +413,7 @@
 <!-- CONTENIDO PRINCIPAL -->
 <div class="container-fluid px-4 py-4">
 
-    <!-- FILA DE KPI TILES -->
+    <!-- KPI TILES -->
     <div class="row g-3 mb-4">
         <div class="col-md-3">
             <div class="kpi-tile gray">
@@ -480,7 +479,6 @@
 
     <!-- TABLA DETALLE DE ENVÍOS -->
     <div class="card-custom">
-        <!-- Toolbar superior -->
         <div class="toolbar">
             <div class="toolbar-title">
                 <i class="bi bi-table"></i> Detalle de Envíos
@@ -531,7 +529,7 @@
     </div>
 </div>
 
-<!-- MODAL IMPORTAR EXCEL -->
+<!-- MODALES -->
 <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
         <div class="modal-content border-0">
@@ -558,7 +556,6 @@
     </div>
 </div>
 
-<!-- MODAL ASIGNAR PO -->
 <div class="modal fade" id="poModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -584,7 +581,6 @@
     </div>
 </div>
 
-<!-- MODAL ASIGNAR N° REQ -->
 <div class="modal fade" id="reqModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
         <div class="modal-content border-0 shadow">
@@ -609,7 +605,6 @@
     </div>
 </div>
 
-<!-- MODAL DETALLE ENVÍO -->
 <div class="modal fade" id="detailModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0">
@@ -650,7 +645,6 @@
     </div>
 </div>
 
-<!-- MODAL RESUMEN DE CARGA -->
 <div class="modal fade" id="uploadSummaryModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
         <div class="modal-content border-0">
@@ -786,20 +780,31 @@
             if (!groups[env]) {
                 const dateInfo = smartDate(r.FECHA);
                 groups[env] = {
-                    ENVIO: env, PO: r.PO, REQ: r['N°'], PROVEEDOR: prov,
-                    FECHA_OBJ: dateInfo.obj, FECHA_DISPLAY: dateInfo.display,
-                    CLIENTS_SET: new Set(), SEARCH_META: ''
+                    ENVIO: env,
+                    PO: (hasPO) ? r.PO : '',
+                    REQ: (hasReq) ? r['N°'] : '',
+                    PROVEEDOR: prov,
+                    FECHA_OBJ: dateInfo.obj,
+                    FECHA_DISPLAY: dateInfo.display,
+                    CLIENTS_SET: new Set(),
+                    SEARCH_META: '',
+                    TOTAL: 0
                 };
-                if (!providerStats[prov]) providerStats[prov] = { total:0, withPO:0, noPO:0, withReq:0, noReq:0 };
+                if (!providerStats[prov])
+                    providerStats[prov] = { total:0, withPO:0, noPO:0, withReq:0, noReq:0 };
                 providerStats[prov].total++;
                 if (hasPO) providerStats[prov].withPO++; else providerStats[prov].noPO++;
                 if (hasReq) providerStats[prov].withReq++; else providerStats[prov].noReq++;
+            } else {
+                // Si el grupo ya existe, completar PO y REQ si aún están vacíos
+                if (!groups[env].PO && hasPO) groups[env].PO = r.PO;
+                if (!groups[env].REQ && hasReq) groups[env].REQ = r['N°'];
             }
 
             groups[env].CLIENTS_SET.add(clientName);
             groups[env].SEARCH_META += ` ${r.ESTILO||''} ${r.CORTE||''} ${r.COLOR||''} ${r.TIPO||''}`;
             const p = Number(r.PARTES) || 0;
-            groups[env].TOTAL = (groups[env].TOTAL || 0) + p;
+            groups[env].TOTAL += p;
             totalP += p;
         });
 
@@ -1008,9 +1013,12 @@
         if (pageData.length === 0) return tb.innerHTML = '<tr><td colspan="8" class="text-center p-5 text-muted">No se encontraron datos</td></tr>';
 
         pageData.forEach(i => {
-            const poBadge = i.PO ? `<span class="badge bg-success bg-opacity-10 text-success border border-success-subtle px-2">${i.PO}</span>` :
-                `<span class="badge bg-warning bg-opacity-10 text-warning border border-warning-subtle px-2">Sin Asignar</span>`;
-            const reqBadge = i.REQ ? `<span class="fw-bold text-dark small">${i.REQ}</span>` : `<span class="text-muted small">-</span>`;
+            const poBadge = i.PO
+                ? `<span class="badge bg-primary">${i.PO}</span>`
+                : `<span class="badge bg-warning text-dark">Sin Asignar</span>`;
+            const reqBadge = i.REQ
+                ? `<span class="fw-bold text-dark small">${i.REQ}</span>`
+                : `<span class="text-muted small">-</span>`;
             const tr = document.createElement('tr');
             tr.innerHTML = `
                 <td class="small">${i.FECHA_DISPLAY}</td>
