@@ -18,7 +18,12 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
     />
 
+    <!-- SheetJS solo para LECTURA de Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <!-- ExcelJS para EXPORTACIÓN con estilos profesionales -->
+    <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+    <!-- FileSaver para descargar el blob -->
+    <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
     <style>
@@ -779,7 +784,7 @@
       }
 
       // ==========================================
-      // 4. LÓGICA EXCEL
+      // 4. LÓGICA EXCEL (LECTURA)
       // ==========================================
       const COL = {
         Customer: 2,
@@ -923,191 +928,188 @@
       }
 
       // ==========================================
-      // 5. EXPORTAR EXCEL CON ESTILOS PROFESIONALES
+      // 5. EXPORTAR EXCEL CON EXCELJS (FORMATO PROFESIONAL)
       // ==========================================
-      function s(ref) {
-        return XLSX.utils.decode_cell(ref);
-      }
-
-      function applyCellStyle(ws, cellRef, style) {
-        if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
-        ws[cellRef].s = style;
-      }
-
-      document.getElementById("exportBtn").onclick = () => {
+      document.getElementById("exportBtn").onclick = async () => {
         if (!masterRows.length) return;
 
-        // Preparar datos planos para el sheet
-        const headers = [
-          "Customer", "PO (Excel)", "Sales Order (DB)", "Style", "Color",
-          "Cut", "Process", "Rout", "Contractor", "Pcs", "XFD (Fecha)",
-          "Sheet", "File"
+        const workbook = new ExcelJS.Workbook();
+        workbook.creator = "Análisis de Producción";
+        workbook.created = new Date();
+        workbook.modified = new Date();
+
+        const worksheet = workbook.addWorksheet("Datos", {
+          properties: { defaultRowHeight: 22 },
+          views: [{ state: "frozen", ySplit: 1 }],
+        });
+
+        // Definir columnas con ancho y key
+        worksheet.columns = [
+          { header: "Customer", key: "Customer", width: 18 },
+          { header: "PO (Excel)", key: "PO", width: 18 },
+          { header: "Sales Order (DB)", key: "SalesOrder", width: 18 },
+          { header: "Style", key: "Style", width: 14 },
+          { header: "Color", key: "Color", width: 14 },
+          { header: "Cut", key: "Cut", width: 10 },
+          { header: "Process", key: "Process", width: 16 },
+          { header: "Rout", key: "Rout", width: 16 },
+          { header: "Contractor", key: "Contractor", width: 16 },
+          { header: "Pcs", key: "Pcs", width: 10 },
+          { header: "XFD (Fecha)", key: "XDF", width: 14 },
+          { header: "Sheet", key: "Sheet", width: 14 },
+          { header: "File", key: "File", width: 32 },
         ];
 
-        const data = masterRows.map((r) => ({
-          "Customer": r.Customer,
-          "PO (Excel)": r.PO,
-          "Sales Order (DB)": r.SalesOrder || "NO ENCONTRADO",
-          "Style": r.Style,
-          "Color": r.Color,
-          "Cut": r.Cut,
-          "Process": r.Process,
-          "Rout": r.Rout,
-          "Contractor": r.Contractor,
-          "Pcs": r.Pcs,
-          "XFD (Fecha)": r.XDF,
-          "Sheet": r.Sheet,
-          "File": r.File,
-        }));
+        // Estilo del encabezado (fila 1)
+        const headerRow = worksheet.getRow(1);
+        headerRow.height = 28;
+        headerRow.eachCell((cell) => {
+          cell.fill = {
+            type: "pattern",
+            pattern: "solid",
+            fgColor: { argb: "FF334155" }, // slate-700
+          };
+          cell.font = {
+            name: "Inter",
+            bold: true,
+            color: { argb: "FFFFFFFF" },
+            size: 11,
+          };
+          cell.alignment = {
+            horizontal: "center",
+            vertical: "middle",
+            wrapText: true,
+          };
+          cell.border = {
+            top: { style: "thin", color: { argb: "FF475569" } },
+            bottom: { style: "thin", color: { argb: "FF475569" } },
+            left: { style: "thin", color: { argb: "FF475569" } },
+            right: { style: "thin", color: { argb: "FF475569" } },
+          };
+        });
 
-        const ws = XLSX.utils.json_to_sheet(data, { header: headers });
-        const range = XLSX.utils.decode_range(ws['!ref']);
-        const totalRows = range.e.r;
-        const totalCols = range.e.c;
+        // Paleta de colores ARGB
+        const C_TEXT = "FF1E293B";
+        const C_TEXT_MUTED = "FF64748B";
+        const C_CUSTOMER = "FF2563EB";
+        const C_SUCCESS = "FF059669";
+        const C_DANGER = "FFDC2626";
+        const C_DANGER_BG = "FFFEF2F2";
+        const C_WARNING_BG = "FFFEF3C7";
+        const C_ZEBRA = "FFF8FAFC";
+        const C_BORDER = "FFCBD5E1";
 
-        // Colores
-        const C_HEADER_BG = "334155";   // slate-700
-        const C_HEADER_FG = "FFFFFF";
-        const C_BORDER = "CBD5E1";      // slate-300
-        const C_TEXT = "1E293B";        // slate-800
-        const C_TEXT_MUTED = "64748B";  // slate-500
-        const C_CUSTOMER = "2563EB";    // blue-600
-        const C_SUCCESS = "059669";     // emerald-600
-        const C_DANGER = "DC2626";      // red-600
-        const C_DANGER_BG = "FEF2F2";   // red-50
-        const C_WARNING_BG = "FEF3C7";  // amber-100
-        const C_ZEBRA = "F8FAFC";       // slate-50
-
-        // Estilos base
-        const borderThin = {
-          top: { style: "thin", color: { rgb: C_BORDER } },
-          bottom: { style: "thin", color: { rgb: C_BORDER } },
-          left: { style: "thin", color: { rgb: C_BORDER } },
-          right: { style: "thin", color: { rgb: C_BORDER } },
+        const thinBorderBottom = {
+          bottom: { style: "thin", color: { argb: C_BORDER } },
         };
 
-        const borderBottom = {
-          bottom: { style: "thin", color: { rgb: C_BORDER } },
-        };
+        // Agregar datos fila por fila
+        masterRows.forEach((r, idx) => {
+          const hasSO = !!r.SalesOrder;
+          const isEven = idx % 2 === 0;
 
-        const headerStyle = {
-          font: { name: "Inter", bold: true, color: { rgb: C_HEADER_FG }, sz: 11 },
-          fill: { patternType: "solid", fgColor: { rgb: C_HEADER_BG } },
-          alignment: { horizontal: "center", vertical: "center", wrapText: true },
-          border: borderThin,
-        };
+          // Determinar fondo de fila
+          let rowFill = null;
+          if (!hasSO) {
+            rowFill = { type: "pattern", pattern: "solid", fgColor: { argb: C_WARNING_BG } };
+          } else if (isEven) {
+            rowFill = { type: "pattern", pattern: "solid", fgColor: { argb: C_ZEBRA } };
+          }
 
-        const baseStyle = {
-          font: { name: "Inter", color: { rgb: C_TEXT }, sz: 10 },
-          alignment: { vertical: "center" },
-          border: borderBottom,
-        };
+          const row = worksheet.addRow({
+            Customer: r.Customer,
+            PO: r.PO,
+            SalesOrder: r.SalesOrder || "NO ENCONTRADO",
+            Style: r.Style,
+            Color: r.Color,
+            Cut: r.Cut,
+            Process: r.Process,
+            Rout: r.Rout,
+            Contractor: r.Contractor,
+            Pcs: typeof r.Pcs === "number" ? r.Pcs : Number(r.Pcs) || r.Pcs,
+            XDF: r.XDF,
+            Sheet: r.Sheet,
+            File: r.File,
+          });
 
-        const mutedStyle = {
-          font: { name: "Inter", color: { rgb: C_TEXT_MUTED }, sz: 10 },
-          alignment: { vertical: "center" },
-          border: borderBottom,
-        };
+          row.height = 20;
 
-        // Aplicar estilos por celda
-        for (let R = range.s.r; R <= range.e.r; ++R) {
-          for (let C = range.s.c; C <= range.e.c; ++C) {
-            const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
-            const cell = ws[cellRef];
-            if (!cell) continue;
-
-            if (R === 0) {
-              // Header row
-              cell.s = headerStyle;
-              continue;
+          // Aplicar estilos celda por celda
+          row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
+            // Fondo base
+            if (rowFill) {
+              cell.fill = { ...rowFill };
             }
 
-            const isEven = R % 2 === 0;
-            const rowData = masterRows[R - 1];
-            const hasSO = rowData && !!rowData.SalesOrder;
-            const colName = headers[C];
+            // Bordes
+            cell.border = thinBorderBottom;
 
-            // Fondo base (zebra o warning)
-            let bgColor = null;
-            if (!hasSO) {
-              bgColor = C_WARNING_BG;
-            } else if (isEven) {
-              bgColor = C_ZEBRA;
-            }
+            // Alineación base
+            cell.alignment = { vertical: "middle" };
 
-            // Estilo por columna
-            let style = JSON.parse(JSON.stringify(baseStyle));
-            style.border = borderBottom;
-
-            if (bgColor) {
-              style.fill = { patternType: "solid", fgColor: { rgb: bgColor } };
-            }
-
-            switch (colName) {
-              case "Customer":
-                style.font = { name: "Inter", bold: true, color: { rgb: C_CUSTOMER }, sz: 10 };
+            // Estilos específicos por columna
+            switch (colNumber) {
+              case 1: // Customer
+                cell.font = { name: "Inter", bold: true, color: { argb: C_CUSTOMER }, size: 10 };
                 break;
-              case "PO (Excel)":
-                style.font = { name: "Inter", bold: true, color: { rgb: C_TEXT }, sz: 10 };
+              case 2: // PO
+                cell.font = { name: "Inter", bold: true, color: { argb: C_TEXT }, size: 10 };
                 break;
-              case "Sales Order (DB)":
+              case 3: // Sales Order
                 if (hasSO) {
-                  style.font = { name: "Inter", bold: true, color: { rgb: C_SUCCESS }, sz: 10 };
+                  cell.font = { name: "Inter", bold: true, color: { argb: C_SUCCESS }, size: 10 };
                 } else {
-                  style.font = { name: "Inter", bold: true, color: { rgb: C_DANGER }, sz: 10 };
-                  style.fill = { patternType: "solid", fgColor: { rgb: C_DANGER_BG } };
+                  cell.font = { name: "Inter", bold: true, color: { argb: C_DANGER }, size: 10 };
+                  cell.fill = { type: "pattern", pattern: "solid", fgColor: { argb: C_DANGER_BG } };
+                }
+                cell.alignment = { horizontal: "center", vertical: "middle" };
+                break;
+              case 4: // Style
+              case 5: // Color
+              case 6: // Cut
+                cell.font = { name: "Inter", color: { argb: C_TEXT }, size: 10 };
+                break;
+              case 7: // Process
+              case 8: // Rout
+              case 9: // Contractor
+              case 12: // Sheet
+                cell.font = { name: "Inter", color: { argb: C_TEXT_MUTED }, size: 10 };
+                break;
+              case 10: // Pcs
+                cell.font = { name: "Inter", bold: true, color: { argb: C_TEXT }, size: 10 };
+                cell.alignment = { horizontal: "right", vertical: "middle" };
+                if (typeof cell.value === "number") {
+                  cell.numFmt = "#,##0";
                 }
                 break;
-              case "Pcs":
-                style.font = { name: "Inter", bold: true, color: { rgb: C_TEXT }, sz: 10 };
-                style.alignment = { horizontal: "right", vertical: "center" };
+              case 11: // XFD
+                cell.font = { name: "Inter", color: { argb: C_TEXT }, size: 10 };
+                cell.alignment = { horizontal: "center", vertical: "middle" };
                 break;
-              case "Process":
-              case "Rout":
-              case "Contractor":
-              case "Sheet":
-                style = JSON.parse(JSON.stringify(mutedStyle));
-                if (bgColor) style.fill = { patternType: "solid", fgColor: { rgb: bgColor } };
-                break;
-              case "File":
-                style = JSON.parse(JSON.stringify(mutedStyle));
-                if (bgColor) style.fill = { patternType: "solid", fgColor: { rgb: bgColor } };
+              case 13: // File
+                cell.font = { name: "Inter", color: { argb: C_TEXT_MUTED }, size: 10 };
                 break;
               default:
-                // Style, Color, Cut, XFD
-                style.font = { name: "Inter", color: { rgb: C_TEXT }, sz: 10 };
+                cell.font = { name: "Inter", color: { argb: C_TEXT }, size: 10 };
             }
+          });
+        });
 
-            cell.s = style;
-          }
-        }
+        // Auto-filtro
+        worksheet.autoFilter = {
+          from: { row: 1, column: 1 },
+          to: { row: 1, column: 13 },
+        };
 
-        // Congelar primera fila
-        ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft" };
+        // Congelar primera fila (ya definido en views al crear worksheet, pero reforzado)
+        worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
-        // Anchos de columna
-        ws['!cols'] = [
-          { wch: 18 }, // Customer
-          { wch: 16 }, // PO
-          { wch: 18 }, // Sales Order
-          { wch: 14 }, // Style
-          { wch: 12 }, // Color
-          { wch: 10 }, // Cut
-          { wch: 14 }, // Process
-          { wch: 14 }, // Rout
-          { wch: 16 }, // Contractor
-          { wch: 10 }, // Pcs
-          { wch: 14 }, // XFD
-          { wch: 14 }, // Sheet
-          { wch: 20 }, // File
-        ];
-
-        // Filtros automáticos
-        ws['!autofilter'] = { ref: ws['!ref'] };
-
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Datos");
-        XLSX.writeFile(wb, "Reporte_Produccion.xlsx");
+        // Generar buffer y descargar
+        const buffer = await workbook.xlsx.writeBuffer();
+        const blob = new Blob([buffer], {
+          type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        });
+        saveAs(blob, `Reporte_Produccion_${new Date().toISOString().slice(0,10)}.xlsx`);
       };
 
       // Listeners UI
