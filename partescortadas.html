@@ -3,9 +3,9 @@
 <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Control de Envíos Partes Cortadas</title>
+    <title>Control de Envíos | Partes Cortadas</title>
 
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet" />
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css" />
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet" />
 
@@ -16,396 +16,953 @@
 
     <style>
         :root {
-            --bg-body: #F7F9FC;
-            --bg-card: #FFFFFF;
-            --text-primary: #1D2D3E;
-            --text-secondary: #5B738B;
-            --accent-dark: #354A5F;
-            --sap-blue: #0070C0;
-            --sap-green: #188918;
-            --sap-red: #D9364F;
-            --sap-orange: #F0AB00;
-            --border-color: #D5DDE5;
-            --hover-bg: #E5F0F9;
-            --table-stripe: rgba(0, 112, 192, 0.03);
+            --bg-primary: #0B0F19;
+            --bg-secondary: #111827;
+            --bg-tertiary: #1F2937;
+            --bg-glass: rgba(17, 24, 39, 0.7);
+            --border-glass: rgba(255, 255, 255, 0.08);
+            --text-primary: #F9FAFB;
+            --text-secondary: #9CA3AF;
+            --text-muted: #6B7280;
+            --accent-cyan: #06B6D4;
+            --accent-blue: #3B82F6;
+            --accent-emerald: #10B981;
+            --accent-amber: #F59E0B;
+            --accent-rose: #F43F5E;
+            --accent-violet: #8B5CF6;
+            --gradient-cyan: linear-gradient(135deg, #06B6D4 0%, #3B82F6 100%);
+            --gradient-emerald: linear-gradient(135deg, #10B981 0%, #059669 100%);
+            --gradient-amber: linear-gradient(135deg, #F59E0B 0%, #D97706 100%);
+            --gradient-rose: linear-gradient(135deg, #F43F5E 0%, #E11D48 100%);
+            --shadow-glow-cyan: 0 0 20px rgba(6, 182, 212, 0.15);
+            --shadow-glow-emerald: 0 0 20px rgba(16, 185, 129, 0.15);
+            --shadow-card: 0 4px 6px -1px rgba(0, 0, 0, 0.3), 0 2px 4px -1px rgba(0, 0, 0, 0.2);
+            --shadow-card-hover: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+            --font-sans: 'Inter', sans-serif;
+            --font-mono: 'JetBrains Mono', monospace;
+        }
+
+        * {
+            scrollbar-width: thin;
+            scrollbar-color: var(--bg-tertiary) var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+
+        ::-webkit-scrollbar-track {
+            background: var(--bg-primary);
+        }
+
+        ::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 4px;
+        }
+
+        ::-webkit-scrollbar-thumb:hover {
+            background: #374151;
         }
 
         body {
-            background-color: var(--bg-body);
-            font-family: 'Inter', sans-serif;
+            background-color: var(--bg-primary);
+            background-image: 
+                radial-gradient(circle at 20% 50%, rgba(6, 182, 212, 0.03) 0%, transparent 50%),
+                radial-gradient(circle at 80% 80%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+            font-family: var(--font-sans);
             color: var(--text-primary);
-            line-height: 1.5;
+            line-height: 1.6;
+            overflow-x: hidden;
         }
 
-        /* ========== NAVBAR CORPORATIVA ========== */
-        .navbar-custom {
-            background-color: var(--accent-dark);
-            padding: 0.75rem 2rem;
-            color: white;
-            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+        /* ========== ANIMACIONES ========== */
+        @keyframes fadeInUp {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .navbar-custom .module-name {
-            font-size: 0.8rem;
-            opacity: 0.8;
-            letter-spacing: 0.5px;
+        @keyframes pulse-glow {
+            0%, 100% { box-shadow: 0 0 5px rgba(6, 182, 212, 0.2); }
+            50% { box-shadow: 0 0 20px rgba(6, 182, 212, 0.4); }
         }
 
-        /* ========== KPI TILES ESTILO SAP FIORI ========== */
-        .kpi-tile {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            padding: 1.25rem;
-            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04);
-            display: flex;
-            flex-direction: column;
-            justify-content: space-between;
-            height: 100%;
-            transition: all 0.2s ease;
+        @keyframes slideInRight {
+            from { opacity: 0; transform: translateX(30px); }
+            to { opacity: 1; transform: translateX(0); }
         }
 
-        .kpi-tile:hover {
-            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
-            transform: translateY(-1px);
+        @keyframes countUp {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
         }
 
-        .kpi-tile .kpi-icon {
-            font-size: 1.5rem;
-            margin-bottom: 0.5rem;
+        @keyframes shimmer {
+            0% { background-position: -1000px 0; }
+            100% { background-position: 1000px 0; }
         }
 
-        .kpi-tile .kpi-label {
-            font-size: 0.75rem;
-            font-weight: 600;
-            text-transform: uppercase;
-            letter-spacing: 0.4px;
-            color: var(--text-secondary);
-            margin-bottom: 0.25rem;
+        .animate-in {
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
         }
 
-        .kpi-tile .kpi-number {
-            font-size: 2rem;
-            font-weight: 700;
-            color: var(--text-primary);
-            line-height: 1.2;
-        }
+        .delay-1 { animation-delay: 0.1s; }
+        .delay-2 { animation-delay: 0.2s; }
+        .delay-3 { animation-delay: 0.3s; }
+        .delay-4 { animation-delay: 0.4s; }
 
-        .kpi-tile.blue { border-left: 4px solid var(--sap-blue); }
-        .kpi-tile.green { border-left: 4px solid var(--sap-green); }
-        .kpi-tile.gray { border-left: 4px solid #6B7280; }
-        .kpi-tile.orange { border-left: 4px solid var(--sap-orange); }
-
-        .kpi-tile .kpi-icon.blue { color: var(--sap-blue); }
-        .kpi-tile .kpi-icon.green { color: var(--sap-green); }
-        .kpi-tile .kpi-icon.gray { color: #6B7280; }
-        .kpi-tile .kpi-icon.orange { color: var(--sap-orange); }
-
-        /* ========== TARJETAS GENERALES ========== */
-        .card-custom {
-            background: var(--bg-card);
-            border: 1px solid var(--border-color);
-            border-radius: 8px;
-            box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
-        }
-
-        /* ========== TABLA ESTILO SAP ALV ========== */
-        .table-sap {
-            margin-bottom: 0;
-            font-size: 0.8125rem;
-            border-collapse: separate;
-            border-spacing: 0;
-        }
-
-        .table-sap thead th {
-            background-color: #F1F3F5;
-            color: #1D2D3E;
-            font-weight: 600;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            padding: 0.75rem 1rem;
-            border-bottom: 2px solid var(--sap-blue);
-            border-right: 1px solid #ECF0F4;
+        /* ========== NAVBAR TECNOLÓGICA ========== */
+        .navbar-tech {
+            background: rgba(11, 15, 25, 0.85);
+            backdrop-filter: blur(20px);
+            -webkit-backdrop-filter: blur(20px);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 0.875rem 2rem;
             position: sticky;
             top: 0;
-            z-index: 2;
+            z-index: 1030;
         }
 
-        .table-sap thead th:last-child {
-            border-right: none;
+        .navbar-tech::before {
+            content: '';
+            position: absolute;
+            bottom: -1px;
+            left: 0;
+            right: 0;
+            height: 1px;
+            background: linear-gradient(90deg, transparent, var(--accent-cyan), transparent);
+            opacity: 0.5;
         }
 
-        .table-sap tbody td {
-            padding: 0.7rem 1rem;
-            vertical-align: middle;
-            border-bottom: 1px solid #ECF0F4;
-            border-right: 1px solid #ECF0F4;
-            color: #4B5563;
+        .brand-title {
+            font-size: 1.25rem;
+            font-weight: 800;
+            background: var(--gradient-cyan);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+            letter-spacing: -0.02em;
         }
 
-        .table-sap tbody td:last-child {
-            border-right: none;
+        .brand-subtitle {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+            letter-spacing: 0.1em;
+            text-transform: uppercase;
         }
 
-        .table-sap tbody tr:nth-child(even) {
-            background-color: var(--table-stripe);
-        }
-
-        .table-sap tbody tr:hover {
-            background-color: var(--hover-bg);
-            cursor: pointer;
-        }
-
-        .table-sap tfoot td {
-            background-color: #F8FAFC;
-            font-weight: 600;
-            border-top: 2px solid #D5DDE5;
-            padding: 0.75rem 1rem !important;
-            color: #1D2D3E;
-        }
-
-        /* ========== BARRA DE HERRAMIENTAS ========== */
-        .toolbar {
-            background: #FFFFFF;
-            border-bottom: 1px solid var(--border-color);
-            padding: 0.75rem 1.25rem;
-            display: flex;
-            flex-wrap: wrap;
-            align-items: center;
-            justify-content: space-between;
-        }
-
-        .toolbar-title {
-            font-weight: 600;
-            font-size: 1.1rem;
+        .nav-search {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 0.5rem 1rem;
             color: var(--text-primary);
-            display: flex;
+            transition: all 0.3s ease;
+            width: 300px;
+            font-size: 0.875rem;
+        }
+
+        .nav-search:focus {
+            outline: none;
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+            background: rgba(31, 41, 55, 0.9);
+        }
+
+        .nav-search::placeholder {
+            color: var(--text-muted);
+        }
+
+        .btn-tech {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid var(--border-glass);
+            color: var(--text-secondary);
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.2s ease;
+            display: inline-flex;
             align-items: center;
             gap: 0.5rem;
         }
 
-        .toolbar-actions {
+        .btn-tech:hover {
+            background: rgba(59, 130, 246, 0.15);
+            border-color: rgba(59, 130, 246, 0.3);
+            color: var(--accent-blue);
+            transform: translateY(-1px);
+        }
+
+        .btn-tech-primary {
+            background: var(--gradient-cyan);
+            border: none;
+            color: white;
+            font-weight: 600;
+        }
+
+        .btn-tech-primary:hover {
+            filter: brightness(1.1);
+            box-shadow: var(--shadow-glow-cyan);
+            color: white;
+        }
+
+        .btn-tech-danger:hover {
+            background: rgba(244, 63, 94, 0.15);
+            border-color: rgba(244, 63, 94, 0.3);
+            color: var(--accent-rose);
+        }
+
+        /* ========== KPI CARDS ========== */
+        .kpi-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 1.25rem;
+            margin-bottom: 1.5rem;
+        }
+
+        .kpi-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            padding: 1.5rem;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .kpi-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 3px;
+            opacity: 0.8;
+        }
+
+        .kpi-card:hover {
+            transform: translateY(-4px);
+            box-shadow: var(--shadow-card-hover);
+            border-color: rgba(255, 255, 255, 0.15);
+        }
+
+        .kpi-card.cyan::before { background: var(--gradient-cyan); }
+        .kpi-card.emerald::before { background: var(--gradient-emerald); }
+        .kpi-card.amber::before { background: var(--gradient-amber); }
+        .kpi-card.rose::before { background: var(--gradient-rose); }
+
+        .kpi-card.cyan:hover { box-shadow: var(--shadow-glow-cyan); }
+        .kpi-card.emerald:hover { box-shadow: var(--shadow-glow-emerald); }
+
+        .kpi-icon-wrap {
+            width: 48px;
+            height: 48px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 1rem;
+            position: relative;
+        }
+
+        .kpi-card.cyan .kpi-icon-wrap {
+            background: rgba(6, 182, 212, 0.1);
+            color: var(--accent-cyan);
+        }
+
+        .kpi-card.emerald .kpi-icon-wrap {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-emerald);
+        }
+
+        .kpi-card.amber .kpi-icon-wrap {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-amber);
+        }
+
+        .kpi-card.rose .kpi-icon-wrap {
+            background: rgba(244, 63, 94, 0.1);
+            color: var(--accent-rose);
+        }
+
+        .kpi-label {
+            font-size: 0.75rem;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        .kpi-value {
+            font-size: 2.25rem;
+            font-weight: 800;
+            line-height: 1;
+            font-family: var(--font-mono);
+            letter-spacing: -0.02em;
+        }
+
+        .kpi-card.cyan .kpi-value { color: var(--accent-cyan); }
+        .kpi-card.emerald .kpi-value { color: var(--accent-emerald); }
+        .kpi-card.amber .kpi-value { color: var(--accent-amber); }
+        .kpi-card.rose .kpi-value { color: var(--accent-rose); }
+
+        .kpi-trend {
+            font-size: 0.75rem;
+            margin-top: 0.75rem;
+            color: var(--text-muted);
+            display: flex;
+            align-items: center;
+            gap: 0.25rem;
+        }
+
+        /* ========== GLASS CARDS ========== */
+        .glass-card {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 16px;
+            overflow: hidden;
+            box-shadow: var(--shadow-card);
+            animation: fadeInUp 0.6s ease-out forwards;
+            opacity: 0;
+        }
+
+        .glass-header {
+            padding: 1.25rem 1.5rem;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background: rgba(255, 255, 255, 0.02);
+        }
+
+        .glass-title {
+            font-size: 0.9375rem;
+            font-weight: 700;
+            color: var(--text-primary);
             display: flex;
             align-items: center;
             gap: 0.75rem;
         }
 
-        /* ========== PROVEEDORES TABLA RESUMEN ========== */
-        .provider-metric-table {
-            font-size: 0.8rem;
-            margin-bottom: 0;
+        .glass-title i {
+            color: var(--accent-cyan);
+            font-size: 1.1rem;
         }
 
-        .provider-metric-table thead th {
-            background-color: #F1F3F5;
-            font-weight: 600;
-            font-size: 0.7rem;
-            text-transform: uppercase;
-            letter-spacing: 0.3px;
-            border-bottom: 2px solid var(--sap-blue);
-            padding: 0.6rem;
-        }
-
-        .provider-metric-table tbody td {
-            padding: 0.5rem 0.6rem;
-            border-bottom: 1px solid #ECF0F4;
-        }
-
-        .provider-metric-table .kpi-link {
-            cursor: pointer;
-            color: var(--sap-blue);
-            font-weight: 600;
-        }
-
-        .provider-metric-table .kpi-link:hover {
-            text-decoration: underline;
-        }
-
-        .provider-link {
-            cursor: pointer;
-            font-weight: 600;
-            color: var(--text-primary);
-        }
-
-        .provider-link:hover {
-            color: var(--sap-blue);
-            text-decoration: underline;
-        }
-
-        /* ========== MODALES ========== */
-        .modal-header.bg-light {
-            background-color: #F5F6F7 !important;
-            border-bottom: 1px solid var(--border-color);
-        }
-
-        .modal-footer {
-            border-top: 1px solid var(--border-color);
-        }
-
-        /* ========== BOTONES ========== */
-        .btn-primary {
-            background-color: var(--sap-blue);
-            border-color: var(--sap-blue);
-        }
-
-        .btn-primary:hover {
-            background-color: #005A9C;
-            border-color: #005A9C;
-        }
-
-        .btn-outline-secondary {
-            color: #4B5563;
-            border-color: #D1D5DB;
-        }
-
-        .btn-outline-secondary:hover {
-            background-color: #F3F4F6;
-        }
-
-        .btn-dark-custom {
-            background-color: #374151;
-            border: none;
-            color: white;
-        }
-
-        .btn-dark-custom:hover {
-            background-color: #1F2937;
-            color: white;
-        }
-
-        /* ========== DROPZONE ========== */
-        .dropzone {
-            border: 2px dashed #D1D5DB;
-            background: #F9FAFB;
-            border-radius: 8px;
-            padding: 3rem;
-            text-align: center;
-            cursor: pointer;
-            transition: 0.2s;
-        }
-
-        .dropzone:hover {
-            border-color: #6B7280;
-            background: #F3F4F6;
-        }
-
-        /* ========== LOADER ========== */
-        #loader-overlay {
-            position: fixed;
-            top: 0;
-            left: 0;
+        /* ========== TABLA TECNOLÓGICA ========== */
+        .table-tech {
             width: 100%;
-            height: 100%;
-            background: rgba(247, 249, 252, 0.95);
-            z-index: 9999;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            flex-direction: column;
-            backdrop-filter: blur(2px);
+            border-collapse: separate;
+            border-spacing: 0;
+            font-size: 0.8125rem;
         }
 
-        .spinner-border.text-dark {
-            color: var(--sap-blue) !important;
+        .table-tech thead th {
+            background: rgba(31, 41, 55, 0.8);
+            color: var(--text-secondary);
+            font-weight: 600;
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.875rem 1.25rem;
+            border-bottom: 1px solid var(--border-glass);
+            white-space: nowrap;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+            backdrop-filter: blur(8px);
+        }
+
+        .table-tech tbody tr {
+            transition: all 0.2s ease;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .table-tech tbody tr:hover {
+            background: rgba(6, 182, 212, 0.03);
+            cursor: pointer;
+        }
+
+        .table-tech tbody td {
+            padding: 1rem 1.25rem;
+            color: var(--text-secondary);
+            vertical-align: middle;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+        }
+
+        .table-tech tbody tr:last-child td {
+            border-bottom: none;
+        }
+
+        .table-tech tfoot td {
+            background: rgba(31, 41, 55, 0.6);
+            font-weight: 700;
+            color: var(--text-primary);
+            padding: 1rem 1.25rem;
+            border-top: 2px solid var(--border-glass);
+            font-family: var(--font-mono);
+        }
+
+        .envio-code {
+            font-family: var(--font-mono);
+            font-weight: 700;
+            color: var(--accent-cyan);
+            font-size: 0.875rem;
+            letter-spacing: -0.01em;
+        }
+
+        .badge-tech {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.375rem;
+            padding: 0.375rem 0.75rem;
+            border-radius: 6px;
+            font-size: 0.75rem;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            border: 1px solid transparent;
+        }
+
+        .badge-tech-blue {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+            border-color: rgba(59, 130, 246, 0.2);
+        }
+
+        .badge-tech-warning {
+            background: rgba(245, 158, 11, 0.1);
+            color: var(--accent-amber);
+            border-color: rgba(245, 158, 11, 0.2);
+        }
+
+        .badge-tech-success {
+            background: rgba(16, 185, 129, 0.1);
+            color: var(--accent-emerald);
+            border-color: rgba(16, 185, 129, 0.2);
+        }
+
+        .action-btn-group {
+            display: flex;
+            gap: 0.25rem;
+            justify-content: center;
+        }
+
+        .action-btn {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            border: 1px solid var(--border-glass);
+            background: rgba(31, 41, 55, 0.4);
+            color: var(--text-muted);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .action-btn:hover {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            border-color: rgba(59, 130, 246, 0.3);
+            transform: translateY(-1px);
+        }
+
+        .action-btn.danger:hover {
+            background: rgba(244, 63, 94, 0.15);
+            color: var(--accent-rose);
+            border-color: rgba(244, 63, 94, 0.3);
+        }
+
+        /* ========== TOOLBAR ========== */
+        .toolbar-tech {
+            padding: 1rem 1.5rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            flex-wrap: wrap;
+            gap: 1rem;
+            border-bottom: 1px solid var(--border-glass);
+        }
+
+        .live-indicator {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            font-family: var(--font-mono);
+        }
+
+        .live-dot {
+            width: 8px;
+            height: 8px;
+            background: var(--accent-emerald);
+            border-radius: 50%;
+            box-shadow: 0 0 8px var(--accent-emerald);
+            animation: pulse-glow 2s infinite;
         }
 
         /* ========== PAGINACIÓN ========== */
-        .pagination-container {
+        .pagination-tech {
             display: flex;
-            justify-content: space-between;
             align-items: center;
-            padding: 1rem 1.25rem;
-            border-top: 1px solid #ECF0F4;
-            background: #FFFFFF;
+            justify-content: space-between;
+            padding: 1rem 1.5rem;
+            border-top: 1px solid var(--border-glass);
+            background: rgba(255, 255, 255, 0.02);
         }
 
-        /* ========== ELEMENTOS ESPECIALES ========== */
-        .skipped-item {
-            background: #FEE2E2;
-            border-left: 4px solid var(--sap-red);
-            padding: 0.75rem;
-            margin-bottom: 0.5rem;
-            border-radius: 4px;
-            font-size: 0.9rem;
+        .page-btn {
+            padding: 0.5rem 1rem;
+            border-radius: 10px;
+            border: 1px solid var(--border-glass);
+            background: rgba(31, 41, 55, 0.4);
+            color: var(--text-secondary);
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.2s;
+            cursor: pointer;
         }
 
-        .text-success-dark { color: var(--sap-green); }
-        .text-danger-dark { color: var(--sap-red); }
+        .page-btn:hover:not(:disabled) {
+            background: rgba(59, 130, 246, 0.15);
+            color: var(--accent-blue);
+            border-color: rgba(59, 130, 246, 0.3);
+        }
 
-        .summary-card-item {
-            border: 1px solid var(--border-color);
+        .page-btn:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        .page-select {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
             border-radius: 8px;
+            padding: 0.375rem 0.75rem;
+            font-size: 0.8125rem;
+            cursor: pointer;
+        }
+
+        /* ========== MODALES TECNOLÓGICOS ========== */
+        .modal-content.tech {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: 20px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.7);
+            overflow: hidden;
+        }
+
+        .modal-header.tech {
+            background: rgba(17, 24, 39, 0.8);
+            border-bottom: 1px solid var(--border-glass);
+            padding: 1.25rem 1.5rem;
+        }
+
+        .modal-title.tech {
+            font-weight: 700;
+            color: var(--text-primary);
+            font-size: 1.1rem;
+        }
+
+        .modal-body.tech {
+            padding: 1.5rem;
+            background: var(--bg-secondary);
+        }
+
+        .modal-footer.tech {
+            background: rgba(17, 24, 39, 0.8);
+            border-top: 1px solid var(--border-glass);
+            padding: 1rem 1.5rem;
+        }
+
+        .form-control-tech, .form-select-tech {
+            background: rgba(31, 41, 55, 0.6);
+            border: 1px solid var(--border-glass);
+            color: var(--text-primary);
+            border-radius: 12px;
+            padding: 0.75rem 1rem;
+            font-size: 0.875rem;
+            transition: all 0.2s;
+        }
+
+        .form-control-tech:focus, .form-select-tech:focus {
+            background: rgba(31, 41, 55, 0.9);
+            border-color: var(--accent-cyan);
+            box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.1);
+            color: var(--text-primary);
+            outline: none;
+        }
+
+        .form-control-tech::placeholder {
+            color: var(--text-muted);
+        }
+
+        .form-label-tech {
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            color: var(--text-muted);
+            margin-bottom: 0.5rem;
+        }
+
+        /* ========== DROPZONE ========== */
+        .dropzone-tech {
+            border: 2px dashed rgba(6, 182, 212, 0.3);
+            background: rgba(6, 182, 212, 0.03);
+            border-radius: 16px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+        }
+
+        .dropzone-tech:hover {
+            border-color: var(--accent-cyan);
+            background: rgba(6, 182, 212, 0.06);
+            box-shadow: var(--shadow-glow-cyan);
+        }
+
+        .dropzone-tech i {
+            font-size: 3rem;
+            color: var(--accent-cyan);
+            margin-bottom: 1rem;
+            display: block;
+        }
+
+        /* ========== LOADER ========== */
+        .loader-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(11, 15, 25, 0.95);
+            backdrop-filter: blur(8px);
+            z-index: 9999;
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            align-items: center;
+            gap: 1.5rem;
+        }
+
+        .loader-ring {
+            width: 64px;
+            height: 64px;
+            border: 3px solid rgba(6, 182, 212, 0.1);
+            border-top-color: var(--accent-cyan);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+
+        .loader-text {
+            color: var(--text-secondary);
+            font-size: 0.875rem;
+            font-weight: 500;
+            letter-spacing: 0.05em;
+        }
+
+        .loader-progress-container {
+            width: 240px;
+            height: 4px;
+            background: rgba(31, 41, 55, 0.8);
+            border-radius: 2px;
+            overflow: hidden;
+        }
+
+        .loader-progress-bar {
+            height: 100%;
+            background: var(--gradient-cyan);
+            border-radius: 2px;
+            transition: width 0.3s ease;
+            box-shadow: 0 0 10px rgba(6, 182, 212, 0.3);
+        }
+
+        /* ========== PROVIDER TABLE ========== */
+        .provider-table {
+            font-size: 0.8125rem;
+            width: 100%;
+            border-collapse: separate;
+            border-spacing: 0;
+        }
+
+        .provider-table th {
+            background: rgba(31, 41, 55, 0.6);
+            color: var(--text-muted);
+            font-weight: 600;
+            font-size: 0.6875rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            padding: 0.75rem 1rem;
+            border-bottom: 1px solid var(--border-glass);
+            position: sticky;
+            top: 0;
+        }
+
+        .provider-table td {
+            padding: 0.875rem 1rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+            color: var(--text-secondary);
+        }
+
+        .provider-table tr:hover td {
+            background: rgba(6, 182, 212, 0.03);
+        }
+
+        .provider-name {
+            font-weight: 700;
+            color: var(--text-primary);
+            cursor: pointer;
+            transition: color 0.2s;
+        }
+
+        .provider-name:hover {
+            color: var(--accent-cyan);
+        }
+
+        .stat-link {
+            cursor: pointer;
+            font-weight: 600;
+            font-family: var(--font-mono);
+            transition: all 0.2s;
+            padding: 0.25rem 0.5rem;
+            border-radius: 6px;
+        }
+
+        .stat-link:hover {
+            background: rgba(255, 255, 255, 0.05);
+        }
+
+        .stat-link.po-yes { color: var(--accent-emerald); }
+        .stat-link.po-no { color: var(--accent-rose); }
+        .stat-link.req-yes { color: var(--accent-blue); }
+        .stat-link.req-no { color: var(--text-muted); }
+
+        /* ========== SUMMARY CARDS ========== */
+        .summary-card-tech {
+            background: rgba(31, 41, 55, 0.4);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
             margin-bottom: 1rem;
             overflow: hidden;
         }
 
-        .summary-header {
-            background: #F3F4F6;
-            padding: 0.75rem 1rem;
-            border-bottom: 1px solid var(--border-color);
+        .summary-card-header {
+            background: rgba(255, 255, 255, 0.03);
+            padding: 1rem 1.25rem;
+            border-bottom: 1px solid var(--border-glass);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
         }
 
-        .badge.bg-success {
-            background-color: var(--sap-green) !important;
+        .skipped-item-tech {
+            background: rgba(244, 63, 94, 0.08);
+            border: 1px solid rgba(244, 63, 94, 0.2);
+            border-left: 4px solid var(--accent-rose);
+            padding: 1rem;
+            margin-bottom: 0.75rem;
+            border-radius: 8px;
+            font-size: 0.875rem;
+            color: var(--text-secondary);
         }
 
-        .badge.bg-warning {
-            background-color: var(--sap-orange) !important;
+        /* ========== TOAST NOTIFICATIONS ========== */
+        .toast-container-tech {
+            position: fixed;
+            top: 1.5rem;
+            right: 1.5rem;
+            z-index: 1060;
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
         }
 
-        /* ========== SWEET ALERT CUSTOM ========== */
-        .swal2-popup {
-            font-family: 'Inter', sans-serif;
+        .toast-tech {
+            background: var(--bg-glass);
+            backdrop-filter: blur(16px);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            padding: 1rem 1.25rem;
+            box-shadow: var(--shadow-card-hover);
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+            min-width: 300px;
+            animation: slideInRight 0.4s ease-out;
+            border-left: 4px solid var(--accent-cyan);
+        }
+
+        .toast-tech.success { border-left-color: var(--accent-emerald); }
+        .toast-tech.error { border-left-color: var(--accent-rose); }
+        .toast-tech.warning { border-left-color: var(--accent-amber); }
+
+        /* ========== UTILITIES ========== */
+        .text-gradient {
+            background: var(--gradient-cyan);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .mono { font-family: var(--font-mono); }
+
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-muted);
+        }
+
+        .empty-state i {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            opacity: 0.3;
+        }
+
+        /* ========== SCROLLABLE AREAS ========== */
+        .scrollable {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+
+        .scrollable::-webkit-scrollbar {
+            width: 6px;
+        }
+
+        .scrollable::-webkit-scrollbar-thumb {
+            background: var(--bg-tertiary);
+            border-radius: 3px;
+        }
+
+        /* ========== RESPONSIVE ========== */
+        @media (max-width: 768px) {
+            .navbar-tech { padding: 0.75rem 1rem; }
+            .kpi-grid { grid-template-columns: 1fr; }
+            .toolbar-tech { flex-direction: column; align-items: flex-start; }
+            .nav-search { width: 100%; }
+            .action-btn-group { flex-wrap: wrap; }
+        }
+
+        /* ========== DROPDOWN ========== */
+        .dropdown-menu-tech {
+            background: var(--bg-secondary);
+            border: 1px solid var(--border-glass);
+            border-radius: 12px;
+            box-shadow: var(--shadow-card-hover);
+            padding: 0.5rem;
+            min-width: 220px;
+        }
+
+        .dropdown-item-tech {
+            color: var(--text-secondary);
+            padding: 0.625rem 1rem;
+            border-radius: 8px;
+            font-size: 0.8125rem;
+            font-weight: 500;
+            transition: all 0.15s;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            gap: 0.625rem;
+        }
+
+        .dropdown-item-tech:hover {
+            background: rgba(59, 130, 246, 0.1);
+            color: var(--accent-blue);
+        }
+
+        .dropdown-header-tech {
+            color: var(--text-muted);
+            font-size: 0.6875rem;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.08em;
+            padding: 0.5rem 1rem;
+        }
+
+        .dropdown-divider-tech {
+            border-top: 1px solid var(--border-glass);
+            margin: 0.5rem 0;
         }
     </style>
+<base target="_blank">
 </head>
 <body>
-<div id="loader-overlay" style="display: none;">
-    <div class="spinner-border text-dark mb-3" role="status" style="width: 3rem; height: 3rem;"></div>
-    <h6 class="text-secondary fw-bold" id="loaderText">Cargando datos...</h6>
-    <div class="progress mt-3" style="width: 200px; height: 5px;">
-        <div class="progress-bar bg-dark" role="progressbar" style="width: 0%" id="loaderProgress"></div>
+
+<!-- LOADER -->
+<div id="loader-overlay" class="loader-overlay" style="display: none;">
+    <div class="loader-ring"></div>
+    <div class="loader-text" id="loaderText">Cargando datos...</div>
+    <div class="loader-progress-container">
+        <div class="loader-progress-bar" id="loaderProgress" style="width: 0%"></div>
     </div>
 </div>
 
+<!-- TOAST CONTAINER -->
+<div class="toast-container-tech" id="toastContainer"></div>
+
 <!-- NAVBAR -->
-<nav class="navbar-custom d-flex justify-content-between align-items-center sticky-top">
+<nav class="navbar-tech d-flex justify-content-between align-items-center">
     <div class="d-flex flex-column">
-        <div class="d-flex align-items-center gap-2 fw-bold fs-4">
-            <i class="bi bi-building-fill-gear"></i> CONTROL DE ENVIOS A PROVEEDORES
+        <div class="d-flex align-items-center gap-3">
+            <div style="width: 40px; height: 40px; background: var(--gradient-cyan); border-radius: 12px; display: flex; align-items: center; justify-content: center; color: white; font-size: 1.25rem;">
+                <i class="bi bi-box-seam-fill"></i>
+            </div>
+            <div>
+                <div class="brand-title">CONTROL DE ENVÍOS</div>
+                <div class="brand-subtitle">Módulo: Partes Cortadas · v2.0</div>
+            </div>
         </div>
-        <span class="module-name ms-4 ps-2 font-monospace">Módulo: Envíos Partes Cortadas</span>
     </div>
-    <div class="d-flex gap-2 align-items-center">
-        <div class="input-group input-group-sm me-2" style="width: 260px;">
-            <span class="input-group-text bg-white border-0"><i class="bi bi-search text-secondary"></i></span>
-            <input type="text" class="form-control border-0" id="globalSearch" placeholder="Buscar Envío, Cliente..." />
+    <div class="d-flex gap-2 align-items-center flex-wrap">
+        <div class="position-relative">
+            <i class="bi bi-search position-absolute text-muted" style="left: 1rem; top: 50%; transform: translateY(-50%); font-size: 0.875rem;"></i>
+            <input type="text" class="nav-search ps-4" id="globalSearch" placeholder="Buscar envío, cliente, PO..." />
         </div>
 
-        <button class="btn btn-sm btn-outline-light" onclick="openReqMode()" title="Asignar N° Req">
-            <i class="bi bi-hash"></i> N° Req
+        <button class="btn-tech" onclick="openReqMode()" title="Asignar N° Req">
+            <i class="bi bi-hash"></i> <span class="d-none d-md-inline">N° Req</span>
         </button>
-        <button class="btn btn-sm btn-outline-light" onclick="openPOMode()" title="Asignar PO">
-            <i class="bi bi-tag-fill"></i> PO
+        <button class="btn-tech" onclick="openPOMode()" title="Asignar PO">
+            <i class="bi bi-tag-fill"></i> <span class="d-none d-md-inline">PO</span>
         </button>
 
         <div class="dropdown">
-            <button class="btn btn-sm btn-light text-dark fw-bold dropdown-toggle" type="button" data-bs-toggle="dropdown">
-                <i class="bi bi-file-earmark-bar-graph-fill me-1"></i> Reportes
+            <button class="btn-tech dropdown-toggle" type="button" data-bs-toggle="dropdown">
+                <i class="bi bi-file-earmark-bar-graph-fill"></i> <span class="d-none d-md-inline">Reportes</span>
             </button>
-            <ul class="dropdown-menu dropdown-menu-end shadow">
-                <li><h6 class="dropdown-header">Generales</h6></li>
-                <li><button class="dropdown-item" onclick="exportGeneralReport()"><i class="bi bi-table text-success me-2"></i>Exportar General (Vista Actual)</button></li>
-                <li><hr class="dropdown-divider" /></li>
-                <li><h6 class="dropdown-header">Pendientes</h6></li>
-                <li><button class="dropdown-item" onclick="exportSpecialReport('NO_PO')"><i class="bi bi-exclamation-circle text-warning me-2"></i>Envíos sin PO</button></li>
-                <li><button class="dropdown-item" onclick="exportSpecialReport('NO_REQ')"><i class="bi bi-exclamation-circle text-info me-2"></i>Envíos sin Requisición</button></li>
+            <ul class="dropdown-menu dropdown-menu-end dropdown-menu-tech">
+                <li><span class="dropdown-header-tech">Generales</span></li>
+                <li><button class="dropdown-item-tech" onclick="exportGeneralReport()">
+                    <i class="bi bi-table text-success"></i> Exportar General
+                </button></li>
+                <li><div class="dropdown-divider-tech"></div></li>
+                <li><span class="dropdown-header-tech">Pendientes</span></li>
+                <li><button class="dropdown-item-tech" onclick="exportSpecialReport('NO_PO')">
+                    <i class="bi bi-exclamation-circle text-warning"></i> Sin PO
+                </button></li>
+                <li><button class="dropdown-item-tech" onclick="exportSpecialReport('NO_REQ')">
+                    <i class="bi bi-exclamation-circle text-info"></i> Sin Requisición
+                </button></li>
             </ul>
         </div>
 
-        <button class="btn btn-sm btn-outline-light" onclick="openImportModal()">
-            <i class="bi bi-cloud-arrow-up-fill"></i>
+        <button class="btn-tech btn-tech-primary" onclick="openImportModal()">
+            <i class="bi bi-cloud-arrow-up-fill"></i> <span class="d-none d-md-inline">Importar</span>
         </button>
     </div>
 </nav>
@@ -414,54 +971,62 @@
 <div class="container-fluid px-4 py-4">
 
     <!-- KPI TILES -->
-    <div class="row g-3 mb-4">
-        <div class="col-md-3">
-            <div class="kpi-tile gray">
-                <div>
-                    <i class="bi bi-truck kpi-icon gray"></i>
-                    <div class="kpi-label">Total Envíos (2024-25)</div>
-                </div>
-                <div class="kpi-number" id="kpi-shipments">0</div>
+    <div class="kpi-grid">
+        <div class="kpi-card cyan delay-1">
+            <div class="kpi-icon-wrap">
+                <i class="bi bi-truck"></i>
+            </div>
+            <div class="kpi-label">Total Envíos</div>
+            <div class="kpi-value" id="kpi-shipments">0</div>
+            <div class="kpi-trend">
+                <i class="bi bi-arrow-up-right"></i> <span id="kpi-year-label">2024-25</span>
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="kpi-tile green">
-                <div>
-                    <i class="bi bi-puzzle-fill kpi-icon green"></i>
-                    <div class="kpi-label">Piezas Procesadas</div>
-                </div>
-                <div class="kpi-number text-success" id="kpi-pieces">0</div>
+        <div class="kpi-card emerald delay-2">
+            <div class="kpi-icon-wrap">
+                <i class="bi bi-puzzle-fill"></i>
+            </div>
+            <div class="kpi-label">Piezas Procesadas</div>
+            <div class="kpi-value" id="kpi-pieces">0</div>
+            <div class="kpi-trend">
+                <i class="bi bi-check-circle-fill text-success"></i> Acumulado total
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="kpi-tile blue">
-                <div>
-                    <i class="bi bi-people-fill kpi-icon blue"></i>
-                    <div class="kpi-label">Cartera Clientes</div>
-                </div>
-                <div class="kpi-number text-primary" id="kpi-clients">0</div>
+        <div class="kpi-card amber delay-3">
+            <div class="kpi-icon-wrap">
+                <i class="bi bi-people-fill"></i>
+            </div>
+            <div class="kpi-label">Cartera Clientes</div>
+            <div class="kpi-value" id="kpi-clients">0</div>
+            <div class="kpi-trend">
+                <i class="bi bi-building"></i> Activos
             </div>
         </div>
-        <div class="col-md-3">
-            <div class="kpi-tile orange">
-                <div>
-                    <i class="bi bi-exclamation-diamond-fill kpi-icon orange"></i>
-                    <div class="kpi-label">Pendientes de PO</div>
-                </div>
-                <div class="kpi-number text-warning" id="kpi-no-po">0</div>
+        <div class="kpi-card rose delay-4">
+            <div class="kpi-icon-wrap">
+                <i class="bi bi-exclamation-diamond-fill"></i>
+            </div>
+            <div class="kpi-label">Pendientes de PO</div>
+            <div class="kpi-value" id="kpi-no-po">0</div>
+            <div class="kpi-trend">
+                <i class="bi bi-clock-history"></i> Requieren atención
             </div>
         </div>
     </div>
 
     <!-- MÉTRICAS POR PROVEEDOR -->
-    <div class="card-custom mb-4">
-        <div class="card-header bg-white fw-bold py-3 border-bottom text-secondary">
-            <i class="bi bi-bar-chart-fill me-2"></i> Métricas por Proveedor (Clic para filtrar)
+    <div class="glass-card mb-4 delay-2">
+        <div class="glass-header">
+            <div class="glass-title">
+                <i class="bi bi-bar-chart-fill"></i> Métricas por Proveedor
+            </div>
+            <span class="badge-tech badge-tech-blue" style="cursor: pointer;" onclick="resetFilters()">
+                <i class="bi bi-arrow-counterclockwise"></i> Reset
+            </span>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive" style="max-height: 250px; overflow-y: auto;">
-                <table class="table table-sm provider-metric-table mb-0 text-center">
-                    <thead>
+        <div class="scrollable">
+            <table class="provider-table mb-0 text-center">
+                <thead>
                     <tr>
                         <th class="text-start ps-4">Proveedor</th>
                         <th>Total Envíos</th>
@@ -470,32 +1035,33 @@
                         <th>Con Req</th>
                         <th>Sin Req</th>
                     </tr>
-                    </thead>
-                    <tbody id="providerKpiBody"></tbody>
-                </table>
-            </div>
+                </thead>
+                <tbody id="providerKpiBody"></tbody>
+            </table>
         </div>
     </div>
 
     <!-- TABLA DETALLE DE ENVÍOS -->
-    <div class="card-custom">
-        <div class="toolbar">
-            <div class="toolbar-title">
+    <div class="glass-card delay-3">
+        <div class="toolbar-tech">
+            <div class="glass-title m-0">
                 <i class="bi bi-table"></i> Detalle de Envíos
             </div>
-            <div class="toolbar-actions">
-                <button class="btn btn-sm btn-outline-secondary" onclick="resetFilters()" id="btnResetFilters" style="display: none;">
+            <div class="d-flex align-items-center gap-3">
+                <button class="btn-tech btn-tech-danger" onclick="resetFilters()" id="btnResetFilters" style="display: none;">
                     <i class="bi bi-x-circle"></i> Quitar Filtros
                 </button>
-                <span class="badge bg-secondary bg-opacity-10 text-secondary fw-normal" id="lastUpdate">Actualizando...</span>
+                <div class="live-indicator">
+                    <div class="live-dot"></div>
+                    <span id="lastUpdate">Actualizando...</span>
+                </div>
             </div>
         </div>
-        <div class="card-body p-0">
-            <div class="table-responsive">
-                <table class="table table-sap mb-0" id="summaryTable">
-                    <thead>
+        <div class="table-responsive">
+            <table class="table-tech mb-0" id="summaryTable">
+                <thead>
                     <tr>
-                        <th>Fecha <i class="bi bi-arrow-down"></i></th>
+                        <th>Fecha <i class="bi bi-arrow-down-short ms-1"></i></th>
                         <th>Envío #</th>
                         <th>N° Req</th>
                         <th>PO</th>
@@ -504,26 +1070,29 @@
                         <th class="text-end">Total Piezas</th>
                         <th class="text-center" style="width: 180px;">Acciones</th>
                     </tr>
-                    </thead>
-                    <tbody id="tableBody"></tbody>
-                    <tfoot id="tableFooter">
+                </thead>
+                <tbody id="tableBody"></tbody>
+                <tfoot id="tableFooter">
                     <tr>
-                        <td colspan="6" class="text-end text-uppercase">Total en vista actual:</td>
-                        <td class="text-end text-success" id="grandTotalDisplay">0</td>
+                        <td colspan="6" class="text-end text-uppercase" style="color: var(--text-muted); font-size: 0.75rem;">Total en vista actual:</td>
+                        <td class="text-end text-success mono" id="grandTotalDisplay" style="font-size: 1rem;">0</td>
                         <td></td>
                     </tr>
-                    </tfoot>
-                </table>
+                </tfoot>
+            </table>
+        </div>
+        <div class="pagination-tech">
+            <div class="d-flex align-items-center gap-3">
+                <span class="text-muted small mono" id="pageInfo">0-0 de 0</span>
+                <select class="page-select" id="pageSelector" onchange="jumpToPage(this.value)"></select>
             </div>
-            <div class="pagination-container">
-                <div class="d-flex align-items-center gap-2">
-                    <span class="text-muted small" id="pageInfo">Mostrando 0-0 de 0</span>
-                    <select class="form-select form-select-sm" style="width: auto;" id="pageSelector" onchange="jumpToPage(this.value)"></select>
-                </div>
-                <div class="btn-group">
-                    <button class="btn btn-sm btn-outline-secondary" onclick="changePage(-1)" id="btnPrev">Anterior</button>
-                    <button class="btn btn-sm btn-outline-secondary" onclick="changePage(1)" id="btnNext">Siguiente</button>
-                </div>
+            <div class="d-flex gap-2">
+                <button class="page-btn" onclick="changePage(-1)" id="btnPrev">
+                    <i class="bi bi-chevron-left"></i> Anterior
+                </button>
+                <button class="page-btn" onclick="changePage(1)" id="btnNext">
+                    Siguiente <i class="bi bi-chevron-right"></i>
+                </button>
             </div>
         </div>
     </div>
@@ -532,25 +1101,27 @@
 <!-- MODALES -->
 <div class="modal fade" id="importModal" tabindex="-1">
     <div class="modal-dialog modal-lg modal-dialog-centered">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold">Cargar Archivos Excel</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content tech">
+            <div class="modal-header tech">
+                <h5 class="modal-title tech"><i class="bi bi-cloud-upload me-2 text-cyan"></i>Cargar Archivos Excel</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body">
-                <div id="dropzone" class="dropzone">
-                    <i class="bi bi-file-earmark-spreadsheet display-3 text-secondary"></i>
-                    <p class="mt-3 fw-bold text-dark">Arrastra tus archivos aquí (Soporta múltiples)</p>
-                    <p class="small text-muted"><strong>Requisito:</strong> Debe tener la palabra "BULTO" en la celda A8.</p>
+            <div class="modal-body tech">
+                <div id="dropzone" class="dropzone-tech">
+                    <i class="bi bi-file-earmark-spreadsheet"></i>
+                    <p class="fw-bold text-light mb-1">Arrastra tus archivos aquí</p>
+                    <p class="small text-muted mb-0">Soporta múltiples archivos · Debe contener "BULTO" en A8</p>
                     <input type="file" id="fileInput" accept=".xlsx,.xls" multiple hidden />
                 </div>
-                <div id="fileInfo" class="mt-3 alert alert-secondary d-none">
-                    <strong>Archivos seleccionados:</strong> <span id="fileName"></span>
+                <div id="fileInfo" class="mt-3 alert d-none" style="background: rgba(16, 185, 129, 0.1); border: 1px solid rgba(16, 185, 129, 0.2); color: var(--accent-emerald); border-radius: 12px;">
+                    <i class="bi bi-check-circle-fill me-2"></i><strong>Archivos:</strong> <span id="fileName" class="mono"></span>
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-light" data-bs-dismiss="modal">Cancelar</button>
-                <button class="btn btn-primary px-4" id="btnProcessExcel" disabled onclick="processExcelBatch()">Procesar Lote</button>
+            <div class="modal-footer tech">
+                <button class="btn-tech" data-bs-dismiss="modal">Cancelar</button>
+                <button class="btn-tech btn-tech-primary px-4" id="btnProcessExcel" disabled onclick="processExcelBatch()">
+                    <i class="bi bi-cpu me-2"></i>Procesar Lote
+                </button>
             </div>
         </div>
     </div>
@@ -558,24 +1129,26 @@
 
 <div class="modal fade" id="poModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold">Asignar PO</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content tech">
+            <div class="modal-header tech">
+                <h5 class="modal-title tech">Asignar PO</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body tech">
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">ENVÍO #</label>
-                    <input class="form-control" list="envioOptions" id="poEnvioInput" placeholder="Busca..." readonly />
+                    <label class="form-label-tech">ENVÍO #</label>
+                    <input class="form-control-tech" list="envioOptions" id="poEnvioInput" placeholder="Busca..." readonly />
                     <datalist id="envioOptions"></datalist>
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">NUEVO PO</label>
-                    <input type="text" class="form-control" id="poValueInput" placeholder="Ej: PO-2024-XXXX" />
+                    <label class="form-label-tech">NUEVO PO</label>
+                    <input type="text" class="form-control-tech" id="poValueInput" placeholder="Ej: PO-2024-XXXX" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary w-100" onclick="updatePO()">Guardar Cambios</button>
+            <div class="modal-footer tech">
+                <button class="btn-tech btn-tech-primary w-100" onclick="updatePO()">
+                    <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+                </button>
             </div>
         </div>
     </div>
@@ -583,23 +1156,25 @@
 
 <div class="modal fade" id="reqModal" tabindex="-1">
     <div class="modal-dialog modal-dialog-centered">
-        <div class="modal-content border-0 shadow">
-            <div class="modal-header bg-light">
-                <h5 class="modal-title fw-bold">Asignar N° Req</h5>
-                <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+        <div class="modal-content tech">
+            <div class="modal-header tech">
+                <h5 class="modal-title tech">Asignar N° Req</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
             </div>
-            <div class="modal-body p-4">
+            <div class="modal-body tech">
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">ENVÍO #</label>
-                    <input class="form-control" list="envioOptions" id="reqEnvioInput" placeholder="Busca..." readonly />
+                    <label class="form-label-tech">ENVÍO #</label>
+                    <input class="form-control-tech" list="envioOptions" id="reqEnvioInput" placeholder="Busca..." readonly />
                 </div>
                 <div class="mb-3">
-                    <label class="form-label small fw-bold text-muted">N° REQUISICIÓN</label>
-                    <input type="text" class="form-control" id="reqValueInput" placeholder="Ej: REQ-XXXX" />
+                    <label class="form-label-tech">N° REQUISICIÓN</label>
+                    <input type="text" class="form-control-tech" id="reqValueInput" placeholder="Ej: REQ-XXXX" />
                 </div>
             </div>
-            <div class="modal-footer">
-                <button class="btn btn-primary w-100" onclick="updateReq()">Guardar Cambios</button>
+            <div class="modal-footer tech">
+                <button class="btn-tech btn-tech-primary w-100" onclick="updateReq()">
+                    <i class="bi bi-check-lg me-2"></i>Guardar Cambios
+                </button>
             </div>
         </div>
     </div>
@@ -607,35 +1182,44 @@
 
 <div class="modal fade" id="detailModal" tabindex="-1">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-light">
+        <div class="modal-content tech">
+            <div class="modal-header tech">
                 <div class="w-100">
                     <div class="d-flex justify-content-between align-items-start">
                         <div>
-                            <h5 class="modal-title fw-bold m-0 text-dark">Detalle de Envío: <span id="detailEnvioTitle" class="text-primary"></span></h5>
-                            <div class="mt-1">
-                                <small class="text-secondary fw-bold text-uppercase">Proveedor:</small>
-                                <small class="text-dark fw-bold ms-1" id="detailProveedor" style="font-size:0.9rem;"></small>
+                            <h5 class="modal-title tech m-0">Detalle de Envío: <span id="detailEnvioTitle" class="text-gradient"></span></h5>
+                            <div class="mt-2 d-flex align-items-center gap-2">
+                                <span class="badge-tech badge-tech-blue" id="detailProveedorBadge">
+                                    <i class="bi bi-building"></i> <span id="detailProveedor"></span>
+                                </span>
                             </div>
                         </div>
-                        <button type="button" class="btn-close" data-bs-dismiss="modal"></button>
+                        <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal"></button>
                     </div>
                 </div>
             </div>
-            <div class="modal-body">
-                <div class="d-flex justify-content-between align-items-center mb-3 p-2 bg-white border rounded">
-                    <div class="btn-group">
-                        <button class="btn btn-outline-secondary btn-sm" id="btnDetailReq"><i class="bi bi-hash"></i> Asignar Req</button>
-                        <button class="btn btn-outline-secondary btn-sm" id="btnDetailPO"><i class="bi bi-tag"></i> Asignar PO</button>
+            <div class="modal-body tech">
+                <div class="d-flex justify-content-between align-items-center mb-4 p-3" style="background: rgba(31, 41, 55, 0.4); border-radius: 12px; border: 1px solid var(--border-glass);">
+                    <div class="btn-group gap-2">
+                        <button class="btn-tech" id="btnDetailReq"><i class="bi bi-hash"></i> Asignar Req</button>
+                        <button class="btn-tech" id="btnDetailPO"><i class="bi bi-tag"></i> Asignar PO</button>
                     </div>
-                    <button class="btn btn-outline-dark btn-sm" onclick="copyConcatenadosFromDetail()"><i class="bi bi-copy"></i> Copiar Concatenados</button>
+                    <button class="btn-tech" onclick="copyConcatenadosFromDetail()">
+                        <i class="bi bi-copy"></i> Copiar Concatenados
+                    </button>
                 </div>
                 <div class="table-responsive">
-                    <table class="table table-sm table-striped table-bordered mb-0 small">
-                        <thead class="table-light">
-                        <tr>
-                            <th>Cliente</th><th>Tipo</th><th>Estilo</th><th>Corte</th><th>Color</th><th class="text-end">Piezas</th><th>PO</th>
-                        </tr>
+                    <table class="table-tech mb-0">
+                        <thead>
+                            <tr>
+                                <th>Cliente</th>
+                                <th>Tipo</th>
+                                <th>Estilo</th>
+                                <th>Corte</th>
+                                <th>Color</th>
+                                <th class="text-end">Piezas</th>
+                                <th>PO</th>
+                            </tr>
                         </thead>
                         <tbody id="detailTableBody"></tbody>
                     </table>
@@ -647,21 +1231,29 @@
 
 <div class="modal fade" id="uploadSummaryModal" tabindex="-1" data-bs-backdrop="static">
     <div class="modal-dialog modal-xl modal-dialog-scrollable">
-        <div class="modal-content border-0">
-            <div class="modal-header bg-success text-white">
-                <h5 class="modal-title fw-bold"><i class="bi bi-check-circle-fill me-2"></i>Resultados de Carga</h5>
+        <div class="modal-content tech">
+            <div class="modal-header tech" style="background: rgba(16, 185, 129, 0.1); border-bottom: 1px solid rgba(16, 185, 129, 0.2);">
+                <h5 class="modal-title tech" style="color: var(--accent-emerald);">
+                    <i class="bi bi-check-circle-fill me-2"></i>Resultados de Carga
+                </h5>
                 <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" onclick="finishUploadFlow()"></button>
             </div>
-            <div class="modal-body bg-light">
+            <div class="modal-body tech">
                 <div id="skippedContainer" class="mb-4" style="display:none;">
-                    <h6 class="fw-bold text-danger mb-2"><i class="bi bi-exclamation-triangle-fill"></i> Archivos/Envíos NO Cargados</h6>
+                    <h6 class="fw-bold mb-3" style="color: var(--accent-rose);">
+                        <i class="bi bi-exclamation-triangle-fill me-2"></i>Archivos/Envíos NO Cargados
+                    </h6>
                     <div id="skippedList"></div>
                 </div>
-                <h6 class="fw-bold text-success mb-2" id="successTitle"><i class="bi bi-check-circle"></i> Envíos Cargados Exitosamente</h6>
+                <h6 class="fw-bold mb-3" style="color: var(--accent-emerald);" id="successTitle">
+                    <i class="bi bi-check-circle me-2"></i>Envíos Cargados Exitosamente
+                </h6>
                 <div id="multiSummaryContainer"></div>
             </div>
-            <div class="modal-footer bg-white">
-                <button class="btn btn-secondary px-4" data-bs-dismiss="modal" onclick="finishUploadFlow()">Cerrar y Actualizar</button>
+            <div class="modal-footer tech">
+                <button class="btn-tech btn-tech-primary px-4" data-bs-dismiss="modal" onclick="finishUploadFlow()">
+                    <i class="bi bi-arrow-clockwise me-2"></i>Cerrar y Actualizar
+                </button>
             </div>
         </div>
     </div>
@@ -687,6 +1279,43 @@
     const loaderText = document.getElementById('loaderText');
     const loaderProgress = document.getElementById('loaderProgress');
 
+    // Toast notification system
+    function showToast(message, type = 'info') {
+        const container = document.getElementById('toastContainer');
+        const toast = document.createElement('div');
+        toast.className = `toast-tech ${type}`;
+        const icons = {
+            success: 'bi-check-circle-fill',
+            error: 'bi-x-circle-fill',
+            warning: 'bi-exclamation-triangle-fill',
+            info: 'bi-info-circle-fill'
+        };
+        const colors = {
+            success: 'var(--accent-emerald)',
+            error: 'var(--accent-rose)',
+            warning: 'var(--accent-amber)',
+            info: 'var(--accent-cyan)'
+        };
+        toast.innerHTML = `
+            <i class="bi ${icons[type]}" style="color: ${colors[type]}; font-size: 1.25rem;"></i>
+            <div style="flex: 1;">
+                <div style="font-weight: 600; font-size: 0.875rem; color: var(--text-primary);">${message}</div>
+            </div>
+            <button onclick="this.parentElement.remove()" style="background: none; border: none; color: var(--text-muted); cursor: pointer; padding: 0;">
+                <i class="bi bi-x-lg"></i>
+            </button>
+        `;
+        container.appendChild(toast);
+        setTimeout(() => {
+            if (toast.parentElement) {
+                toast.style.opacity = '0';
+                toast.style.transform = 'translateX(100%)';
+                toast.style.transition = 'all 0.3s ease';
+                setTimeout(() => toast.remove(), 300);
+            }
+        }, 3000);
+    }
+
     document.addEventListener('DOMContentLoaded', () => {
         importModal = new bootstrap.Modal(document.getElementById('importModal'));
         poModal = new bootstrap.Modal(document.getElementById('poModal'));
@@ -700,11 +1329,11 @@
         document.getElementById('globalSearch').addEventListener('input', (e) => {
             const term = e.target.value.toLowerCase();
             filteredData = summaryData.filter(i =>
-                (i.ENVIO||'').toLowerCase().includes(term) ||
-                (i.CLIENTE_DISPLAY||'').toLowerCase().includes(term) ||
-                (i.PO||'').toLowerCase().includes(term) ||
-                (i.REQ||'').toLowerCase().includes(term) ||
-                (i.PROVEEDOR||'').toLowerCase().includes(term)
+                (i.ENVIO || '').toLowerCase().includes(term) ||
+                (i.CLIENTE_DISPLAY || '').toLowerCase().includes(term) ||
+                (i.PO || '').toLowerCase().includes(term) ||
+                (i.REQ || '').toLowerCase().includes(term) ||
+                (i.PROVEEDOR || '').toLowerCase().includes(term)
             );
             currentPage = 1;
             renderTablePage();
@@ -721,8 +1350,8 @@
     function smartDate(dateStr) {
         if (!dateStr) return { valid: false, obj: new Date(0), display: '-' };
         if (/^\d{4}-\d{2}-\d{2}$/.test(dateStr)) {
-            const [y,m,d] = dateStr.split('-').map(Number);
-            const localDate = new Date(y, m-1, d);
+            const [y, m, d] = dateStr.split('-').map(Number);
+            const localDate = new Date(y, m - 1, d);
             return { valid: true, obj: localDate, display: localDate.toLocaleDateString() };
         }
         let d = new Date(dateStr);
@@ -739,7 +1368,7 @@
     }
 
     async function loadData() {
-        toggleLoader(true, 'Cargando base de datos completa...');
+        toggleLoader(true, 'Sincronizando con base de datos...');
         rawData = [];
         let from = 0;
         const limit = 1000;
@@ -791,18 +1420,17 @@
                     TOTAL: 0
                 };
                 if (!providerStats[prov])
-                    providerStats[prov] = { total:0, withPO:0, noPO:0, withReq:0, noReq:0 };
+                    providerStats[prov] = { total: 0, withPO: 0, noPO: 0, withReq: 0, noReq: 0 };
                 providerStats[prov].total++;
                 if (hasPO) providerStats[prov].withPO++; else providerStats[prov].noPO++;
                 if (hasReq) providerStats[prov].withReq++; else providerStats[prov].noReq++;
             } else {
-                // Si el grupo ya existe, completar PO y REQ si aún están vacíos
                 if (!groups[env].PO && hasPO) groups[env].PO = r.PO;
                 if (!groups[env].REQ && hasReq) groups[env].REQ = r['N°'];
             }
 
             groups[env].CLIENTS_SET.add(clientName);
-            groups[env].SEARCH_META += ` ${r.ESTILO||''} ${r.CORTE||''} ${r.COLOR||''} ${r.TIPO||''}`;
+            groups[env].SEARCH_META += ` ${r.ESTILO || ''} ${r.CORTE || ''} ${r.COLOR || ''} ${r.TIPO || ''}`;
             const p = Number(r.PARTES) || 0;
             groups[env].TOTAL += p;
             totalP += p;
@@ -815,14 +1443,15 @@
             return g;
         });
 
-        summaryData.sort((a,b) => b.FECHA_OBJ - a.FECHA_OBJ);
+        summaryData.sort((a, b) => b.FECHA_OBJ - a.FECHA_OBJ);
         filteredData = [...summaryData];
 
-        document.getElementById('kpi-shipments').innerText = summaryData.length;
-        document.getElementById('kpi-pieces').innerText = totalP.toLocaleString();
-        document.getElementById('kpi-clients').innerText = new Set(rawData.map(d => d.CLIENTE)).size;
-        document.getElementById('kpi-no-po').innerText = summaryData.filter(s => !s.PO || s.PO.trim()==='').length;
-        document.getElementById('lastUpdate').innerText = 'Actualizado: ' + new Date().toLocaleTimeString();
+        animateValue('kpi-shipments', parseInt(document.getElementById('kpi-shipments').innerText.replace(/,/g, '') || 0), summaryData.length, 1000);
+        animateValue('kpi-pieces', parseInt(document.getElementById('kpi-pieces').innerText.replace(/,/g, '') || 0), totalP, 1200);
+        animateValue('kpi-clients', parseInt(document.getElementById('kpi-clients').innerText.replace(/,/g, '') || 0), new Set(rawData.map(d => d.CLIENTE)).size, 800);
+        animateValue('kpi-no-po', parseInt(document.getElementById('kpi-no-po').innerText.replace(/,/g, '') || 0), summaryData.filter(s => !s.PO || s.PO.trim() === '').length, 600);
+
+        document.getElementById('lastUpdate').innerText = new Date().toLocaleTimeString();
 
         renderProviderStats(providerStats);
 
@@ -838,6 +1467,28 @@
         currentPage = 1;
         renderTablePage();
         toggleLoader(false);
+    }
+
+    function animateValue(id, start, end, duration) {
+        const obj = document.getElementById(id);
+        const range = end - start;
+        const minTimer = 50;
+        let stepTime = Math.abs(Math.floor(duration / range));
+        stepTime = Math.max(stepTime, minTimer);
+        let startTime = new Date().getTime();
+        let endTime = startTime + duration;
+        let timer;
+
+        function run() {
+            let now = new Date().getTime();
+            let remaining = Math.max((endTime - now) / duration, 0);
+            let value = Math.round(end - (remaining * range));
+            obj.innerHTML = value.toLocaleString();
+            if (value == end) clearInterval(timer);
+        }
+
+        timer = setInterval(run, stepTime);
+        run();
     }
 
     function exportGeneralReport() {
@@ -860,32 +1511,33 @@
         wsData.push([{ v: 'REPORTE GENERAL DE ENVÍOS', s: { font: { bold: true, sz: 14 } } }]);
         wsData.push([{ v: 'Generado el: ' + new Date().toLocaleDateString(), s: { font: { italic: true } } }]);
         wsData.push([]);
-        wsData.push(['Fecha','Proveedor','Envío #','N° Req','PO','Cliente','Estilo','Corte','Color','Piezas'].map(h => ({ v: h, s: headerStyle })));
+        wsData.push(['Fecha', 'Proveedor', 'Envío #', 'N° Req', 'PO', 'Cliente', 'Estilo', 'Corte', 'Color', 'Piezas'].map(h => ({ v: h, s: headerStyle })));
 
         sortedKeys.forEach(envKey => {
             const groupRows = groups[envKey];
             let subtotal = 0;
             groupRows.forEach(r => {
-                const pcs = Number(r.PARTES)||0;
+                const pcs = Number(r.PARTES) || 0;
                 subtotal += pcs;
-                wsData.push([{ v: r.FECHA, s: cellStyle },{ v: r.PROVEEDOR, s: cellStyle },{ v: r['ENVIO#'], s: cellStyle },{ v: r['N°']||'', s: cellStyle },{ v: r.PO||'', s: cellStyle },{ v: r.CLIENTE, s: cellStyle },{ v: r.ESTILO, s: cellStyle },{ v: r.CORTE, s: cellStyle },{ v: r.COLOR, s: cellStyle },{ v: pcs, t: 'n', z: '#,##0', s: cellStyle }]);
+                wsData.push([{ v: r.FECHA, s: cellStyle }, { v: r.PROVEEDOR, s: cellStyle }, { v: r['ENVIO#'], s: cellStyle }, { v: r['N°'] || '', s: cellStyle }, { v: r.PO || '', s: cellStyle }, { v: r.CLIENTE, s: cellStyle }, { v: r.ESTILO, s: cellStyle }, { v: r.CORTE, s: cellStyle }, { v: r.COLOR, s: cellStyle }, { v: pcs, t: 'n', z: '#,##0', s: cellStyle }]);
             });
-            wsData.push([{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: '', s: totalStyle },{ v: 'TOTAL '+envKey+':', s: totalStyle },{ v: subtotal, t: 'n', z: '#,##0', s: totalStyle }]);
+            wsData.push([{ v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: '', s: totalStyle }, { v: 'TOTAL ' + envKey + ':', s: totalStyle }, { v: subtotal, t: 'n', z: '#,##0', s: totalStyle }]);
         });
 
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 4 }];
-        ws['!cols'] = [{ wch:12 },{ wch:25 },{ wch:20 },{ wch:15 },{ wch:15 },{ wch:25 },{ wch:15 },{ wch:15 },{ wch:20 },{ wch:12 }];
+        ws['!cols'] = [{ wch: 12 }, { wch: 25 }, { wch: 20 }, { wch: 15 }, { wch: 15 }, { wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 12 }];
         XLSX.utils.book_append_sheet(wb, ws, 'General');
-        XLSX.writeFile(wb, `Reporte_General_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, `Reporte_General_${new Date().toISOString().slice(0, 10)}.xlsx`);
         toggleLoader(false);
+        showToast('Reporte general exportado exitosamente', 'success');
     }
 
     function exportSpecialReport(type) {
         toggleLoader(true, 'Generando reporte...');
         let filteredRows = [];
-        if (type === 'NO_PO') filteredRows = rawData.filter(r => !r.PO || String(r.PO).trim()==='' || String(r.PO).trim()==='null');
-        else if (type === 'NO_REQ') filteredRows = rawData.filter(r => !r['N°'] || String(r['N°']).trim()==='' || String(r['N°']).trim()==='null');
+        if (type === 'NO_PO') filteredRows = rawData.filter(r => !r.PO || String(r.PO).trim() === '' || String(r.PO).trim() === 'null');
+        else if (type === 'NO_REQ') filteredRows = rawData.filter(r => !r['N°'] || String(r['N°']).trim() === '' || String(r['N°']).trim() === 'null');
         if (filteredRows.length === 0) { toggleLoader(false); return Swal.fire('Info', 'No hay datos pendientes.', 'info'); }
 
         const groups = {};
@@ -897,35 +1549,35 @@
 
         const wb = XLSX.utils.book_new();
         const wsData = [];
-        wsData.push([{ v: 'REPORTE PENDIENTES - ' + (type==='NO_PO' ? 'SIN PO' : 'SIN REQUISICIÓN'), s: { font: { bold: true, sz: 14 } } }]);
+        wsData.push([{ v: 'REPORTE PENDIENTES - ' + (type === 'NO_PO' ? 'SIN PO' : 'SIN REQUISICIÓN'), s: { font: { bold: true, sz: 14 } } }]);
         wsData.push([{ v: 'Generado el: ' + new Date().toLocaleDateString(), s: { font: { italic: true } } }]);
         wsData.push([]);
 
         Object.keys(groups).sort().forEach(envio => {
             const rows = groups[envio];
             const info = rows[0];
-            const groupHeader = [{ v: `ENVÍO: ${envio}`, s: headerStyle },{ v: `PROVEEDOR: ${info.PROVEEDOR}`, s: headerStyle },{ v: `FECHA: ${info.FECHA}`, s: headerStyle }];
-            const totalCols = type==='NO_PO' ? 7 : 6;
+            const groupHeader = [{ v: `ENVÍO: ${envio}`, s: headerStyle }, { v: `PROVEEDOR: ${info.PROVEEDOR}`, s: headerStyle }, { v: `FECHA: ${info.FECHA}`, s: headerStyle }];
+            const totalCols = type === 'NO_PO' ? 7 : 6;
             while (groupHeader.length < totalCols) groupHeader.push({ v: '', s: headerStyle });
             wsData.push(groupHeader);
 
             const headers = [];
-            if (type==='NO_PO') headers.push({ v: 'N° Req', s: tableHeaderStyle });
-            headers.push({ v: 'Cliente', s: tableHeaderStyle },{ v: 'Estilo', s: tableHeaderStyle },{ v: 'Corte', s: tableHeaderStyle },{ v: 'Color', s: tableHeaderStyle },{ v: 'Tipo', s: tableHeaderStyle },{ v: 'Piezas', s: tableHeaderStyle });
+            if (type === 'NO_PO') headers.push({ v: 'N° Req', s: tableHeaderStyle });
+            headers.push({ v: 'Cliente', s: tableHeaderStyle }, { v: 'Estilo', s: tableHeaderStyle }, { v: 'Corte', s: tableHeaderStyle }, { v: 'Color', s: tableHeaderStyle }, { v: 'Tipo', s: tableHeaderStyle }, { v: 'Piezas', s: tableHeaderStyle });
             wsData.push(headers);
 
             let subtotal = 0;
             rows.forEach(r => {
-                const pcs = Number(r.PARTES)||0;
+                const pcs = Number(r.PARTES) || 0;
                 subtotal += pcs;
                 const row = [];
-                if (type==='NO_PO') row.push({ v: r['N°']||'-', s: cellStyle });
-                row.push({ v: r.CLIENTE, s: cellStyle },{ v: r.ESTILO, s: cellStyle },{ v: r.CORTE, s: cellStyle },{ v: r.COLOR, s: cellStyle },{ v: r.TIPO, s: cellStyle },{ v: pcs, t: 'n', z: '#,##0', s: cellStyle });
+                if (type === 'NO_PO') row.push({ v: r['N°'] || '-', s: cellStyle });
+                row.push({ v: r.CLIENTE, s: cellStyle }, { v: r.ESTILO, s: cellStyle }, { v: r.CORTE, s: cellStyle }, { v: r.COLOR, s: cellStyle }, { v: r.TIPO, s: cellStyle }, { v: pcs, t: 'n', z: '#,##0', s: cellStyle });
                 wsData.push(row);
             });
             const footer = [];
-            const spacersCount = type==='NO_PO' ? 5 : 4;
-            for (let i=0; i<spacersCount; i++) footer.push({ v: '', s: totalStyle });
+            const spacersCount = type === 'NO_PO' ? 5 : 4;
+            for (let i = 0; i < spacersCount; i++) footer.push({ v: '', s: totalStyle });
             footer.push({ v: 'TOTAL ENVÍO:', s: totalStyle });
             footer.push({ v: subtotal, t: 'n', z: '#,##0', s: totalStyle });
             wsData.push(footer);
@@ -935,12 +1587,13 @@
         const ws = XLSX.utils.aoa_to_sheet(wsData);
         ws['!views'] = [{ state: 'frozen', xSplit: 0, ySplit: 0 }];
         const cols = [];
-        if (type==='NO_PO') cols.push({ wch:15 });
-        cols.push({ wch:25 },{ wch:15 },{ wch:15 },{ wch:20 },{ wch:35 },{ wch:12 });
+        if (type === 'NO_PO') cols.push({ wch: 15 });
+        cols.push({ wch: 25 }, { wch: 15 }, { wch: 15 }, { wch: 20 }, { wch: 35 }, { wch: 12 });
         ws['!cols'] = cols;
         XLSX.utils.book_append_sheet(wb, ws, 'Reporte');
-        XLSX.writeFile(wb, `Reporte_Pendientes_${type}_${new Date().toISOString().slice(0,10)}.xlsx`);
+        XLSX.writeFile(wb, `Reporte_Pendientes_${type}_${new Date().toISOString().slice(0, 10)}.xlsx`);
         toggleLoader(false);
+        showToast('Reporte de pendientes exportado', 'success');
     }
 
     function renderProviderStats(stats) {
@@ -949,14 +1602,14 @@
         Object.keys(stats).sort().forEach(prov => {
             const s = stats[prov];
             const makeLink = (text, type, filterVal) =>
-                text === 0 ? `<span class="text-muted">-</span>` : `<span class="kpi-link ${type}" onclick="filterByProviderStat('${prov}', '${filterVal}')">${text}</span>`;
+                text === 0 ? `<span class="text-muted">-</span>` : `<span class="stat-link ${type}" onclick="filterByProviderStat('${prov}', '${filterVal}')">${text}</span>`;
             const tr = document.createElement('tr');
-            tr.innerHTML = `<td class="text-start ps-4 fw-bold text-dark"><span class="provider-link fw-bold" onclick="filterByProviderStat('${prov}', 'ALL')">${prov}</span></td>
-                <td><span class="badge bg-secondary">${s.total}</span></td>
-                <td>${makeLink(s.withPO, 'text-success-dark', 'WITH_PO')}</td>
-                <td>${makeLink(s.noPO, 'text-danger-dark', 'NO_PO')}</td>
-                <td>${makeLink(s.withReq, 'text-primary', 'WITH_REQ')}</td>
-                <td>${makeLink(s.noReq, 'text-muted', 'NO_REQ')}</td>`;
+            tr.innerHTML = `<td class="text-start ps-4"><span class="provider-name" onclick="filterByProviderStat('${prov}', 'ALL')">${prov}</span></td>
+                <td><span class="badge-tech badge-tech-blue" style="font-size: 0.75rem;">${s.total}</span></td>
+                <td>${makeLink(s.withPO, 'po-yes', 'WITH_PO')}</td>
+                <td>${makeLink(s.noPO, 'po-no', 'NO_PO')}</td>
+                <td>${makeLink(s.withReq, 'req-yes', 'WITH_REQ')}</td>
+                <td>${makeLink(s.noReq, 'req-no', 'NO_REQ')}</td>`;
             tbody.appendChild(tr);
         });
     }
@@ -975,8 +1628,8 @@
         });
         currentPage = 1;
         renderTablePage();
-        document.getElementById('btnResetFilters').style.display = 'inline-block';
-        Swal.fire({ toast: true, position: 'top-end', icon: 'info', title: `Filtrado: ${provider}`, showConfirmButton: false, timer: 1500 });
+        document.getElementById('btnResetFilters').style.display = 'inline-flex';
+        showToast(`Filtrado: ${provider}`, 'info');
     };
 
     window.resetFilters = () => {
@@ -985,6 +1638,7 @@
         document.getElementById('btnResetFilters').style.display = 'none';
         currentPage = 1;
         renderTablePage();
+        showToast('Filtros restablecidos', 'info');
     };
 
     function renderTablePage() {
@@ -997,7 +1651,7 @@
         const end = start + rowsPerPage;
         const pageData = filteredData.slice(start, end);
 
-        document.getElementById('pageInfo').innerText = `Mostrando ${Math.min(start+1, filteredData.length)}-${Math.min(end, filteredData.length)} de ${filteredData.length}`;
+        document.getElementById('pageInfo').innerText = `${Math.min(start + 1, filteredData.length)}-${Math.min(end, filteredData.length)} de ${filteredData.length}`;
         document.getElementById('btnPrev').disabled = currentPage === 1;
         document.getElementById('btnNext').disabled = currentPage >= totalPages;
 
@@ -1005,41 +1659,49 @@
         selector.innerHTML = '';
         for (let i = 1; i <= totalPages; i++) {
             const opt = document.createElement('option');
-            opt.value = i; opt.text = `Página ${i}`;
+            opt.value = i; opt.text = `Pág. ${i}`;
             if (i === currentPage) opt.selected = true;
             selector.appendChild(opt);
         }
 
-        if (pageData.length === 0) return tb.innerHTML = '<tr><td colspan="8" class="text-center p-5 text-muted">No se encontraron datos</td></tr>';
+        if (pageData.length === 0) {
+            return tb.innerHTML = `<tr><td colspan="8" class="empty-state">
+                <i class="bi bi-inbox"></i>
+                <div class="fw-bold mb-1">No se encontraron datos</div>
+                <div class="small">Intenta ajustar tus filtros o búsqueda</div>
+            </td></tr>`;
+        }
 
-        pageData.forEach(i => {
+        pageData.forEach((i, idx) => {
             const poBadge = i.PO
-                ? `<span class="badge bg-primary">${i.PO}</span>`
-                : `<span class="badge bg-warning text-dark">Sin Asignar</span>`;
+                ? `<span class="badge-tech badge-tech-blue">${i.PO}</span>`
+                : `<span class="badge-tech badge-tech-warning">Sin Asignar</span>`;
             const reqBadge = i.REQ
-                ? `<span class="fw-bold text-dark small">${i.REQ}</span>`
-                : `<span class="text-muted small">-</span>`;
+                ? `<span class="mono fw-bold" style="color: var(--text-primary); font-size: 0.8125rem;">${i.REQ}</span>`
+                : `<span class="text-muted">-</span>`;
             const tr = document.createElement('tr');
+            tr.style.animationDelay = `${idx * 0.05}s`;
+            tr.className = 'animate-in';
             tr.innerHTML = `
-                <td class="small">${i.FECHA_DISPLAY}</td>
-                <td class="fw-bold text-primary">${i.ENVIO}</td>
+                <td class="mono" style="color: var(--text-muted); font-size: 0.75rem;">${i.FECHA_DISPLAY}</td>
+                <td class="envio-code">${i.ENVIO}</td>
                 <td>${reqBadge}</td>
                 <td>${poBadge}</td>
-                <td class="small text-secondary fw-bold">${i.PROVEEDOR||''}</td>
-                <td class="fw-bold text-dark small text-uppercase">${i.CLIENTE_DISPLAY}</td>
-                <td class="text-end fw-bold font-monospace text-secondary">${(i.TOTAL||0).toLocaleString()}</td>
-                <td class="text-center">
-                    <div class="btn-group" role="group">
-                        <button class="btn btn-sm btn-outline-secondary border-0" onclick="openDetailModal('${i.ENVIO}')" title="Ver Detalles"><i class="bi bi-eye"></i></button>
-                        <button class="btn btn-sm btn-outline-secondary border-0" onclick="handleReqClick('${i.ENVIO}', '${i.REQ||''}')" title="Asignar Req"><i class="bi bi-hash"></i></button>
-                        <button class="btn btn-sm btn-outline-secondary border-0" onclick="handlePOClick('${i.ENVIO}', '${i.PO||''}')" title="Asignar PO"><i class="bi bi-tag"></i></button>
-                        <button class="btn btn-sm btn-outline-danger border-0" onclick="deleteEnvio('${i.ENVIO}')" title="Eliminar"><i class="bi bi-trash"></i></button>
+                <td style="font-weight: 600; color: var(--text-primary); font-size: 0.8125rem;">${i.PROVEEDOR || ''}</td>
+                <td style="font-weight: 600; color: var(--text-primary); font-size: 0.8125rem; text-transform: uppercase;">${i.CLIENTE_DISPLAY}</td>
+                <td class="text-end mono fw-bold" style="color: var(--text-primary); font-size: 0.9375rem;">${(i.TOTAL || 0).toLocaleString()}</td>
+                <td>
+                    <div class="action-btn-group">
+                        <button class="action-btn" onclick="openDetailModal('${i.ENVIO}')" title="Ver Detalles"><i class="bi bi-eye"></i></button>
+                        <button class="action-btn" onclick="handleReqClick('${i.ENVIO}', '${i.REQ || ''}')" title="Asignar Req"><i class="bi bi-hash"></i></button>
+                        <button class="action-btn" onclick="handlePOClick('${i.ENVIO}', '${i.PO || ''}')" title="Asignar PO"><i class="bi bi-tag"></i></button>
+                        <button class="action-btn danger" onclick="deleteEnvio('${i.ENVIO}')" title="Eliminar"><i class="bi bi-trash"></i></button>
                     </div>
                 </td>`;
             tb.appendChild(tr);
         });
 
-        const totalVisible = filteredData.reduce((acc, curr) => acc + (curr.TOTAL||0), 0);
+        const totalVisible = filteredData.reduce((acc, curr) => acc + (curr.TOTAL || 0), 0);
         document.getElementById('grandTotalDisplay').innerText = totalVisible.toLocaleString();
     }
 
@@ -1048,7 +1710,7 @@
 
     function handleReqClick(envio, current) {
         if (current && current !== 'undefined' && current !== 'null' && current !== '') {
-            Swal.fire({ title: '¿Actualizar?', text: `Ya existe Req: ${current}. ¿Cambiar?`, icon: 'question', showCancelButton: true }).then(r => { if (r.isConfirmed) openReqMode(envio); });
+            Swal.fire({ title: '¿Actualizar?', text: `Ya existe Req: ${current}. ¿Cambiar?`, icon: 'question', showCancelButton: true, confirmButtonColor: 'var(--accent-cyan)' }).then(r => { if (r.isConfirmed) openReqMode(envio); });
         } else openReqMode(envio);
     }
     function handlePOClick(envio, current) {
@@ -1058,11 +1720,21 @@
     }
 
     async function deleteEnvio(envio) {
-        if ((await Swal.fire({ title: '¿Eliminar?', html: `Borrar envío <b>${envio}</b>? Irreversible.`, icon: 'warning', showCancelButton: true, confirmButtonColor: '#d33', confirmButtonText: 'Sí' })).isConfirmed) {
+        if ((await Swal.fire({ 
+            title: '¿Eliminar?', 
+            html: `Borrar envío <b style="color: var(--accent-rose)">${envio}</b>?<br><small>Esta acción no se puede deshacer.</small>`, 
+            icon: 'warning', 
+            showCancelButton: true, 
+            confirmButtonColor: '#F43F5E', 
+            confirmButtonText: 'Sí, eliminar',
+            cancelButtonText: 'Cancelar',
+            background: '#1F2937',
+            color: '#F9FAFB'
+        })).isConfirmed) {
             toggleLoader(true, 'Eliminando...');
             const { error } = await supabaseClient.from(TABLE_NAME).delete().eq('"ENVIO#"', envio);
             if (error) { toggleLoader(false); Swal.fire('Error', error.message, 'error'); }
-            else { rawData = rawData.filter(r => r['ENVIO#'] !== envio); processLocalData(); Swal.fire('Eliminado', '', 'success'); }
+            else { rawData = rawData.filter(r => r['ENVIO#'] !== envio); processLocalData(); showToast('Envío eliminado correctamente', 'success'); }
         }
     }
 
@@ -1077,7 +1749,7 @@
         const header = `${first.PROVEEDOR}\n${first['ENVIO#']}\n`;
         const body = window.currentDetailRows.map(r => r.CONCATENADO).join('\n');
         const finalText = header + body;
-        try { await navigator.clipboard.writeText(finalText); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copiado', showConfirmButton: false, timer: 1500 }); } catch(e) {}
+        try { await navigator.clipboard.writeText(finalText); showToast('Concatenados copiados al portapapeles', 'success'); } catch (e) { }
     }
 
     window.copyConcatenadosFromBatch = async (env) => {
@@ -1087,7 +1759,7 @@
         const header = `${first.PROVEEDOR}\n${first['ENVIO#']}\n`;
         const body = rows.map(r => r.CONCATENADO).join('\n');
         const finalText = header + body;
-        try { await navigator.clipboard.writeText(finalText); Swal.fire({ toast: true, position: 'top-end', icon: 'success', title: 'Copiado', showConfirmButton: false, timer: 1500 }); } catch(e) {}
+        try { await navigator.clipboard.writeText(finalText); showToast('Concatenados copiados al portapapeles', 'success'); } catch (e) { }
     };
 
     function openDetailModal(envio) {
@@ -1104,10 +1776,22 @@
         const tb = document.getElementById('detailTableBody');
         tb.innerHTML = '';
         rows.forEach(r => {
-            tb.innerHTML += `<tr><td>${r.CLIENTE}</td><td>${r.TIPO}</td><td>${r.ESTILO}</td><td>${r.CORTE}</td><td>${r.COLOR}</td><td class="text-end font-monospace">${(Number(r.PARTES)||0).toLocaleString()}</td><td>${r.PO||''}</td></tr>`;
+            tb.innerHTML += `<tr>
+                <td style="font-weight: 600;">${r.CLIENTE}</td>
+                <td>${r.TIPO}</td>
+                <td>${r.ESTILO}</td>
+                <td>${r.CORTE}</td>
+                <td>${r.COLOR}</td>
+                <td class="text-end mono fw-bold">${(Number(r.PARTES) || 0).toLocaleString()}</td>
+                <td>${r.PO || ''}</td>
+            </tr>`;
         });
-        const totalDetail = rows.reduce((acc, r) => acc + (Number(r.PARTES)||0), 0);
-        tb.innerHTML += `<tr class="table-active fw-bold"><td colspan="5" class="text-end">TOTAL ENVÍO:</td><td class="text-end text-success">${totalDetail.toLocaleString()}</td><td></td></tr>`;
+        const totalDetail = rows.reduce((acc, r) => acc + (Number(r.PARTES) || 0), 0);
+        tb.innerHTML += `<tr style="background: rgba(16, 185, 129, 0.05);">
+            <td colspan="5" class="text-end fw-bold" style="color: var(--text-primary);">TOTAL ENVÍO:</td>
+            <td class="text-end mono fw-bold" style="color: var(--accent-emerald); font-size: 1rem;">${totalDetail.toLocaleString()}</td>
+            <td></td>
+        </tr>`;
         window.currentDetailRows = rows;
         detailModal.show();
     }
@@ -1116,9 +1800,9 @@
         const dz = document.getElementById('dropzone');
         const fi = document.getElementById('fileInput');
         dz.onclick = () => fi.click();
-        dz.ondragover = (e) => { e.preventDefault(); dz.style.borderColor = '#333'; };
-        dz.ondragleave = () => { dz.style.borderColor = '#D1D5DB'; };
-        dz.ondrop = (e) => { e.preventDefault(); dz.style.borderColor = '#D1D5DB'; handleFiles(e.dataTransfer.files); };
+        dz.ondragover = (e) => { e.preventDefault(); dz.style.borderColor = 'var(--accent-cyan)'; dz.style.background = 'rgba(6, 182, 212, 0.08)'; };
+        dz.ondragleave = () => { dz.style.borderColor = 'rgba(6, 182, 212, 0.3)'; dz.style.background = 'rgba(6, 182, 212, 0.03)'; };
+        dz.ondrop = (e) => { e.preventDefault(); dz.style.borderColor = 'rgba(6, 182, 212, 0.3)'; dz.style.background = 'rgba(6, 182, 212, 0.03)'; handleFiles(e.dataTransfer.files); };
         fi.onchange = (e) => handleFiles(e.target.files);
     }
 
@@ -1147,23 +1831,23 @@
             for (let fileObj of selectedFiles) {
                 const wb = XLSX.read(fileObj.buffer, { type: 'array', cellDates: true });
                 const ws = wb.Sheets[wb.SheetNames[0]];
-                const cellA8 = ws[XLSX.utils.encode_cell({ r:7, c:0 })];
+                const cellA8 = ws[XLSX.utils.encode_cell({ r: 7, c: 0 })];
                 const valA8 = cellA8 ? String(cellA8.v).trim().toUpperCase() : '';
-                if (!valA8.includes('BULTO')) { skippedBatches.push({ env:'Desconocido', file: fileObj.name, reason: 'Formato Incorrecto: No se encontró "# BULTO" en A8' }); continue; }
+                if (!valA8.includes('BULTO')) { skippedBatches.push({ env: 'Desconocido', file: fileObj.name, reason: 'Formato Incorrecto: No se encontró "# BULTO" en A8' }); continue; }
 
                 const read = (c) => (ws[c] ? String(ws[c].v).trim() : '');
                 const prov = read('C4');
                 const env = read('F5');
-                if (!env) { skippedBatches.push({ env:'Sin Dato', file: fileObj.name, reason: 'No se encontró el ENVÍO en F5' }); continue; }
+                if (!env) { skippedBatches.push({ env: 'Sin Dato', file: fileObj.name, reason: 'No se encontró el ENVÍO en F5' }); continue; }
 
                 const localDateISO = getLocalISODate();
                 if (!batchResults[env]) batchResults[env] = { prov: prov, date: localDateISO, rows: [], sourceFile: fileObj.name };
 
                 let R = 8, safety = 0;
                 while (safety < 5000) {
-                    const cellB = ws[XLSX.utils.encode_cell({ r:R, c:1 })];
+                    const cellB = ws[XLSX.utils.encode_cell({ r: R, c: 1 })];
                     if (cellB && String(cellB.v).toUpperCase().includes('TOTAL')) break;
-                    const getVal = (c) => ws[XLSX.utils.encode_cell({ r:R, c:c })] ? String(ws[XLSX.utils.encode_cell({ r:R, c:c })].v).trim() : '';
+                    const getVal = (c) => ws[XLSX.utils.encode_cell({ r: R, c: c })] ? String(ws[XLSX.utils.encode_cell({ r: R, c: c })].v).trim() : '';
                     const partesSrc = getVal(4);
                     if (!partesSrc || partesSrc.trim() === '') { R++; safety++; continue; }
                     const [tipo, cli, est, cor, col] = [getVal(2), getVal(7), getVal(8), getVal(9), getVal(10)];
@@ -1196,7 +1880,7 @@
                 if (isBlocked) { group.status = 'BLOCKED'; skippedBatches.push({ env: env, file: group.sourceFile || 'N/A', reason: blockReason }); continue; }
 
                 if (existingRows && existingRows.length > 0) await supabaseClient.from(TABLE_NAME).delete().eq('"ENVIO#"', env);
-                for (let i=0; i < group.rows.length; i+=100) { await supabaseClient.from(TABLE_NAME).insert(group.rows.slice(i, i+100)); }
+                for (let i = 0; i < group.rows.length; i += 100) { await supabaseClient.from(TABLE_NAME).insert(group.rows.slice(i, i + 100)); }
                 group.status = 'SUCCESS';
             }
             renderMultiUploadSummary();
@@ -1213,8 +1897,8 @@
 
         if (skippedBatches.length > 0) {
             skippedDiv.style.display = 'block';
-            let tableHtml = `<div class="table-responsive"><table class="table table-sm table-bordered mb-0"><thead><tr><th>Archivo</th><th>Envío #</th><th>Motivo del Error</th></tr></thead><tbody>`;
-            skippedBatches.forEach(item => { tableHtml += `<tr><td class="fw-bold text-dark">${item.file||'N/A'}</td><td>${item.env}</td><td class="text-danger small">${item.reason}</td></tr>`; });
+            let tableHtml = `<div class="table-responsive"><table class="table-tech mb-0"><thead><tr><th>Archivo</th><th>Envío #</th><th>Motivo del Error</th></tr></thead><tbody>`;
+            skippedBatches.forEach(item => { tableHtml += `<tr><td class="fw-bold" style="color: var(--text-primary);">${item.file || 'N/A'}</td><td class="mono">${item.env}</td><td style="color: var(--accent-rose); font-size: 0.8125rem;">${item.reason}</td></tr>`; });
             tableHtml += `</tbody></table></div>`;
             skippedList.innerHTML = tableHtml;
         } else skippedDiv.style.display = 'none';
@@ -1225,17 +1909,37 @@
             const group = batchResults[env];
             if (group.status !== 'SUCCESS') return;
             hasSuccess = true;
-            const totalPcs = group.rows.reduce((a,b) => a + b.PARTES, 0);
+            const totalPcs = group.rows.reduce((a, b) => a + b.PARTES, 0);
             const card = document.createElement('div');
-            card.className = 'summary-card-item bg-white shadow-sm';
-            let html = `<div class="summary-header d-flex justify-content-between align-items-center"><div><strong>Envío #${env}</strong> <span class="mx-2 text-muted">|</span> <small>${group.prov}</small> <span class="mx-2 text-muted">|</span> <strong class="text-success">${totalPcs.toLocaleString()} Pcs</strong></div><div><span class="badge bg-success">Cargado</span><button class="btn btn-warning btn-sm fw-bold ms-3" onclick="copyConcatenadosFromBatch('${env}')"><i class="bi bi-copy"></i> Copiar</button></div></div><div class="table-responsive" style="max-height:200px;"><table class="table table-sm table-striped mb-0 small"><thead class="table-light"><tr><th>Cliente</th><th>Estilo</th><th>Corte</th><th>Color</th><th class="text-end">Piezas</th></tr></thead><tbody>`;
-            group.rows.forEach(r => { html += `<tr><td>${r.CLIENTE}</td><td>${r.ESTILO}</td><td>${r.CORTE}</td><td>${r.COLOR}</td><td class="text-end">${r.PARTES}</td></tr>`; });
+            card.className = 'summary-card-tech';
+            let html = `<div class="summary-card-header">
+                <div>
+                    <strong style="color: var(--text-primary); font-size: 1rem;">Envío #${env}</strong>
+                    <span class="mx-2 text-muted">|</span>
+                    <small style="color: var(--text-secondary);">${group.prov}</small>
+                    <span class="mx-2 text-muted">|</span>
+                    <strong style="color: var(--accent-emerald);">${totalPcs.toLocaleString()} Pcs</strong>
+                </div>
+                <div class="d-flex gap-2 align-items-center">
+                    <span class="badge-tech badge-tech-success">Cargado</span>
+                    <button class="btn-tech btn-tech-primary btn-sm" onclick="copyConcatenadosFromBatch('${env}')">
+                        <i class="bi bi-copy"></i> Copiar
+                    </button>
+                </div>
+            </div>
+            <div class="table-responsive" style="max-height: 250px;">
+                <table class="table-tech mb-0">
+                    <thead>
+                        <tr><th>Cliente</th><th>Estilo</th><th>Corte</th><th>Color</th><th class="text-end">Piezas</th></tr>
+                    </thead>
+                    <tbody>`;
+            group.rows.forEach(r => { html += `<tr><td>${r.CLIENTE}</td><td>${r.ESTILO}</td><td>${r.CORTE}</td><td>${r.COLOR}</td><td class="text-end mono">${r.PARTES}</td></tr>`; });
             html += `</tbody></table></div>`;
             card.innerHTML = html;
             container.appendChild(card);
         });
 
-        if (!hasSuccess && skippedBatches.length === 0) container.innerHTML = '<div class="alert alert-info text-center">No se cargaron envíos nuevos.</div>';
+        if (!hasSuccess && skippedBatches.length === 0) container.innerHTML = '<div class="empty-state"><i class="bi bi-info-circle"></i><div>No se cargaron envíos nuevos.</div></div>';
         uploadSummaryModal.show();
     }
 
@@ -1244,12 +1948,12 @@
         const v = document.getElementById('poValueInput').value;
         if (!e || !v) return Swal.fire('Atención', 'Datos incompletos', 'warning');
         poModal.hide();
-        toggleLoader(true);
+        toggleLoader(true, 'Actualizando PO...');
         await supabaseClient.from(TABLE_NAME).update({ PO: v }).eq('"ENVIO#"', e);
         rawData.forEach(r => { if (r['ENVIO#'] === e) r.PO = v; });
         processLocalData();
         toggleLoader(false);
-        Swal.fire('Listo', 'PO actualizada', 'success');
+        showToast('PO actualizada correctamente', 'success');
     }
 
     async function updateReq() {
@@ -1257,12 +1961,12 @@
         const v = document.getElementById('reqValueInput').value;
         if (!e || !v) return Swal.fire('Atención', 'Datos incompletos', 'warning');
         reqModal.hide();
-        toggleLoader(true);
+        toggleLoader(true, 'Actualizando Requisición...');
         await supabaseClient.from(TABLE_NAME).update({ 'N°': v }).eq('"ENVIO#"', e);
         rawData.forEach(r => { if (r['ENVIO#'] === e) r['N°'] = v; });
         processLocalData();
         toggleLoader(false);
-        Swal.fire('Listo', 'Req actualizada', 'success');
+        showToast('Requisición actualizada correctamente', 'success');
     }
 </script>
 </body>
