@@ -23,22 +23,22 @@
 
     <style>
       :root {
-        --bg-primary: #0b0f19;
-        --bg-secondary: #111827;
-        --bg-tertiary: #1a1f2e;
-        --bg-elevated: #1e2538;
-        --border-subtle: rgba(148, 163, 184, 0.08);
-        --border-medium: rgba(148, 163, 184, 0.12);
-        --accent-primary: #06b6d4;
-        --accent-secondary: #8b5cf6;
+        --bg-primary: #f0f4f8;
+        --bg-secondary: #ffffff;
+        --bg-tertiary: #f8fafc;
+        --bg-elevated: #eef2f7;
+        --border-subtle: rgba(148, 163, 184, 0.25);
+        --border-medium: rgba(148, 163, 184, 0.4);
+        --accent-primary: #3b82f6;
+        --accent-secondary: #6366f1;
         --accent-success: #10b981;
         --accent-warning: #f59e0b;
         --accent-danger: #ef4444;
-        --text-primary: #f8fafc;
-        --text-secondary: #94a3b8;
-        --text-muted: #64748b;
-        --shadow-glow: 0 0 20px rgba(6, 182, 212, 0.15);
-        --shadow-card: 0 4px 24px rgba(0, 0, 0, 0.4);
+        --text-primary: #1e293b;
+        --text-secondary: #64748b;
+        --text-muted: #94a3b8;
+        --shadow-soft: 0 1px 3px rgba(0, 0, 0, 0.04), 0 4px 12px rgba(0, 0, 0, 0.06);
+        --shadow-card: 0 4px 24px rgba(30, 41, 59, 0.08);
         --radius-sm: 8px;
         --radius-md: 12px;
         --radius-lg: 16px;
@@ -46,7 +46,7 @@
 
       * {
         scrollbar-width: thin;
-        scrollbar-color: var(--bg-elevated) var(--bg-secondary);
+        scrollbar-color: #cbd5e1 #f1f5f9;
       }
 
       *::-webkit-scrollbar {
@@ -54,16 +54,16 @@
         height: 8px;
       }
       *::-webkit-scrollbar-track {
-        background: var(--bg-secondary);
+        background: #f1f5f9;
         border-radius: 4px;
       }
       *::-webkit-scrollbar-thumb {
-        background: var(--bg-elevated);
+        background: #cbd5e1;
         border-radius: 4px;
-        border: 2px solid var(--bg-secondary);
+        border: 2px solid #f1f5f9;
       }
       *::-webkit-scrollbar-thumb:hover {
-        background: var(--text-muted);
+        background: #94a3b8;
       }
 
       body {
@@ -76,8 +76,8 @@
         flex-direction: column;
         overflow: hidden;
         background-image: 
-          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(6, 182, 212, 0.08), transparent),
-          radial-gradient(ellipse 60% 40% at 80% 80%, rgba(139, 92, 246, 0.05), transparent);
+          radial-gradient(ellipse 80% 50% at 50% -20%, rgba(59, 130, 246, 0.04), transparent),
+          radial-gradient(ellipse 60% 40% at 80% 80%, rgba(99, 102, 241, 0.03), transparent);
       }
 
       .app-container {
@@ -92,10 +92,10 @@
 
       /* ===== HEADER ===== */
       header {
-        background: linear-gradient(135deg, rgba(30, 37, 56, 0.9), rgba(17, 24, 39, 0.95));
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.98));
         backdrop-filter: blur(20px);
         border: 1px solid var(--border-medium);
-        color: #fff;
+        color: var(--text-primary);
         border-radius: var(--radius-lg);
         padding: 16px 28px;
         display: flex;
@@ -117,6 +117,7 @@
         background: linear-gradient(90deg, var(--accent-primary), var(--accent-secondary), var(--accent-primary));
         background-size: 200% 100%;
         animation: shimmer 3s linear infinite;
+        opacity: 0.6;
       }
 
       @keyframes shimmer {
@@ -125,7 +126,7 @@
       }
 
       header h1 {
-        background: linear-gradient(135deg, #fff 0%, var(--accent-primary) 100%);
+        background: linear-gradient(135deg, #1e293b 0%, #3b82f6 100%);
         -webkit-background-clip: text;
         -webkit-text-fill-color: transparent;
         background-clip: text;
@@ -133,8 +134,8 @@
       }
 
       .badge-version {
-        background: rgba(16, 185, 129, 0.1) !important;
-        color: var(--accent-success) !important;
+        background: rgba(16, 185, 129, 0.08) !important;
+        color: #059669 !important;
         border: 1px solid rgba(16, 185, 129, 0.2) !important;
         backdrop-filter: blur(10px);
         font-weight: 600;
@@ -155,10 +156,10 @@
       }
 
       .dropzone {
-        border: 2px dashed rgba(6, 182, 212, 0.3);
+        border: 2px dashed rgba(59, 130, 246, 0.3);
         border-radius: var(--radius-md);
         padding: 16px;
-        background: linear-gradient(135deg, rgba(6, 182, 212, 0.05), rgba(139, 92, 246, 0.05));
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.03), rgba(99, 102, 241, 0.03));
         cursor: pointer;
         transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
         text-align: center;
@@ -170,7 +171,7 @@
         content: '';
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, transparent, rgba(6, 182, 212, 0.1), transparent);
+        background: linear-gradient(135deg, transparent, rgba(59, 130, 246, 0.06), transparent);
         opacity: 0;
         transition: opacity 0.3s;
       }
@@ -178,7 +179,7 @@
       .dropzone:hover {
         border-color: var(--accent-primary);
         transform: translateY(-1px);
-        box-shadow: var(--shadow-glow);
+        box-shadow: 0 4px 20px rgba(59, 130, 246, 0.12);
       }
 
       .dropzone:hover::before {
@@ -186,7 +187,7 @@
       }
 
       .dropzone i {
-        filter: drop-shadow(0 0 8px rgba(6, 182, 212, 0.4));
+        filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.3));
       }
 
       /* ===== FORM ELEMENTS ===== */
@@ -199,30 +200,31 @@
       }
 
       .form-control, .form-select, .input-group-text {
-        background: var(--bg-tertiary) !important;
+        background: #f8fafc !important;
         border: 1px solid var(--border-subtle) !important;
         color: var(--text-primary) !important;
         transition: all 0.2s;
       }
 
       .form-control:focus, .form-select:focus {
-        background: var(--bg-elevated) !important;
+        background: #ffffff !important;
         border-color: var(--accent-primary) !important;
-        box-shadow: 0 0 0 3px rgba(6, 182, 212, 0.15) !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.1) !important;
         color: var(--text-primary) !important;
       }
 
       .form-control::placeholder {
-        color: var(--text-muted);
+        color: #94a3b8;
       }
 
       .input-group-text {
         color: var(--text-muted) !important;
+        background: #f8fafc !important;
       }
 
       .form-check-input {
-        background-color: var(--bg-elevated);
-        border-color: var(--border-medium);
+        background-color: #f1f5f9;
+        border-color: #cbd5e1;
       }
 
       .form-check-input:checked {
@@ -245,43 +247,43 @@
       }
 
       .btn-outline-danger {
-        background: rgba(239, 68, 68, 0.08);
-        color: var(--accent-danger);
+        background: rgba(239, 68, 68, 0.04);
+        color: #dc2626;
         border: 1px solid rgba(239, 68, 68, 0.2);
       }
 
       .btn-outline-danger:hover {
-        background: rgba(239, 68, 68, 0.15);
-        color: #fff;
-        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.2);
+        background: rgba(239, 68, 68, 0.08);
+        color: #b91c1c;
+        box-shadow: 0 4px 12px rgba(239, 68, 68, 0.1);
       }
 
       .btn-success {
-        background: linear-gradient(135deg, var(--accent-success), #059669) !important;
+        background: linear-gradient(135deg, #10b981, #059669) !important;
         color: #fff !important;
-        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.25);
+        box-shadow: 0 4px 12px rgba(16, 185, 129, 0.2);
       }
 
       .btn-success:hover {
-        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.35);
+        box-shadow: 0 6px 20px rgba(16, 185, 129, 0.25);
       }
 
       .btn-outline-secondary {
-        background: var(--bg-tertiary);
+        background: #f8fafc;
         color: var(--text-secondary);
         border: 1px solid var(--border-subtle);
       }
 
       .btn-outline-secondary:hover {
-        background: var(--bg-elevated);
+        background: #f1f5f9;
         color: var(--text-primary);
         border-color: var(--border-medium);
       }
 
       /* ===== STATUS BAR ===== */
       .status-bar {
-        background: linear-gradient(135deg, rgba(6, 182, 212, 0.1), rgba(139, 92, 246, 0.1));
-        color: var(--accent-primary);
+        background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(99, 102, 241, 0.04));
+        color: #2563eb;
         padding: 8px 16px;
         border-radius: var(--radius-sm);
         font-size: 0.8rem;
@@ -289,20 +291,20 @@
         display: inline-flex;
         align-items: center;
         gap: 10px;
-        border: 1px solid rgba(6, 182, 212, 0.15);
+        border: 1px solid rgba(59, 130, 246, 0.15);
         backdrop-filter: blur(10px);
         letter-spacing: 0.02em;
       }
 
       .status-bar.success {
-        background: linear-gradient(135deg, rgba(16, 185, 129, 0.1), rgba(16, 185, 129, 0.05));
-        color: var(--accent-success);
+        background: linear-gradient(135deg, rgba(16, 185, 129, 0.06), rgba(16, 185, 129, 0.03));
+        color: #059669;
         border-color: rgba(16, 185, 129, 0.2);
       }
 
       .status-bar.error {
-        background: linear-gradient(135deg, rgba(239, 68, 68, 0.1), rgba(239, 68, 68, 0.05));
-        color: var(--accent-danger);
+        background: linear-gradient(135deg, rgba(239, 68, 68, 0.06), rgba(239, 68, 68, 0.03));
+        color: #dc2626;
         border-color: rgba(239, 68, 68, 0.2);
       }
 
@@ -333,13 +335,13 @@
       }
 
       #resultTable th {
-        background: linear-gradient(180deg, var(--bg-elevated), var(--bg-tertiary));
-        color: var(--text-secondary);
+        background: linear-gradient(180deg, #f8fafc, #f1f5f9);
+        color: #475569;
         padding: 14px 16px;
         position: sticky;
         top: 0;
         z-index: 10;
-        border-bottom: 2px solid var(--border-medium);
+        border-bottom: 2px solid #e2e8f0;
         text-transform: uppercase;
         font-size: 0.7rem;
         font-weight: 700;
@@ -355,12 +357,12 @@
         right: 0;
         height: 1px;
         background: linear-gradient(90deg, transparent, var(--accent-primary), transparent);
-        opacity: 0.3;
+        opacity: 0.2;
       }
 
       #resultTable td {
         padding: 10px 16px;
-        border-bottom: 1px solid var(--border-subtle);
+        border-bottom: 1px solid #f1f5f9;
         vertical-align: middle;
         color: var(--text-primary);
         transition: background-color 0.15s;
@@ -371,23 +373,23 @@
       }
 
       #resultTable tbody tr:hover td {
-        background-color: rgba(6, 182, 212, 0.04);
+        background-color: rgba(59, 130, 246, 0.03);
       }
 
       #resultTable tbody tr.table-warning td {
-        background-color: rgba(245, 158, 11, 0.06);
+        background-color: rgba(245, 158, 11, 0.04);
         border-left: 3px solid var(--accent-warning);
       }
 
       #resultTable tbody tr.table-warning:hover td {
-        background-color: rgba(245, 158, 11, 0.1);
+        background-color: rgba(245, 158, 11, 0.07);
       }
 
       /* ===== SECTION HEADER ===== */
       .section-header {
         padding: 14px 20px;
         border-bottom: 1px solid var(--border-subtle);
-        background: linear-gradient(90deg, var(--bg-secondary), var(--bg-tertiary));
+        background: linear-gradient(90deg, #ffffff, #f8fafc);
         display: flex;
         justify-content: space-between;
         align-items: center;
@@ -402,21 +404,21 @@
       }
 
       #countBadge {
-        background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary)) !important;
+        background: linear-gradient(135deg, #3b82f6, #6366f1) !important;
         color: #fff !important;
         font-weight: 700;
         padding: 6px 14px !important;
         border-radius: 20px;
         font-size: 0.75rem;
         letter-spacing: 0.05em;
-        box-shadow: 0 2px 8px rgba(6, 182, 212, 0.25);
+        box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
       }
 
       /* ===== PAGINATION ===== */
       .pagination-bar {
         padding: 14px 24px;
         border-top: 1px solid var(--border-subtle);
-        background: linear-gradient(180deg, var(--bg-secondary), var(--bg-tertiary));
+        background: linear-gradient(180deg, #ffffff, #f8fafc);
         font-size: 0.85rem;
         flex-shrink: 0;
         color: var(--text-secondary);
@@ -475,8 +477,8 @@
       <header>
         <div class="d-flex align-items-center gap-3">
           <div style="position: relative;">
-            <i class="bi bi-cpu-fill fs-4" style="color: var(--accent-primary); filter: drop-shadow(0 0 10px rgba(6,182,212,0.5));"></i>
-            <div style="position: absolute; inset: -4px; border-radius: 50%; border: 1px solid rgba(6,182,212,0.3); animation: pulse 2s infinite;"></div>
+            <i class="bi bi-cpu-fill fs-4" style="color: var(--accent-primary); filter: drop-shadow(0 0 8px rgba(59,130,246,0.3));"></i>
+            <div style="position: absolute; inset: -4px; border-radius: 50%; border: 1px solid rgba(59,130,246,0.2); animation: pulse 2s infinite;"></div>
           </div>
           <div style="line-height: 1.2">
             <h1 class="m-0 fs-5 fw-bold">Análisis de Producción</h1>
@@ -941,7 +943,7 @@
                   r.SalesOrder
                     ? "fw-bold"
                     : "fw-bold"
-                }" style="${r.SalesOrder ? 'color: var(--accent-success);' : 'color: var(--accent-danger); background: rgba(239, 68, 68, 0.08);'}">
+                }" style="${r.SalesOrder ? 'color: var(--accent-success);' : 'color: var(--accent-danger); background: rgba(239, 68, 68, 0.04);'}">
                     ${r.SalesOrder || "NO ENCONTRADO"}
                 </td>
                 <td>${r.Style}</td>
@@ -982,7 +984,7 @@
       dz.onclick = () => document.getElementById("file").click();
       dz.ondragover = (e) => {
         e.preventDefault();
-        dz.style.backgroundColor = "rgba(6, 182, 212, 0.08)";
+        dz.style.backgroundColor = "rgba(59, 130, 246, 0.06)";
         dz.style.borderColor = "var(--accent-primary)";
       };
       dz.ondragleave = (e) => {
