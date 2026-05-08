@@ -1390,28 +1390,12 @@
     }
 
     function generateStyledExcel(data, columnas, fname) {
-      const sHeader = {
-        fill: { fgColor: { rgb: "004D55" } },
-        font: { color: { rgb: "FFFFFF" }, bold: true },
-        alignment: { horizontal: "center" },
-      };
-      const sFooter = {
-        fill: { fgColor: { rgb: "004D55" } },
-        font: { color: { rgb: "FFFFFF" }, bold: true },
-        alignment: { horizontal: "right" },
-        border: { top: { style: "thin", color: { rgb: "FFFFFF" } } },
-      };
-      const sNum = { alignment: { horizontal: "right" } };
-      const sMoney = {
-        numFmt: "$#,##0.00",
-        alignment: { horizontal: "right" },
-      };
-
       const headers = columnas.map((c) => c.header);
       const keys = columnas.map((c) => c.key);
 
       const rows = data.map((r) => keys.map((k) => r[k]));
 
+      // Calcular totales
       let totals = new Array(headers.length).fill("");
       totals[0] = "Total General";
 
@@ -1439,53 +1423,237 @@
       const ws = XLSX.utils.aoa_to_sheet([headers, ...rows, totals]);
       const range = XLSX.utils.decode_range(ws["!ref"]);
 
+      // ===== ESTILOS =====
+      const thinBorder = { style: "thin", color: { rgb: "E2E8F0" } };
+      const thinBorderDark = { style: "thin", color: { rgb: "CBD5E1" } };
+      const thinBorderWhite = { style: "thin", color: { rgb: "FFFFFF" } };
+
+      // Header: degradado cian/azul como la web
+      const sHeader = {
+        fill: { fgColor: { rgb: "0891B2" } },
+        font: { color: { rgb: "FFFFFF" }, bold: true, sz: 10, name: "Inter" },
+        alignment: { horizontal: "center", vertical: "center", wrapText: true },
+        border: {
+          bottom: { style: "medium", color: { rgb: "2563EB" } },
+          right: thinBorderWhite,
+        },
+      };
+
+      // Footer (totales): fondo oscuro como la web
+      const sFooter = {
+        fill: { fgColor: { rgb: "0F172A" } },
+        font: { color: { rgb: "67E8F9" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: {
+          top: { style: "medium", color: { rgb: "0891B2" } },
+          right: { style: "thin", color: { rgb: "1E293B" } },
+          bottom: { style: "thin", color: { rgb: "1E293B" } },
+        },
+      };
+      const sFooterLabel = {
+        fill: { fgColor: { rgb: "0F172A" } },
+        font: { color: { rgb: "FFFFFF" }, bold: true, sz: 10, name: "Inter" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: {
+          top: { style: "medium", color: { rgb: "0891B2" } },
+          right: { style: "thin", color: { rgb: "1E293B" } },
+          bottom: { style: "thin", color: { rgb: "1E293B" } },
+        },
+      };
+
+      // Filas zebra
+      const sRowEven = {
+        fill: { fgColor: { rgb: "FFFFFF" } },
+        font: { color: { rgb: "334155" }, sz: 10, name: "Inter" },
+        border: { bottom: thinBorder, right: thinBorder },
+        alignment: { vertical: "center" },
+      };
+      const sRowOdd = {
+        fill: { fgColor: { rgb: "F8FAFC" } },
+        font: { color: { rgb: "334155" }, sz: 10, name: "Inter" },
+        border: { bottom: thinBorder, right: thinBorder },
+        alignment: { vertical: "center" },
+      };
+
+      // Numéricos
+      const sNum = {
+        font: { color: { rgb: "334155" }, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sNumEven = {
+        fill: { fgColor: { rgb: "FFFFFF" } },
+        font: { color: { rgb: "334155" }, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sNumOdd = {
+        fill: { fgColor: { rgb: "F8FAFC" } },
+        font: { color: { rgb: "334155" }, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sMoney = {
+        numFmt: "$#,##0.00",
+        font: { color: { rgb: "334155" }, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sMoneyEven = {
+        numFmt: "$#,##0.00",
+        fill: { fgColor: { rgb: "FFFFFF" } },
+        font: { color: { rgb: "334155" }, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sMoneyOdd = {
+        numFmt: "$#,##0.00",
+        fill: { fgColor: { rgb: "F8FAFC" } },
+        font: { color: { rgb: "334155" }, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+
+      // Negativo (Diferencia < 0) - rosa
+      const sNeg = {
+        font: { color: { rgb: "E11D48" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sNegEven = {
+        fill: { fgColor: { rgb: "FFFFFF" } },
+        font: { color: { rgb: "E11D48" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sNegOdd = {
+        fill: { fgColor: { rgb: "F8FAFC" } },
+        font: { color: { rgb: "E11D48" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+
+      // Positivo (Diferencia > 0) - esmeralda
+      const sPos = {
+        font: { color: { rgb: "059669" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sPosEven = {
+        fill: { fgColor: { rgb: "FFFFFF" } },
+        font: { color: { rgb: "059669" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sPosOdd = {
+        fill: { fgColor: { rgb: "F8FAFC" } },
+        font: { color: { rgb: "059669" }, bold: true, sz: 10, name: "JetBrains Mono" },
+        alignment: { horizontal: "right", vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+
+      // Credit Status "Not approved" - rosa
+      const sNotApproved = {
+        font: { color: { rgb: "E11D48" }, bold: true, sz: 10, name: "Inter" },
+        alignment: { vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sNotApprovedEven = {
+        fill: { fgColor: { rgb: "FFFFFF" } },
+        font: { color: { rgb: "E11D48" }, bold: true, sz: 10, name: "Inter" },
+        alignment: { vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+      const sNotApprovedOdd = {
+        fill: { fgColor: { rgb: "F8FAFC" } },
+        font: { color: { rgb: "E11D48" }, bold: true, sz: 10, name: "Inter" },
+        alignment: { vertical: "center" },
+        border: { bottom: thinBorder, right: thinBorder },
+      };
+
+      // Detectar columnas especiales
+      const creditStatusCol = keys.indexOf("Credit Status");
+      const diferenciaCol = keys.indexOf("Diferencia");
+      const isNotApprovedReport = fname.toLowerCase().includes("not_approved");
+
       for (let R = 0; R <= range.e.r; ++R) {
         for (let C = 0; C <= range.e.c; ++C) {
           const addr = XLSX.utils.encode_cell({ r: R, c: C });
           if (!ws[addr]) {
             if (R === range.e.r)
-              XLSX.utils.sheet_add_aoa(ws, [[""]], {
-                origin: { r: R, c: C },
-              });
+              XLSX.utils.sheet_add_aoa(ws, [[""]], { origin: { r: R, c: C } });
             else continue;
           }
           if (!ws[addr]) continue;
 
+          const isEvenRow = R % 2 === 0;
+          const h = headers[C].toLowerCase();
+          const isMoneyCol = h.includes("price") || h.includes("value") || h.includes("net");
+          const isNumCol = h.includes("qty") || h.includes("dif") || h.includes("ship");
+          const isCreditStatusCol = C === creditStatusCol;
+          const isDiferenciaCol = C === diferenciaCol;
+          const val = ws[addr].v;
+
           if (R === 0) {
+            // Header
             ws[addr].s = sHeader;
           } else if (R === range.e.r) {
-            ws[addr].s = sFooter;
-            const val = ws[addr].v;
-            if (typeof val === "number") {
-              const h = headers[C].toLowerCase();
-              if (
-                h.includes("price") ||
-                h.includes("value") ||
-                h.includes("net")
-              ) {
-                ws[addr].z = "$#,##0.00";
-              } else {
-                ws[addr].z = "#,##0";
-              }
+            // Footer (totales)
+            if (C === 0) {
+              ws[addr].s = sFooterLabel;
+            } else if (typeof val === "number") {
+              ws[addr].s = sFooter;
+              if (isMoneyCol) ws[addr].z = "$#,##0.00";
+              else ws[addr].z = "#,##0";
+            } else {
+              ws[addr].s = sFooter;
             }
           } else {
-            const val = ws[addr].v;
-            if (typeof val === "number") {
-              const h = headers[C].toLowerCase();
-              if (
-                h.includes("price") ||
-                h.includes("value") ||
-                h.includes("net")
-              ) {
-                ws[addr].s = sMoney;
+            // Data rows
+            if (isCreditStatusCol && typeof val === "string" && val.toLowerCase().includes("not approved")) {
+              ws[addr].s = isEvenRow ? sNotApprovedEven : sNotApprovedOdd;
+            } else if (isDiferenciaCol && typeof val === "number") {
+              if (val < 0) {
+                ws[addr].s = isEvenRow ? sNegEven : sNegOdd;
+                ws[addr].z = "#,##0";
+              } else if (val > 0) {
+                ws[addr].s = isEvenRow ? sPosEven : sPosOdd;
+                ws[addr].z = "#,##0";
               } else {
-                ws[addr].s = sNum;
+                ws[addr].s = isEvenRow ? sNumEven : sNumOdd;
+                ws[addr].z = "#,##0";
               }
+            } else if (isMoneyCol && typeof val === "number") {
+              ws[addr].s = isEvenRow ? sMoneyEven : sMoneyOdd;
+              ws[addr].z = "$#,##0.00";
+            } else if (isNumCol && typeof val === "number") {
+              ws[addr].s = isEvenRow ? sNumEven : sNumOdd;
+              ws[addr].z = "#,##0";
+            } else {
+              ws[addr].s = isEvenRow ? sRowEven : sRowOdd;
             }
           }
         }
       }
-      ws["!cols"] = headers.map(() => ({ wch: 15 }));
+
+      // Ajustar anchos de columna
+      const colWidths = headers.map((h, i) => {
+        const key = keys[i];
+        if (key === "Cliente" || key === "Soldto Name") return { wch: 32 };
+        if (key === "Credit Status") return { wch: 18 };
+        if (key === "Sales Order #") return { wch: 14 };
+        if (key === "Material #") return { wch: 12 };
+        if (key === "Customer PO #") return { wch: 14 };
+        if (h.toLowerCase().includes("value") || h.toLowerCase().includes("price")) return { wch: 16 };
+        if (h.toLowerCase().includes("qty")) return { wch: 12 };
+        if (h.toLowerCase().includes("date")) return { wch: 14 };
+        return { wch: 15 };
+      });
+      ws["!cols"] = colWidths;
+
+      // Congelar paneles (header visible al scrollear)
+      ws["!freeze"] = { xSplit: 0, ySplit: 1 };
+
       const wb = XLSX.utils.book_new();
       XLSX.utils.book_append_sheet(wb, ws, "Reporte");
       XLSX.writeFile(wb, fname + ".xlsx");
