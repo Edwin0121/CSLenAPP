@@ -55,29 +55,35 @@
     ::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 4px; }
     ::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
 
+    html, body {
+      height: 100%;
+      margin: 0;
+      padding: 0;
+    }
+
     body {
       font-family: "Inter", sans-serif;
       background: var(--bg-primary);
       color: var(--text-primary);
       min-height: 100vh;
-      margin: 0;
       -webkit-font-smoothing: antialiased;
+      display: flex;
+      flex-direction: column;
     }
 
     /* ===== HEADER ===== */
     .app-header {
-      position: sticky;
-      top: 0;
-      z-index: 100;
+      flex-shrink: 0;
       height: 68px;
       padding: 0 2rem;
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.9);
+      background: rgba(255, 255, 255, 0.95);
       backdrop-filter: blur(16px) saturate(180%);
       border-bottom: 1px solid var(--border-light);
       box-shadow: var(--shadow-sm);
+      z-index: 100;
     }
 
     .brand {
@@ -120,20 +126,27 @@
       text-transform: uppercase;
     }
 
-    /* ===== LAYOUT ===== */
+    /* ===== MAIN ===== */
     main {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       max-width: 1700px;
+      width: 100%;
       margin: 0 auto;
-      padding: 2rem;
+      padding: 1.5rem 2rem;
+      min-height: 0;
+      overflow: hidden;
     }
 
     /* ===== CONTROL BAR ===== */
     .control-bar {
+      flex-shrink: 0;
       background: var(--bg-panel);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-lg);
-      padding: 1.5rem;
-      margin-bottom: 1.5rem;
+      padding: 1.25rem 1.5rem;
+      margin-bottom: 1.25rem;
       box-shadow: var(--shadow);
       display: flex;
       gap: 1.5rem;
@@ -144,7 +157,7 @@
     /* ===== DROP ZONES ===== */
     .drop-zone {
       flex: 1;
-      min-width: 260px;
+      min-width: 240px;
       border: 2px dashed var(--border-medium);
       border-radius: var(--radius);
       padding: 1.25rem 1.5rem;
@@ -152,7 +165,7 @@
       cursor: pointer;
       display: flex;
       align-items: center;
-      gap: 16px;
+      gap: 14px;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
       overflow: hidden;
@@ -190,15 +203,15 @@
     }
 
     .dz-icon {
-      width: 48px;
-      height: 48px;
+      width: 44px;
+      height: 44px;
       border-radius: 12px;
       background: white;
       border: 1px solid var(--border-light);
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: 1.15rem;
+      font-size: 1.1rem;
       color: var(--accent-cyan);
       transition: all 0.3s;
       flex-shrink: 0;
@@ -241,14 +254,14 @@
     }
     #search {
       border-radius: var(--radius-sm);
-      padding: 0.75rem 1rem 0.75rem 2.5rem;
+      padding: 0.7rem 1rem 0.7rem 2.5rem;
       background: var(--bg-primary);
       border: 1px solid var(--border-medium);
       color: var(--text-primary);
       font-weight: 500;
       font-size: 0.9rem;
       transition: all 0.3s;
-      width: 280px;
+      width: 260px;
     }
     #search::placeholder { color: var(--text-muted); }
     #search:focus {
@@ -270,8 +283,8 @@
     .btn-modern {
       border-radius: var(--radius-sm) !important;
       font-weight: 700;
-      padding: 0.7rem 1.25rem;
-      font-size: 0.85rem;
+      padding: 0.65rem 1.1rem;
+      font-size: 0.82rem;
       border: none;
       transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
       display: inline-flex;
@@ -334,15 +347,15 @@
 
     /* ===== TABLE CARD ===== */
     .table-card {
+      flex: 1;
+      display: flex;
+      flex-direction: column;
       background: var(--bg-panel);
       border: 1px solid var(--border-light);
       border-radius: var(--radius-lg);
       box-shadow: var(--shadow);
       overflow: hidden;
-      display: flex;
-      flex-direction: column;
-      height: calc(100vh - 280px);
-      min-height: 500px;
+      min-height: 0;
     }
 
     /* ===== TABS ===== */
@@ -407,29 +420,28 @@
 
     .tab-content-modern {
       flex: 1;
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
       position: relative;
     }
     .tab-pane-modern {
       position: absolute;
       inset: 0;
-      overflow: hidden;
-      opacity: 0;
-      visibility: hidden;
-      transition: opacity 0.25s ease;
-      display: flex;
+      display: none;
       flex-direction: column;
+      overflow: hidden;
     }
     .tab-pane-modern.active {
-      opacity: 1;
-      visibility: visible;
       position: relative;
+      display: flex;
     }
 
-    /* ===== TABLE CONTAINER (SCROLL) ===== */
+    /* ===== TABLE SCROLL CONTAINER ===== */
     .table-scroll-container {
       flex: 1;
       overflow: auto;
+      min-height: 0;
       position: relative;
     }
     .table-scroll-container::-webkit-scrollbar { width: 8px; height: 8px; }
@@ -462,7 +474,6 @@
       border-bottom: 2px solid var(--border-medium);
       border-right: 1px solid var(--border-light);
       white-space: nowrap;
-      position: relative;
     }
     .data-table th:last-child { border-right: none; }
     .data-table td {
@@ -497,7 +508,7 @@
       font-weight: 700;
     }
 
-    /* ===== TABLE FOOTER ===== */
+    /* ===== TABLE FOOTER ROW (totales dentro del tbody) ===== */
     .table-footer-row td {
       background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
       color: white !important;
@@ -506,6 +517,9 @@
       border-right: 1px solid rgba(255,255,255,0.1);
       font-family: "JetBrains Mono", monospace;
       padding: 12px 16px;
+      position: sticky;
+      bottom: 0;
+      z-index: 15;
     }
     .table-footer-row td:last-child { border-right: none; }
     .table-footer-row .num {
@@ -513,15 +527,15 @@
       font-weight: 700;
     }
 
-    /* ===== PAGINATION ===== */
+    /* ===== PAGINATION BAR ===== */
     .pagination-bar {
+      flex-shrink: 0;
       display: flex;
       align-items: center;
       justify-content: space-between;
       padding: 10px 20px;
       background: var(--bg-primary);
       border-top: 1px solid var(--border-light);
-      flex-shrink: 0;
       gap: 1rem;
       flex-wrap: wrap;
     }
@@ -696,7 +710,6 @@
       .control-bar { flex-direction: column; align-items: stretch; }
       .actions-area { margin-left: 0; width: 100%; }
       #search { width: 100%; }
-      .table-card { height: calc(100vh - 240px); }
       .pagination-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
     }
     @media (max-width: 768px) {
@@ -953,7 +966,6 @@
       worker: null,
     };
 
-    // Configuración de paginación por tabla
     const pagination = {
       gen: { page: 1, rpp: 50, total: 0 },
       neg: { page: 1, rpp: 50, total: 0 },
@@ -1032,7 +1044,6 @@
       els.btns.neg.onclick = () => exportReport("negatives");
       els.btns.na.onclick = () => exportReport("na");
 
-      // Eventos de paginación
       els.rpps.gen.addEventListener("change", (e) => { pagination.gen.rpp = parseInt(e.target.value); pagination.gen.page = 1; render(); });
       els.rpps.neg.addEventListener("change", (e) => { pagination.neg.rpp = parseInt(e.target.value); pagination.neg.page = 1; render(); });
       els.rpps.na.addEventListener("change", (e) => { pagination.na.rpp = parseInt(e.target.value); pagination.na.page = 1; render(); });
@@ -1153,7 +1164,6 @@
       const end = start + rpp;
       const slice = data.slice(start, end);
 
-      // Calcular sums de TODOS los datos, no solo la página
       let sums = {};
       if (data.length > 0) {
         const first = data[0];
@@ -1175,41 +1185,34 @@
       const info = els.infos[key];
       const ctrl = els.ctrls[key];
 
-      const start = (current - 1) * pag.rpp + 1;
+      const start = pag.total === 0 ? 0 : (current - 1) * pag.rpp + 1;
       const end = Math.min(current * pag.rpp, pag.total);
       info.innerHTML = `Mostrando <strong>${start}-${end}</strong> de <strong>${pag.total}</strong> registros`;
 
       let buttons = [];
 
-      // Botón Anterior
       buttons.push(`<button class="pagination-btn" ${current === 1 ? 'disabled' : ''} onclick="goToPage('${key}', ${current - 1})"><i class="fas fa-chevron-left"></i></button>`);
 
-      // Primera página
       if (totalPages > 1) {
         buttons.push(`<button class="pagination-btn ${current === 1 ? 'active' : ''}" onclick="goToPage('${key}', 1)">1</button>`);
       }
 
-      // Ellipsis izquierda
       if (current > 3) {
         buttons.push(`<span class="pagination-btn ellipsis">...</span>`);
       }
 
-      // Páginas intermedias
       for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
         buttons.push(`<button class="pagination-btn ${current === i ? 'active' : ''}" onclick="goToPage('${key}', ${i})">${i}</button>`);
       }
 
-      // Ellipsis derecha
       if (current < totalPages - 2) {
         buttons.push(`<span class="pagination-btn ellipsis">...</span>`);
       }
 
-      // Última página
       if (totalPages > 1) {
         buttons.push(`<button class="pagination-btn ${current === totalPages ? 'active' : ''}" onclick="goToPage('${key}', ${totalPages})">${totalPages}</button>`);
       }
 
-      // Botón Siguiente
       buttons.push(`<button class="pagination-btn" ${current === totalPages ? 'disabled' : ''} onclick="goToPage('${key}', ${current + 1})"><i class="fas fa-chevron-right"></i></button>`);
 
       ctrl.innerHTML = buttons.join('');
@@ -1218,7 +1221,6 @@
     function goToPage(key, page) {
       pagination[key].page = page;
       render();
-      // Scroll al top de la tabla
       const scrollId = key === 'gen' ? 'scrollGen' : key === 'neg' ? 'scrollNeg' : 'scrollNA';
       document.getElementById(scrollId).scrollTop = 0;
     }
@@ -1260,7 +1262,6 @@
         )
         .join("");
 
-      // Footer con totales
       if (Object.keys(sums).length > 0) {
         html += `<tr class="table-footer-row">${cols
           .map((c, i) => {
@@ -1318,7 +1319,6 @@
         })
         .join("");
 
-      // Footer con totales
       html += `<tr class="table-footer-row">
           <td colspan="4" style="text-align:right; font-family:Inter, sans-serif; font-weight:700;">Total General</td>
           <td class="num">${fmtNum.format(sums["Ordered Qty"] || 0)}</td>
