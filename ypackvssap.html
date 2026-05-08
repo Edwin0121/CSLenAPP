@@ -74,7 +74,7 @@
       display: flex;
       align-items: center;
       justify-content: space-between;
-      background: rgba(255, 255, 255, 0.85);
+      background: rgba(255, 255, 255, 0.9);
       backdrop-filter: blur(16px) saturate(180%);
       border-bottom: 1px solid var(--border-light);
       box-shadow: var(--shadow-sm);
@@ -413,11 +413,12 @@
     .tab-pane-modern {
       position: absolute;
       inset: 0;
-      overflow: auto;
+      overflow: hidden;
       opacity: 0;
       visibility: hidden;
       transition: opacity 0.25s ease;
-      padding: 0;
+      display: flex;
+      flex-direction: column;
     }
     .tab-pane-modern.active {
       opacity: 1;
@@ -425,17 +426,29 @@
       position: relative;
     }
 
+    /* ===== TABLE CONTAINER (SCROLL) ===== */
+    .table-scroll-container {
+      flex: 1;
+      overflow: auto;
+      position: relative;
+    }
+    .table-scroll-container::-webkit-scrollbar { width: 8px; height: 8px; }
+    .table-scroll-container::-webkit-scrollbar-track { background: transparent; }
+    .table-scroll-container::-webkit-scrollbar-thumb { background: var(--border-medium); border-radius: 4px; }
+    .table-scroll-container::-webkit-scrollbar-thumb:hover { background: #94a3b8; }
+
     /* ===== DATA TABLE ===== */
     .data-table {
       width: 100%;
       border-collapse: collapse;
       font-size: 0.8125rem;
       table-layout: auto;
+      min-width: 900px;
     }
     .data-table thead {
       position: sticky;
       top: 0;
-      z-index: 10;
+      z-index: 20;
     }
     .data-table th {
       background: linear-gradient(180deg, #f1f5f9 0%, #e2e8f0 100%);
@@ -447,8 +460,9 @@
       letter-spacing: 0.06em;
       font-size: 0.68rem;
       border-bottom: 2px solid var(--border-medium);
-      white-space: nowrap;
       border-right: 1px solid var(--border-light);
+      white-space: nowrap;
+      position: relative;
     }
     .data-table th:last-child { border-right: none; }
     .data-table td {
@@ -484,21 +498,115 @@
     }
 
     /* ===== TABLE FOOTER ===== */
-    .table-footer td {
+    .table-footer-row td {
       background: linear-gradient(180deg, #1e293b 0%, #0f172a 100%) !important;
       color: white !important;
       font-weight: 700;
-      position: sticky;
-      bottom: 0;
-      z-index: 10;
       border-top: 2px solid var(--accent-cyan);
       border-right: 1px solid rgba(255,255,255,0.1);
       font-family: "JetBrains Mono", monospace;
+      padding: 12px 16px;
     }
-    .table-footer td:last-child { border-right: none; }
-    .table-footer .num {
+    .table-footer-row td:last-child { border-right: none; }
+    .table-footer-row .num {
       color: #67e8f9 !important;
       font-weight: 700;
+    }
+
+    /* ===== PAGINATION ===== */
+    .pagination-bar {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 10px 20px;
+      background: var(--bg-primary);
+      border-top: 1px solid var(--border-light);
+      flex-shrink: 0;
+      gap: 1rem;
+      flex-wrap: wrap;
+    }
+    .pagination-info {
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .pagination-info strong {
+      color: var(--text-primary);
+      font-weight: 700;
+    }
+    .pagination-controls {
+      display: flex;
+      align-items: center;
+      gap: 4px;
+    }
+    .pagination-btn {
+      min-width: 36px;
+      height: 36px;
+      padding: 0 10px;
+      border: 1px solid var(--border-medium);
+      background: white;
+      color: var(--text-secondary);
+      border-radius: 8px;
+      font-size: 0.8rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s;
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 4px;
+    }
+    .pagination-btn:hover:not(:disabled) {
+      background: var(--bg-panel-hover);
+      border-color: var(--accent-cyan);
+      color: var(--accent-cyan);
+      transform: translateY(-1px);
+    }
+    .pagination-btn:disabled {
+      opacity: 0.4;
+      cursor: not-allowed;
+      transform: none;
+    }
+    .pagination-btn.active {
+      background: linear-gradient(135deg, var(--accent-cyan), var(--accent-blue));
+      color: white;
+      border-color: transparent;
+      box-shadow: 0 4px 12px rgba(8, 145, 178, 0.3);
+    }
+    .pagination-btn.ellipsis {
+      border: none;
+      background: transparent;
+      cursor: default;
+      color: var(--text-muted);
+    }
+    .pagination-btn.ellipsis:hover {
+      transform: none;
+      color: var(--text-muted);
+      border-color: transparent;
+      background: transparent;
+    }
+    .rows-per-page {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.8rem;
+      color: var(--text-muted);
+      font-weight: 500;
+    }
+    .rows-per-page select {
+      padding: 6px 10px;
+      border-radius: 8px;
+      border: 1px solid var(--border-medium);
+      background: white;
+      color: var(--text-primary);
+      font-weight: 600;
+      font-size: 0.8rem;
+      cursor: pointer;
+      outline: none;
+    }
+    .rows-per-page select:focus {
+      border-color: var(--accent-cyan);
+      box-shadow: var(--shadow-glow-cyan);
     }
 
     /* ===== LOADER ===== */
@@ -589,6 +697,7 @@
       .actions-area { margin-left: 0; width: 100%; }
       #search { width: 100%; }
       .table-card { height: calc(100vh - 240px); }
+      .pagination-bar { flex-direction: column; align-items: stretch; gap: 0.5rem; }
     }
     @media (max-width: 768px) {
       .app-header { padding: 0 1rem; height: 60px; }
@@ -687,26 +796,73 @@
       </ul>
 
       <div class="tab-content-modern">
+        <!-- TAB GENERAL -->
         <div class="tab-pane-modern active" id="tabGen">
-          <table class="data-table" id="tblGen">
-            <thead></thead>
-            <tbody></tbody>
-            <tfoot></tfoot>
-          </table>
+          <div class="table-scroll-container" id="scrollGen">
+            <table class="data-table" id="tblGen">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="pagGen">
+            <div class="pagination-info" id="infoGen">Mostrando 0 de 0 registros</div>
+            <div class="pagination-controls" id="ctrlGen"></div>
+            <div class="rows-per-page">
+              <label for="rppGen">Filas:</label>
+              <select id="rppGen">
+                <option value="20">20</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </div>
+          </div>
         </div>
+
+        <!-- TAB NEGATIVOS -->
         <div class="tab-pane-modern" id="tabNeg">
-          <table class="data-table" id="tblNeg">
-            <thead></thead>
-            <tbody></tbody>
-            <tfoot></tfoot>
-          </table>
+          <div class="table-scroll-container" id="scrollNeg">
+            <table class="data-table" id="tblNeg">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="pagNeg">
+            <div class="pagination-info" id="infoNeg">Mostrando 0 de 0 registros</div>
+            <div class="pagination-controls" id="ctrlNeg"></div>
+            <div class="rows-per-page">
+              <label for="rppNeg">Filas:</label>
+              <select id="rppNeg">
+                <option value="20">20</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </div>
+          </div>
         </div>
+
+        <!-- TAB NOT APPROVED -->
         <div class="tab-pane-modern" id="tabNA">
-          <table class="data-table" id="tblNA">
-            <thead></thead>
-            <tbody></tbody>
-            <tfoot></tfoot>
-          </table>
+          <div class="table-scroll-container" id="scrollNA">
+            <table class="data-table" id="tblNA">
+              <thead></thead>
+              <tbody></tbody>
+            </table>
+          </div>
+          <div class="pagination-bar" id="pagNA">
+            <div class="pagination-info" id="infoNA">Mostrando 0 de 0 registros</div>
+            <div class="pagination-controls" id="ctrlNA"></div>
+            <div class="rows-per-page">
+              <label for="rppNA">Filas:</label>
+              <select id="rppNA">
+                <option value="20">20</option>
+                <option value="50" selected>50</option>
+                <option value="100">100</option>
+                <option value="200">200</option>
+              </select>
+            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -796,6 +952,14 @@
       f2: null,
       worker: null,
     };
+
+    // Configuración de paginación por tabla
+    const pagination = {
+      gen: { page: 1, rpp: 50, total: 0 },
+      neg: { page: 1, rpp: 50, total: 0 },
+      na:  { page: 1, rpp: 50, total: 0 },
+    };
+
     const els = {
       d1: document.getElementById("dropSAP"),
       d2: document.getElementById("dropYPK"),
@@ -815,6 +979,21 @@
         gen: document.getElementById("btnExpGeneral"),
         neg: document.getElementById("btnExpNeg"),
         na: document.getElementById("btnExpNA"),
+      },
+      infos: {
+        gen: document.getElementById("infoGen"),
+        neg: document.getElementById("infoNeg"),
+        na: document.getElementById("infoNA"),
+      },
+      ctrls: {
+        gen: document.getElementById("ctrlGen"),
+        neg: document.getElementById("ctrlNeg"),
+        na: document.getElementById("ctrlNA"),
+      },
+      rpps: {
+        gen: document.getElementById("rppGen"),
+        neg: document.getElementById("rppNeg"),
+        na: document.getElementById("rppNA"),
       },
     };
 
@@ -852,6 +1031,11 @@
       els.btns.gen.onclick = () => exportReport("general");
       els.btns.neg.onclick = () => exportReport("negatives");
       els.btns.na.onclick = () => exportReport("na");
+
+      // Eventos de paginación
+      els.rpps.gen.addEventListener("change", (e) => { pagination.gen.rpp = parseInt(e.target.value); pagination.gen.page = 1; render(); });
+      els.rpps.neg.addEventListener("change", (e) => { pagination.neg.rpp = parseInt(e.target.value); pagination.neg.page = 1; render(); });
+      els.rpps.na.addEventListener("change", (e) => { pagination.na.rpp = parseInt(e.target.value); pagination.na.page = 1; render(); });
     }
 
     function processNA() {
@@ -912,12 +1096,15 @@
     function render() {
       const q = els.search.value.toLowerCase();
 
+      // TAB GENERAL
       const dGen = q
         ? state.data.filter((r) =>
             Object.values(r).some((v) => String(v).toLowerCase().includes(q))
           )
         : state.data;
-      renderTable(els.tbls.gen, dGen.slice(0, 200), [
+      pagination.gen.total = dGen.length;
+      const pGen = paginate(dGen, pagination.gen.page, pagination.gen.rpp);
+      renderTable(els.tbls.gen, pGen.data, [
         "Cliente",
         "Sales Order #",
         "Material #",
@@ -925,36 +1112,121 @@
         "Ordered Qty",
         "Shipped Qty",
         "Diferencia",
-      ]);
+      ], pGen.sums);
       els.cnts.gen.textContent = dGen.length;
+      renderPagination("gen", pagination.gen);
 
+      // TAB NEGATIVOS
       const dNeg = dGen.filter((r) => r["Diferencia"] < 0);
-      renderTable(els.tbls.neg, dNeg, [
+      pagination.neg.total = dNeg.length;
+      const pNeg = paginate(dNeg, pagination.neg.page, pagination.neg.rpp);
+      renderTable(els.tbls.neg, pNeg.data, [
         "Cliente",
         "Sales Order #",
         "Material #",
         "Ordered Qty",
         "Shipped Qty",
         "Diferencia",
-      ]);
+      ], pNeg.sums);
       els.cnts.neg.textContent = dNeg.length;
+      renderPagination("neg", pagination.neg);
 
+      // TAB NA
       const dNA = q
         ? state.groupedNA.filter((r) =>
             Object.values(r).some((v) => String(v).toLowerCase().includes(q))
           )
         : state.groupedNA;
-      renderNATable(els.tbls.na, dNA);
+      pagination.na.total = dNA.length;
+      const pNA = paginate(dNA, pagination.na.page, pagination.na.rpp);
+      renderNATable(els.tbls.na, pNA.data, pNA.sums);
       els.cnts.na.textContent = dNA.length;
+      renderPagination("na", pagination.na);
     }
 
-    function renderTable(tbl, data, cols) {
+    function paginate(data, page, rpp) {
+      const total = data.length;
+      const totalPages = Math.max(1, Math.ceil(total / rpp));
+      if (page > totalPages) page = totalPages;
+      if (page < 1) page = 1;
+      const start = (page - 1) * rpp;
+      const end = start + rpp;
+      const slice = data.slice(start, end);
+
+      // Calcular sums de TODOS los datos, no solo la página
+      let sums = {};
+      if (data.length > 0) {
+        const first = data[0];
+        Object.keys(first).forEach(k => {
+          if (typeof first[k] === "number") sums[k] = 0;
+        });
+        data.forEach(r => {
+          Object.keys(sums).forEach(k => {
+            if (typeof r[k] === "number" && !isNaN(r[k])) sums[k] += r[k];
+          });
+        });
+      }
+      return { data: slice, sums, totalPages, page };
+    }
+
+    function renderPagination(key, pag) {
+      const totalPages = Math.max(1, Math.ceil(pag.total / pag.rpp));
+      const current = pag.page;
+      const info = els.infos[key];
+      const ctrl = els.ctrls[key];
+
+      const start = (current - 1) * pag.rpp + 1;
+      const end = Math.min(current * pag.rpp, pag.total);
+      info.innerHTML = `Mostrando <strong>${start}-${end}</strong> de <strong>${pag.total}</strong> registros`;
+
+      let buttons = [];
+
+      // Botón Anterior
+      buttons.push(`<button class="pagination-btn" ${current === 1 ? 'disabled' : ''} onclick="goToPage('${key}', ${current - 1})"><i class="fas fa-chevron-left"></i></button>`);
+
+      // Primera página
+      if (totalPages > 1) {
+        buttons.push(`<button class="pagination-btn ${current === 1 ? 'active' : ''}" onclick="goToPage('${key}', 1)">1</button>`);
+      }
+
+      // Ellipsis izquierda
+      if (current > 3) {
+        buttons.push(`<span class="pagination-btn ellipsis">...</span>`);
+      }
+
+      // Páginas intermedias
+      for (let i = Math.max(2, current - 1); i <= Math.min(totalPages - 1, current + 1); i++) {
+        buttons.push(`<button class="pagination-btn ${current === i ? 'active' : ''}" onclick="goToPage('${key}', ${i})">${i}</button>`);
+      }
+
+      // Ellipsis derecha
+      if (current < totalPages - 2) {
+        buttons.push(`<span class="pagination-btn ellipsis">...</span>`);
+      }
+
+      // Última página
+      if (totalPages > 1) {
+        buttons.push(`<button class="pagination-btn ${current === totalPages ? 'active' : ''}" onclick="goToPage('${key}', ${totalPages})">${totalPages}</button>`);
+      }
+
+      // Botón Siguiente
+      buttons.push(`<button class="pagination-btn" ${current === totalPages ? 'disabled' : ''} onclick="goToPage('${key}', ${current + 1})"><i class="fas fa-chevron-right"></i></button>`);
+
+      ctrl.innerHTML = buttons.join('');
+    }
+
+    function goToPage(key, page) {
+      pagination[key].page = page;
+      render();
+      // Scroll al top de la tabla
+      const scrollId = key === 'gen' ? 'scrollGen' : key === 'neg' ? 'scrollNeg' : 'scrollNA';
+      document.getElementById(scrollId).scrollTop = 0;
+    }
+
+    function renderTable(tbl, data, cols, sums) {
       tbl.querySelector("thead").innerHTML = `<tr>${cols
         .map((c) => `<th>${c}</th>`)
         .join("")}</tr>`;
-
-      let sums = {};
-      cols.forEach((c) => (sums[c] = 0));
 
       if (!data.length) {
         tbl.querySelector("tbody").innerHTML = `
@@ -964,18 +1236,16 @@
               <div>No hay datos para mostrar</div>
             </div>
           </td></tr>`;
-        tbl.querySelector("tfoot").innerHTML = "";
         return;
       }
 
-      tbl.querySelector("tbody").innerHTML = data
+      let html = data
         .map(
           (r, idx) => `
           <tr style="animation-delay: ${Math.min(idx * 0.03, 1.5)}s">${cols
             .map((c) => {
               const v = r[c];
               if (typeof v === "number") {
-                if (!isNaN(v)) sums[c] += v;
                 const isNeg = c === "Diferencia" && v < 0;
                 const isPos = c === "Diferencia" && v > 0;
                 return `<td class="num ${isNeg ? 'neg' : ''} ${isPos ? 'pos' : ''}">${
@@ -990,11 +1260,12 @@
         )
         .join("");
 
-      if (data.length) {
-        tbl.querySelector("tfoot").innerHTML = `<tr class="table-footer">${cols
+      // Footer con totales
+      if (Object.keys(sums).length > 0) {
+        html += `<tr class="table-footer-row">${cols
           .map((c, i) => {
             if (i === 0)
-              return '<td style="text-align:right; font-family:Inter, sans-serif; font-weight:700;">Total (Vista)</td>';
+              return '<td style="text-align:right; font-family:Inter, sans-serif; font-weight:700;">Total General</td>';
             if (typeof sums[c] === "number" && sums[c] !== 0) {
               return `<td class="num">${
                 c.includes("Qty") || c.includes("Dif")
@@ -1005,10 +1276,12 @@
             return "<td></td>";
           })
           .join("")}</tr>`;
-      } else tbl.querySelector("tfoot").innerHTML = "";
+      }
+
+      tbl.querySelector("tbody").innerHTML = html;
     }
 
-    function renderNATable(tbl, data) {
+    function renderNATable(tbl, data, sums) {
       const cols = [
         "Soldto Name",
         "Customer PO #",
@@ -1030,17 +1303,11 @@
               <div>No hay datos para mostrar</div>
             </div>
           </td></tr>`;
-        tbl.querySelector("tfoot").innerHTML = "";
         return;
       }
 
-      let tO = 0, tN = 0, tS = 0;
-
-      tbl.querySelector("tbody").innerHTML = data
+      let html = data
         .map((r, idx) => {
-          tO += r["Ordered Qty"];
-          tN += r["Net Value TTL"];
-          tS += r["Ship Value"];
           return `<tr style="animation-delay: ${Math.min(idx * 0.03, 1.5)}s">
             <td>${r["Cliente"]}</td><td>${r["Customer PO #"]}</td><td>${r["Sales Order #"]}</td>
             <td class="neg">${r["Credit Status"]}</td>
@@ -1051,14 +1318,15 @@
         })
         .join("");
 
-      tbl.querySelector("tfoot").innerHTML = data.length
-        ? `<tr class="table-footer">
+      // Footer con totales
+      html += `<tr class="table-footer-row">
           <td colspan="4" style="text-align:right; font-family:Inter, sans-serif; font-weight:700;">Total General</td>
-          <td class="num">${fmtNum.format(tO)}</td>
-          <td class="num">${fmtMoney.format(tN)}</td>
-          <td class="num">${fmtMoney.format(tS)}</td>
-        </tr>`
-        : "";
+          <td class="num">${fmtNum.format(sums["Ordered Qty"] || 0)}</td>
+          <td class="num">${fmtMoney.format(sums["Net Value TTL"] || 0)}</td>
+          <td class="num">${fmtMoney.format(sums["Ship Value"] || 0)}</td>
+        </tr>`;
+
+      tbl.querySelector("tbody").innerHTML = html;
     }
 
     function exportReport(type) {
