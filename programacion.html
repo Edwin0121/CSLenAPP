@@ -90,7 +90,6 @@
         height: calc(100vh - 24px);
       }
 
-      /* ===== HEADER ===== */
       header {
         background: linear-gradient(135deg, rgba(255, 255, 255, 0.95), rgba(248, 250, 252, 0.98));
         backdrop-filter: blur(20px);
@@ -144,7 +143,6 @@
         border-radius: var(--radius-sm);
       }
 
-      /* ===== CONTROL PANEL ===== */
       .control-panel {
         background: var(--bg-secondary);
         border: 1px solid var(--border-subtle);
@@ -190,7 +188,6 @@
         filter: drop-shadow(0 0 6px rgba(59, 130, 246, 0.3));
       }
 
-      /* ===== FORM ELEMENTS ===== */
       .form-label {
         color: var(--text-secondary);
         font-size: 0.75rem;
@@ -232,7 +229,6 @@
         border-color: var(--accent-primary);
       }
 
-      /* ===== BUTTONS ===== */
       .btn {
         border-radius: var(--radius-sm);
         font-weight: 600;
@@ -280,7 +276,6 @@
         border-color: var(--border-medium);
       }
 
-      /* ===== STATUS BAR ===== */
       .status-bar {
         background: linear-gradient(135deg, rgba(59, 130, 246, 0.06), rgba(99, 102, 241, 0.04));
         color: #2563eb;
@@ -308,7 +303,6 @@
         border-color: rgba(239, 68, 68, 0.2);
       }
 
-      /* ===== TABLE ===== */
       .table-wrapper {
         background: var(--bg-secondary);
         border-radius: var(--radius-lg);
@@ -385,7 +379,6 @@
         background-color: rgba(245, 158, 11, 0.07);
       }
 
-      /* ===== SECTION HEADER ===== */
       .section-header {
         padding: 14px 20px;
         border-bottom: 1px solid var(--border-subtle);
@@ -414,7 +407,6 @@
         box-shadow: 0 2px 8px rgba(59, 130, 246, 0.2);
       }
 
-      /* ===== PAGINATION ===== */
       .pagination-bar {
         padding: 14px 24px;
         border-top: 1px solid var(--border-subtle);
@@ -430,16 +422,9 @@
         letter-spacing: 0.02em;
       }
 
-      /* ===== ANIMATIONS ===== */
       @keyframes fadeInUp {
-        from {
-          opacity: 0;
-          transform: translateY(10px);
-        }
-        to {
-          opacity: 1;
-          transform: translateY(0);
-        }
+        from { opacity: 0; transform: translateY(10px); }
+        to { opacity: 1; transform: translateY(0); }
       }
 
       .app-container > * {
@@ -450,7 +435,6 @@
       .app-container > *:nth-child(2) { animation-delay: 0.1s; }
       .app-container > *:nth-child(3) { animation-delay: 0.2s; }
 
-      /* ===== SPINNER ===== */
       .spinner-border {
         border-width: 0.15em;
       }
@@ -459,7 +443,6 @@
         color: var(--accent-primary) !important;
       }
 
-      /* ===== RESPONSIVE ===== */
       @media (max-width: 768px) {
         header {
           flex-direction: column;
@@ -630,7 +613,7 @@
       // ==========================================
       // 1. CONFIGURACIÓN SUPABASE
       // ==========================================
-      const SUPABASE_TABLE = "SalesOrder"; // Nombre exacto
+      const SUPABASE_TABLE = "SalesOrder";
       const supabaseUrl = "https://aawqcgapxdqemjqzwcsy.supabase.co";
       const supabaseKey =
         "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
@@ -642,34 +625,20 @@
       // ==========================================
       // 2. HELPERS & UTILS
       // ==========================================
-
       const z2 = (n) => (n < 10 ? "0" + n : "" + n);
 
-      // --- 🧠 FUNCIÓN MAESTRA DE FECHAS ---
-      // Convierte: 46036 -> 15/01/2026
-      // Convierte: "2026-01-15" -> 15/01/2026
       function formatExcelDate(v) {
         if (!v) return "";
-
-        // Caso 1: Número Serial de Excel (ej: 46036)
         if (typeof v === "number") {
-          // Usamos la librería XLSX que ya tiene la lógica de años bisiestos
           const dateInfo = XLSX.SSF.parse_date_code(v);
           if (dateInfo) {
             return `${z2(dateInfo.d)}/${z2(dateInfo.m)}/${dateInfo.y}`;
           }
         }
-
-        // Caso 2: Texto o Fecha JS estándar
         const d = new Date(v);
         if (!isNaN(d.getTime())) {
-          // Es una fecha válida
-          return `${z2(d.getDate())}/${z2(
-            d.getMonth() + 1
-          )}/${d.getFullYear()}`;
+          return `${z2(d.getDate())}/${z2(d.getMonth() + 1)}/${d.getFullYear()}`;
         }
-
-        // Caso 3: Retornar texto tal cual si falla todo
         return String(v);
       }
 
@@ -677,33 +646,19 @@
         return v == null ? "" : String(v).trim();
       }
       function normStrong(s) {
-        return toText(s)
-          .toUpperCase()
-          .replace(/[^A-Z0-9]/g, "");
+        return toText(s).toUpperCase().replace(/[^A-Z0-9]/g, "");
       }
 
       // ==========================================
       // 3. LÓGICA DB (Indexado Inteligente)
       // ==========================================
       const PO_COL_CANDIDATES = [
-        "Customer PO #",
-        "CustomerPO",
-        "PO",
-        "po",
-        "Po",
-        "customer_po",
-        "customer po",
-        "Customer_PO",
+        "Customer PO #", "CustomerPO", "PO", "po", "Po",
+        "customer_po", "customer po", "Customer_PO",
       ];
       const SO_COL_CANDIDATES = [
-        "Sales Order #",
-        "SalesOrder",
-        "SO",
-        "so",
-        "So",
-        "sales_order",
-        "sales order",
-        "Sales_Order",
+        "Sales Order #", "SalesOrder", "SO", "so", "So",
+        "sales_order", "sales order", "Sales_Order",
       ];
 
       const salesOrderIndex = {
@@ -715,7 +670,6 @@
       let currentPage = 1,
         pageSize = 25;
 
-      // Encuentra valor en objeto ignorando mayúsculas/minúsculas de la clave
       function findValueInRow(row, candidates) {
         for (const key of candidates) {
           if (row[key] !== undefined) return row[key];
@@ -768,7 +722,6 @@
                 if (!salesOrderIndex.norm.has(n))
                   salesOrderIndex.norm.set(n, so);
 
-                // Tokens (separar por - / etc)
                 const tokens = new Set();
                 tokens.add(po);
                 tokens.add(n);
@@ -810,7 +763,6 @@
           return salesOrderIndex.direct.get(key);
         if (salesOrderIndex.norm.has(normStrong(key)))
           return salesOrderIndex.norm.get(normStrong(key));
-        // Token search
         const tokens = new Set();
         tokens.add(key);
         tokens.add(normStrong(key));
@@ -827,9 +779,8 @@
       }
 
       // ==========================================
-      // 4. LÓGICA EXCEL (COMPLETA)
+      // 4. LÓGICA EXCEL
       // ==========================================
-      // Índices basados en la estructura del Excel original
       const COL = {
         Customer: 2,
         PO: 10,
@@ -838,7 +789,7 @@
         Color: 16,
         Process: 17,
         ProcessRout: 53,
-        Contractor: 54, // Agregados de nuevo
+        Contractor: 54,
         Pcs: 22,
         XDF: 33,
       };
@@ -854,7 +805,6 @@
             if (sheetName.toLowerCase() === "lists") continue;
 
             const ws = wb.Sheets[sheetName];
-            // Obtenemos JSON crudo (raw: true) para detectar fechas seriales
             const aoa = XLSX.utils.sheet_to_json(ws, {
               header: 1,
               defval: "",
@@ -862,7 +812,6 @@
             });
 
             if (aoa.length < 4) continue;
-            // Validación simple de cabecera
             const header = String(aoa[2][COL.Customer] || "").toUpperCase();
             if (!header.includes("CUSTOMER")) continue;
 
@@ -872,25 +821,23 @@
               if (!cust) continue;
 
               const poRaw = toText(row[COL.PO]);
-              // Normalización de PO (FOX, BROOKS)
               let pos = [poRaw];
               if (cust.toUpperCase().startsWith("FOX"))
                 pos = poRaw.split("-").filter(Boolean);
               if (cust.toUpperCase() === "BROOKS")
                 pos = poRaw.split("/").filter(Boolean);
 
-              // Datos comunes de la fila
               const common = {
                 Customer: cust,
                 Style: toText(row[COL.Style]),
                 Color: toText(row[COL.Color]),
                 Cut: row[COL.Cut],
-                Process: toText(row[COL.Process]), // Restaurado
-                Rout: toText(row[COL.ProcessRout]), // Restaurado
-                Contractor: toText(row[COL.Contractor]), // Restaurado
+                Process: toText(row[COL.Process]),
+                Rout: toText(row[COL.ProcessRout]),
+                Contractor: toText(row[COL.Contractor]),
                 Pcs: row[COL.Pcs],
-                XDF: formatExcelDate(row[COL.XDF]), // APLICADA LA FUNCIÓN DE FECHA
-                Sheet: sheetName, // APLICADO NOMBRE DE HOJA
+                XDF: formatExcelDate(row[COL.XDF]),
+                Sheet: sheetName,
                 File: file.name,
               };
 
@@ -955,16 +902,12 @@
                 <td class="text-end fw-bold">${r.Pcs}</td>
                 <td>${r.XDF}</td>
                 <td class="small fst-italic" style="color: var(--text-muted);">${r.Sheet}</td>
-                <td class="small" style="color: var(--text-muted);" title="${r.File}">${r.File.slice(
-              0,
-              12
-            )}...</td>
+                <td class="small" style="color: var(--text-muted);" title="${r.File}">${r.File.slice(0,12)}...</td>
             </tr>
         `
           )
           .join("");
 
-        // Listeners Paginación
         document.getElementById("btnPrev").onclick = () => {
           if (currentPage > 1) {
             currentPage--;
@@ -978,6 +921,194 @@
           }
         };
       }
+
+      // ==========================================
+      // 5. EXPORTAR EXCEL CON ESTILOS PROFESIONALES
+      // ==========================================
+      function s(ref) {
+        return XLSX.utils.decode_cell(ref);
+      }
+
+      function applyCellStyle(ws, cellRef, style) {
+        if (!ws[cellRef]) ws[cellRef] = { t: 's', v: '' };
+        ws[cellRef].s = style;
+      }
+
+      document.getElementById("exportBtn").onclick = () => {
+        if (!masterRows.length) return;
+
+        // Preparar datos planos para el sheet
+        const headers = [
+          "Customer", "PO (Excel)", "Sales Order (DB)", "Style", "Color",
+          "Cut", "Process", "Rout", "Contractor", "Pcs", "XFD (Fecha)",
+          "Sheet", "File"
+        ];
+
+        const data = masterRows.map((r) => ({
+          "Customer": r.Customer,
+          "PO (Excel)": r.PO,
+          "Sales Order (DB)": r.SalesOrder || "NO ENCONTRADO",
+          "Style": r.Style,
+          "Color": r.Color,
+          "Cut": r.Cut,
+          "Process": r.Process,
+          "Rout": r.Rout,
+          "Contractor": r.Contractor,
+          "Pcs": r.Pcs,
+          "XFD (Fecha)": r.XDF,
+          "Sheet": r.Sheet,
+          "File": r.File,
+        }));
+
+        const ws = XLSX.utils.json_to_sheet(data, { header: headers });
+        const range = XLSX.utils.decode_range(ws['!ref']);
+        const totalRows = range.e.r;
+        const totalCols = range.e.c;
+
+        // Colores
+        const C_HEADER_BG = "334155";   // slate-700
+        const C_HEADER_FG = "FFFFFF";
+        const C_BORDER = "CBD5E1";      // slate-300
+        const C_TEXT = "1E293B";        // slate-800
+        const C_TEXT_MUTED = "64748B";  // slate-500
+        const C_CUSTOMER = "2563EB";    // blue-600
+        const C_SUCCESS = "059669";     // emerald-600
+        const C_DANGER = "DC2626";      // red-600
+        const C_DANGER_BG = "FEF2F2";   // red-50
+        const C_WARNING_BG = "FEF3C7";  // amber-100
+        const C_ZEBRA = "F8FAFC";       // slate-50
+
+        // Estilos base
+        const borderThin = {
+          top: { style: "thin", color: { rgb: C_BORDER } },
+          bottom: { style: "thin", color: { rgb: C_BORDER } },
+          left: { style: "thin", color: { rgb: C_BORDER } },
+          right: { style: "thin", color: { rgb: C_BORDER } },
+        };
+
+        const borderBottom = {
+          bottom: { style: "thin", color: { rgb: C_BORDER } },
+        };
+
+        const headerStyle = {
+          font: { name: "Inter", bold: true, color: { rgb: C_HEADER_FG }, sz: 11 },
+          fill: { patternType: "solid", fgColor: { rgb: C_HEADER_BG } },
+          alignment: { horizontal: "center", vertical: "center", wrapText: true },
+          border: borderThin,
+        };
+
+        const baseStyle = {
+          font: { name: "Inter", color: { rgb: C_TEXT }, sz: 10 },
+          alignment: { vertical: "center" },
+          border: borderBottom,
+        };
+
+        const mutedStyle = {
+          font: { name: "Inter", color: { rgb: C_TEXT_MUTED }, sz: 10 },
+          alignment: { vertical: "center" },
+          border: borderBottom,
+        };
+
+        // Aplicar estilos por celda
+        for (let R = range.s.r; R <= range.e.r; ++R) {
+          for (let C = range.s.c; C <= range.e.c; ++C) {
+            const cellRef = XLSX.utils.encode_cell({ r: R, c: C });
+            const cell = ws[cellRef];
+            if (!cell) continue;
+
+            if (R === 0) {
+              // Header row
+              cell.s = headerStyle;
+              continue;
+            }
+
+            const isEven = R % 2 === 0;
+            const rowData = masterRows[R - 1];
+            const hasSO = rowData && !!rowData.SalesOrder;
+            const colName = headers[C];
+
+            // Fondo base (zebra o warning)
+            let bgColor = null;
+            if (!hasSO) {
+              bgColor = C_WARNING_BG;
+            } else if (isEven) {
+              bgColor = C_ZEBRA;
+            }
+
+            // Estilo por columna
+            let style = JSON.parse(JSON.stringify(baseStyle));
+            style.border = borderBottom;
+
+            if (bgColor) {
+              style.fill = { patternType: "solid", fgColor: { rgb: bgColor } };
+            }
+
+            switch (colName) {
+              case "Customer":
+                style.font = { name: "Inter", bold: true, color: { rgb: C_CUSTOMER }, sz: 10 };
+                break;
+              case "PO (Excel)":
+                style.font = { name: "Inter", bold: true, color: { rgb: C_TEXT }, sz: 10 };
+                break;
+              case "Sales Order (DB)":
+                if (hasSO) {
+                  style.font = { name: "Inter", bold: true, color: { rgb: C_SUCCESS }, sz: 10 };
+                } else {
+                  style.font = { name: "Inter", bold: true, color: { rgb: C_DANGER }, sz: 10 };
+                  style.fill = { patternType: "solid", fgColor: { rgb: C_DANGER_BG } };
+                }
+                break;
+              case "Pcs":
+                style.font = { name: "Inter", bold: true, color: { rgb: C_TEXT }, sz: 10 };
+                style.alignment = { horizontal: "right", vertical: "center" };
+                break;
+              case "Process":
+              case "Rout":
+              case "Contractor":
+              case "Sheet":
+                style = JSON.parse(JSON.stringify(mutedStyle));
+                if (bgColor) style.fill = { patternType: "solid", fgColor: { rgb: bgColor } };
+                break;
+              case "File":
+                style = JSON.parse(JSON.stringify(mutedStyle));
+                if (bgColor) style.fill = { patternType: "solid", fgColor: { rgb: bgColor } };
+                break;
+              default:
+                // Style, Color, Cut, XFD
+                style.font = { name: "Inter", color: { rgb: C_TEXT }, sz: 10 };
+            }
+
+            cell.s = style;
+          }
+        }
+
+        // Congelar primera fila
+        ws['!freeze'] = { xSplit: 0, ySplit: 1, topLeftCell: "A2", activePane: "bottomLeft" };
+
+        // Anchos de columna
+        ws['!cols'] = [
+          { wch: 18 }, // Customer
+          { wch: 16 }, // PO
+          { wch: 18 }, // Sales Order
+          { wch: 14 }, // Style
+          { wch: 12 }, // Color
+          { wch: 10 }, // Cut
+          { wch: 14 }, // Process
+          { wch: 14 }, // Rout
+          { wch: 16 }, // Contractor
+          { wch: 10 }, // Pcs
+          { wch: 14 }, // XFD
+          { wch: 14 }, // Sheet
+          { wch: 20 }, // File
+        ];
+
+        // Filtros automáticos
+        ws['!autofilter'] = { ref: ws['!ref'] };
+
+        const wb = XLSX.utils.book_new();
+        XLSX.utils.book_append_sheet(wb, ws, "Datos");
+        XLSX.writeFile(wb, "Reporte_Produccion.xlsx");
+      };
 
       // Listeners UI
       const dz = document.getElementById("dropzone");
@@ -1017,14 +1148,6 @@
       document.getElementById("clearBtn").onclick = () => {
         masterRows = [];
         updateTable();
-      };
-
-      document.getElementById("exportBtn").onclick = () => {
-        if (!masterRows.length) return;
-        const ws = XLSX.utils.json_to_sheet(masterRows);
-        const wb = XLSX.utils.book_new();
-        XLSX.utils.book_append_sheet(wb, ws, "Datos");
-        XLSX.writeFile(wb, "Reporte_Completo.xlsx");
       };
 
       // Inicializar
