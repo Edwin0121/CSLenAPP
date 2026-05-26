@@ -3,7 +3,7 @@
   <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
-    <title>Análisis Programación | Master View</title>
+    <title>Análisis Programación General</title>
 
     <link
       href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap"
@@ -18,11 +18,8 @@
       href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.10.0/font/bootstrap-icons.css"
     />
 
-    <!-- SheetJS solo para LECTURA de Excel -->
     <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
-    <!-- ExcelJS para EXPORTACIÓN con estilos profesionales -->
     <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
-    <!-- FileSaver para descargar el blob -->
     <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 
@@ -496,7 +493,7 @@
                 type="file"
                 accept=".xls,.xlsx,.xlsm"
                 multiple
-                hidden
+                class="d-none"
               />
             </div>
           </div>
@@ -576,6 +573,7 @@
                 <th>Rout</th>
                 <th>Contractor</th>
                 <th class="text-end">Pcs</th>
+                <th>X FTY REVISED 1</th>
                 <th>XFD (Fecha)</th>
                 <th>Sheet</th>
                 <th>File</th>
@@ -784,7 +782,7 @@
       }
 
       // ==========================================
-      // 4. LÓGICA EXCEL (LECTURA)
+      // 4. LÓGICA EXCEL (LECTURA) Y MANEJO DE ARCHIVOS
       // ==========================================
       const COL = {
         Customer: 2,
@@ -796,67 +794,78 @@
         ProcessRout: 53,
         Contractor: 54,
         Pcs: 22,
-        XDF: 33,
+        XFTYRev1: 32, // Columna AG (índice 32 en array 0-based)
+        XDF: 33,      // Columna AH
       };
 
       async function handleFiles(files) {
         if (!files.length) return;
-        masterRows = [];
+        
+        document.getElementById("countBadge").textContent = "Procesando Excel...";
+        
+        try {
+          masterRows = [];
 
-        for (const file of files) {
-          const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
+          for (const file of files) {
+            const wb = XLSX.read(await file.arrayBuffer(), { type: "array" });
 
-          for (const sheetName of wb.SheetNames) {
-            if (sheetName.toLowerCase() === "lists") continue;
+            for (const sheetName of wb.SheetNames) {
+              if (sheetName.toLowerCase() === "lists") continue;
 
-            const ws = wb.Sheets[sheetName];
-            const aoa = XLSX.utils.sheet_to_json(ws, {
-              header: 1,
-              defval: "",
-              raw: true,
-            });
-
-            if (aoa.length < 4) continue;
-            const header = String(aoa[2][COL.Customer] || "").toUpperCase();
-            if (!header.includes("CUSTOMER")) continue;
-
-            for (let r = 3; r < aoa.length; r++) {
-              const row = aoa[r];
-              const cust = toText(row[COL.Customer]);
-              if (!cust) continue;
-
-              const poRaw = toText(row[COL.PO]);
-              let pos = [poRaw];
-              if (cust.toUpperCase().startsWith("FOX"))
-                pos = poRaw.split("-").filter(Boolean);
-              if (cust.toUpperCase() === "BROOKS")
-                pos = poRaw.split("/").filter(Boolean);
-
-              const common = {
-                Customer: cust,
-                Style: toText(row[COL.Style]),
-                Color: toText(row[COL.Color]),
-                Cut: row[COL.Cut],
-                Process: toText(row[COL.Process]),
-                Rout: toText(row[COL.ProcessRout]),
-                Contractor: toText(row[COL.Contractor]),
-                Pcs: row[COL.Pcs],
-                XDF: formatExcelDate(row[COL.XDF]),
-                Sheet: sheetName,
-                File: file.name,
-              };
-
-              pos.forEach((p) => {
-                masterRows.push({
-                  ...common,
-                  PO: p,
-                  SalesOrder: lookupSO(p, cust),
-                });
+              const ws = wb.Sheets[sheetName];
+              const aoa = XLSX.utils.sheet_to_json(ws, {
+                header: 1,
+                defval: "",
+                raw: true,
               });
+
+              if (aoa.length < 4) continue;
+              const header = String(aoa[2][COL.Customer] || "").toUpperCase();
+              if (!header.includes("CUSTOMER")) continue;
+
+              for (let r = 3; r < aoa.length; r++) {
+                const row = aoa[r];
+                const cust = toText(row[COL.Customer]);
+                if (!cust) continue;
+
+                const poRaw = toText(row[COL.PO]);
+                let pos = [poRaw];
+                if (cust.toUpperCase().startsWith("FOX"))
+                  pos = poRaw.split("-").filter(Boolean);
+                if (cust.toUpperCase() === "BROOKS")
+                  pos = poRaw.split("/").filter(Boolean);
+
+                const common = {
+                  Customer: cust,
+                  Style: toText(row[COL.Style]),
+                  Color: toText(row[COL.Color]),
+                  Cut: row[COL.Cut],
+                  Process: toText(row[COL.Process]),
+                  Rout: toText(row[COL.ProcessRout]),
+                  Contractor: toText(row[COL.Contractor]),
+                  Pcs: row[COL.Pcs],
+                  XFTYRev1: formatExcelDate(row[COL.XFTYRev1]), // Nueva columna AG
+                  XDF: formatExcelDate(row[COL.XDF]),
+                  Sheet: sheetName,
+                  File: file.name,
+                };
+
+                pos.forEach((p) => {
+                  masterRows.push({
+                    ...common,
+                    PO: p,
+                    SalesOrder: lookupSO(p, cust),
+                  });
+                });
+              }
             }
           }
+          updateTable();
+        } catch (error) {
+          console.error("Error leyendo Excel:", error);
+          document.getElementById("countBadge").textContent = "Error al leer";
+          alert("Hubo un problema procesando el archivo Excel. Asegúrate de que no esté corrupto y tenga el formato esperado.");
         }
-        updateTable();
       }
 
       function updateTable() {
@@ -905,6 +914,7 @@
                 <td class="small" style="color: var(--text-muted);">${r.Rout}</td>
                 <td class="small" style="color: var(--text-muted);">${r.Contractor}</td>
                 <td class="text-end fw-bold">${r.Pcs}</td>
+                <td>${r.XFTYRev1}</td>
                 <td>${r.XDF}</td>
                 <td class="small fst-italic" style="color: var(--text-muted);">${r.Sheet}</td>
                 <td class="small" style="color: var(--text-muted);" title="${r.File}">${r.File.slice(0,12)}...</td>
@@ -928,7 +938,7 @@
       }
 
       // ==========================================
-      // 5. EXPORTAR EXCEL CON EXCELJS (FORMATO PROFESIONAL)
+      // 5. EXPORTAR EXCEL CON EXCELJS
       // ==========================================
       document.getElementById("exportBtn").onclick = async () => {
         if (!masterRows.length) return;
@@ -943,7 +953,7 @@
           views: [{ state: "frozen", ySplit: 1 }],
         });
 
-        // Definir columnas con ancho y key
+        // Configuración de columnas (Añadida la 11: XFTYRev1)
         worksheet.columns = [
           { header: "Customer", key: "Customer", width: 18 },
           { header: "PO (Excel)", key: "PO", width: 18 },
@@ -955,19 +965,19 @@
           { header: "Rout", key: "Rout", width: 16 },
           { header: "Contractor", key: "Contractor", width: 16 },
           { header: "Pcs", key: "Pcs", width: 10 },
+          { header: "X FTY REVISED 1", key: "XFTYRev1", width: 16 },
           { header: "XFD (Fecha)", key: "XDF", width: 14 },
           { header: "Sheet", key: "Sheet", width: 14 },
           { header: "File", key: "File", width: 32 },
         ];
 
-        // Estilo del encabezado (fila 1)
         const headerRow = worksheet.getRow(1);
         headerRow.height = 28;
         headerRow.eachCell((cell) => {
           cell.fill = {
             type: "pattern",
             pattern: "solid",
-            fgColor: { argb: "FF334155" }, // slate-700
+            fgColor: { argb: "FF334155" },
           };
           cell.font = {
             name: "Inter",
@@ -988,7 +998,6 @@
           };
         });
 
-        // Paleta de colores ARGB
         const C_TEXT = "FF1E293B";
         const C_TEXT_MUTED = "FF64748B";
         const C_CUSTOMER = "FF2563EB";
@@ -1003,12 +1012,10 @@
           bottom: { style: "thin", color: { argb: C_BORDER } },
         };
 
-        // Agregar datos fila por fila
         masterRows.forEach((r, idx) => {
           const hasSO = !!r.SalesOrder;
           const isEven = idx % 2 === 0;
 
-          // Determinar fondo de fila
           let rowFill = null;
           if (!hasSO) {
             rowFill = { type: "pattern", pattern: "solid", fgColor: { argb: C_WARNING_BG } };
@@ -1027,6 +1034,7 @@
             Rout: r.Rout,
             Contractor: r.Contractor,
             Pcs: typeof r.Pcs === "number" ? r.Pcs : Number(r.Pcs) || r.Pcs,
+            XFTYRev1: r.XFTYRev1,
             XDF: r.XDF,
             Sheet: r.Sheet,
             File: r.File,
@@ -1034,28 +1042,19 @@
 
           row.height = 20;
 
-          // Aplicar estilos celda por celda
           row.eachCell({ includeEmpty: true }, (cell, colNumber) => {
-            // Fondo base
-            if (rowFill) {
-              cell.fill = { ...rowFill };
-            }
-
-            // Bordes
+            if (rowFill) cell.fill = { ...rowFill };
             cell.border = thinBorderBottom;
-
-            // Alineación base
             cell.alignment = { vertical: "middle" };
 
-            // Estilos específicos por columna
             switch (colNumber) {
-              case 1: // Customer
+              case 1:
                 cell.font = { name: "Inter", bold: true, color: { argb: C_CUSTOMER }, size: 10 };
                 break;
-              case 2: // PO
+              case 2:
                 cell.font = { name: "Inter", bold: true, color: { argb: C_TEXT }, size: 10 };
                 break;
-              case 3: // Sales Order
+              case 3:
                 if (hasSO) {
                   cell.font = { name: "Inter", bold: true, color: { argb: C_SUCCESS }, size: 10 };
                 } else {
@@ -1064,29 +1063,22 @@
                 }
                 cell.alignment = { horizontal: "center", vertical: "middle" };
                 break;
-              case 4: // Style
-              case 5: // Color
-              case 6: // Cut
+              case 4: case 5: case 6:
                 cell.font = { name: "Inter", color: { argb: C_TEXT }, size: 10 };
                 break;
-              case 7: // Process
-              case 8: // Rout
-              case 9: // Contractor
-              case 12: // Sheet
+              case 7: case 8: case 9: case 13: // 13 es ahora Sheet
                 cell.font = { name: "Inter", color: { argb: C_TEXT_MUTED }, size: 10 };
                 break;
-              case 10: // Pcs
+              case 10:
                 cell.font = { name: "Inter", bold: true, color: { argb: C_TEXT }, size: 10 };
                 cell.alignment = { horizontal: "right", vertical: "middle" };
-                if (typeof cell.value === "number") {
-                  cell.numFmt = "#,##0";
-                }
+                if (typeof cell.value === "number") cell.numFmt = "#,##0";
                 break;
-              case 11: // XFD
+              case 11: case 12: // 11 XFTYRev1, 12 XDF
                 cell.font = { name: "Inter", color: { argb: C_TEXT }, size: 10 };
                 cell.alignment = { horizontal: "center", vertical: "middle" };
                 break;
-              case 13: // File
+              case 14: // File
                 cell.font = { name: "Inter", color: { argb: C_TEXT_MUTED }, size: 10 };
                 break;
               default:
@@ -1095,16 +1087,12 @@
           });
         });
 
-        // Auto-filtro
         worksheet.autoFilter = {
           from: { row: 1, column: 1 },
-          to: { row: 1, column: 13 },
+          to: { row: 1, column: 14 },
         };
-
-        // Congelar primera fila (ya definido en views al crear worksheet, pero reforzado)
         worksheet.views = [{ state: "frozen", ySplit: 1 }];
 
-        // Generar buffer y descargar
         const buffer = await workbook.xlsx.writeBuffer();
         const blob = new Blob([buffer], {
           type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
@@ -1112,9 +1100,18 @@
         saveAs(blob, `Reporte_Produccion_${new Date().toISOString().slice(0,10)}.xlsx`);
       };
 
-      // Listeners UI
+      // ==========================================
+      // LÓGICA DE INTERFAZ: CLICK Y DROPZONE
+      // ==========================================
       const dz = document.getElementById("dropzone");
-      dz.onclick = () => document.getElementById("file").click();
+      const fileInput = document.getElementById("file");
+
+      dz.addEventListener('click', (e) => {
+        if (e.target !== fileInput) {
+          fileInput.click();
+        }
+      });
+
       dz.ondragover = (e) => {
         e.preventDefault();
         dz.style.backgroundColor = "rgba(59, 130, 246, 0.06)";
@@ -1129,11 +1126,18 @@
         e.preventDefault();
         dz.style.backgroundColor = "";
         dz.style.borderColor = "";
-        handleFiles(e.dataTransfer.files);
+        if (e.dataTransfer.files && e.dataTransfer.files.length > 0) {
+          handleFiles(e.dataTransfer.files);
+        }
       };
 
-      document.getElementById("file").onchange = (e) =>
-        handleFiles(e.target.files);
+      fileInput.onchange = (e) => {
+        if(e.target.files && e.target.files.length > 0){
+          handleFiles(e.target.files);
+        }
+        e.target.value = '';
+      };
+
       document.getElementById("search").oninput = () => {
         currentPage = 1;
         updateTable();
@@ -1152,7 +1156,7 @@
         updateTable();
       };
 
-      // Inicializar
+      // Inicializar carga de base
       preloadSalesOrderIndex();
     </script>
   </body>
