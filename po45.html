@@ -453,7 +453,20 @@
     const normColor = v => norm(v).replace(/[\s\-_]/g, '');
     const normSize = v => {
       let s = norm(v);
-      const sizeMap = { 'SM': 'S', 'MD': 'M', 'LG': 'L', 'XL': 'XL', 'XS': 'XS' };
+      const sizeMap = { 
+        // Equivalencias S
+        'S': 'S', 'SM': 'S', 
+        // Equivalencias M
+        'M': 'M', 'MD': 'M', 
+        // Equivalencias L
+        'L': 'L', 'LG': 'L', 
+        // Equivalencias XL
+        'XL': 'XL',
+        // Equivalencias 2XL (XXL = 2XL)
+        '2XL': '2XL', 'XXL': '2XL',
+        // Equivalencias 3XL (XXXL = 3XL)
+        '3XL': '3XL', 'XXXL': '3XL'
+      };
       return sizeMap[s] || s;
     };
     
