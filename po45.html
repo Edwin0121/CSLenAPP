@@ -3,109 +3,185 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Comparador Master | PO45 vs SalesOrder</title>
+  <title>PO45 vs SalesOrder</title>
   
   <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"/>
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap" rel="stylesheet">
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Roboto+Mono:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
   
+  <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/js/bootstrap.bundle.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/exceljs/4.3.0/exceljs.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
   
   <style>
     :root {
-      --bg-body: #f0f2f5; 
+      --bg-body: #f8fafc; 
       --bg-card: #ffffff;
       --primary: #2563eb; 
-      --dark-blue: #0f172a; 
-      --header-blue: #1e3a8a; 
-      --text-main: #1f2937; 
-      --text-muted: #6b7280;
-      --border: #e2e8f0;
-      --shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);
+      --primary-hover: #1d4ed8;
+      --header-bg: #0f172a; 
+      --text-main: #334155; 
+      --text-dark: #0f172a; 
+      --text-muted: #64748b; 
+      --border: #e2e8f0; 
+      --shadow-sm: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+      --shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+      
+      --success-bg: #dcfce7; --success-text: #166534; --success-border: #bbf7d0;
+      --warning-bg: #fef9c3; --warning-text: #854d0e; --warning-border: #fde047;
+      --error-bg: #fee2e2;   --error-text: #991b1b;   --error-border: #fecaca;
     }
 
-    body { background-color: var(--bg-body); color: var(--text-main); font-family: 'Inter', sans-serif; }
+    body { 
+      background-color: var(--bg-body); 
+      color: var(--text-main); 
+      font-family: 'Inter', sans-serif; 
+      -webkit-font-smoothing: antialiased;
+    }
     
+    .font-sap {
+      font-family: 'Roboto Mono', monospace;
+      font-size: 0.8rem;
+      letter-spacing: -0.3px;
+    }
+
     /* --- HEADER PRINCIPAL --- */
     .app-header { 
-      background: var(--dark-blue); 
+      background: var(--header-bg); 
       color: white;
-      padding: 1rem 0; 
+      padding: 0.875rem 0; 
       position: sticky; top: 0; z-index: 100; 
-      box-shadow: 0 4px 10px rgba(0,0,0,0.2); 
+      box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
     }
-    .logo { font-weight: 700; font-size: 1.25rem; color: white; display: flex; align-items: center; gap: 10px;}
-    .logo span { color: var(--dark-blue); background: #e0f2fe; padding: 2px 8px; border-radius: 4px; font-size: 0.8em; }
-    .version-tag { background: rgba(255,255,255,0.15); padding: 4px 10px; border-radius: 20px; font-size: 0.8rem; font-weight: 600; letter-spacing: 0.5px; border: 1px solid rgba(255,255,255,0.2); }
+    .logo { font-weight: 600; font-size: 1.15rem; display: flex; align-items: center; gap: 12px; letter-spacing: -0.5px;}
+    .logo .icon-box { background: linear-gradient(135deg, #3b82f6, #2563eb); padding: 6px; border-radius: 8px; display: flex; box-shadow: 0 2px 4px rgba(0,0,0,0.2);}
+    .version-tag { background: #1e293b; color: #94a3b8; padding: 4px 12px; border-radius: 20px; font-size: 0.75rem; font-weight: 500; border: 1px solid #334155; }
 
-    /* Cards */
-    .cardx { background: var(--bg-card); border: 1px solid var(--border); border-radius: 12px; padding: 1.5rem; box-shadow: var(--shadow); height: 100%; }
+    /* Cards & Containers */
+    .cardx { 
+      background: var(--bg-card); 
+      border: 1px solid var(--border); 
+      border-radius: 12px; 
+      padding: 1.5rem; 
+      box-shadow: var(--shadow-sm); 
+      height: 100%; 
+    }
     
+    .section-title {
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      color: var(--text-muted);
+      font-weight: 600;
+      margin-bottom: 1rem;
+      display: flex; align-items: center; gap: 8px;
+    }
+
     /* Stats & KPI */
-    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 10px; }
-    .stat-item { background: #f8fafc; padding: 10px; border-radius: 8px; border: 1px solid #e2e8f0; font-size: 0.85rem; transition: all 0.2s; position: relative; overflow: hidden; }
-    .stat-val { font-weight: 800; font-size: 1.2rem; display: block; margin-top: 4px; }
+    .stat-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 12px; }
+    .stat-item { 
+      background: #ffffff; 
+      padding: 12px 16px; 
+      border-radius: 10px; 
+      border: 1px solid var(--border); 
+      box-shadow: var(--shadow-sm);
+      transition: all 0.2s ease; 
+      display: flex; flex-direction: column; justify-content: center;
+    }
+    .stat-label { font-size: 0.75rem; color: var(--text-muted); font-weight: 500; margin-bottom: 4px; display: flex; justify-content: space-between; align-items: center;}
+    .stat-val { font-weight: 700; font-size: 1.5rem; color: var(--text-dark); line-height: 1; }
     
-    .kpi-btn { cursor: pointer; user-select: none; border-left: 4px solid transparent; }
-    .kpi-btn:hover { transform: translateY(-2px); box-shadow: 0 4px 8px rgba(0,0,0,0.08); }
-    /* Bordes de color para KPIs */
-    #kpi-ok { border-left-color: #166534; }
-    #kpi-warn { border-left-color: #ca8a04; }
-    #kpi-err { border-left-color: #991b1b; }
+    .kpi-btn { cursor: pointer; user-select: none; }
+    .kpi-btn:hover { border-color: #cbd5e1; box-shadow: var(--shadow-md); transform: translateY(-1px); }
+    
+    #kpi-ok { border-left: 4px solid #22c55e; }
+    #kpi-warn { border-left: 4px solid #eab308; }
+    #kpi-err { border-left: 4px solid #ef4444; }
 
     /* Dropzone */
-    .dropzone { border: 2px dashed #cbd5e1; border-radius: 12px; padding: 2rem; text-align: center; cursor: pointer; transition: all 0.2s; background: #f8fafc; }
-    .dropzone:hover, .dropzone.drag { border-color: var(--primary); background: #eff6ff; color: var(--primary); }
+    .dropzone { 
+      border: 2px dashed #cbd5e1; 
+      border-radius: 12px; 
+      padding: 2.5rem 2rem; 
+      text-align: center; 
+      cursor: pointer; 
+      transition: all 0.2s ease; 
+      background: #f8fafc; 
+    }
+    .dropzone:hover, .dropzone.drag { border-color: var(--primary); background: #eff6ff; }
+    .dropzone i { font-size: 2.5rem; color: #94a3b8; margin-bottom: 10px; display: block; transition: color 0.2s; }
+    .dropzone:hover i, .dropzone.drag i { color: var(--primary); }
 
-    /* --- TABLA PRO --- */
+    /* --- TABLA PRO ERP --- */
     .table-container { 
       border: 1px solid var(--border); 
-      border-radius: 10px; 
+      border-radius: 12px; 
       overflow: hidden; 
       background: white; 
-      box-shadow: var(--shadow); 
+      box-shadow: var(--shadow-sm); 
       display: flex; flex-direction: column;
-      height: 75vh; 
+      height: 70vh; 
     }
     .table-wrap { overflow: auto; flex: 1; position: relative; }
     
-    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.8rem; }
+    table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.85rem; }
     
-    /* Sticky Header Doble */
-    thead th { 
-      background-color: var(--header-blue); 
-      color: white; 
-      position: sticky; 
-      z-index: 20; 
+    thead { position: sticky; top: 0; z-index: 20; background: #f8fafc; }
+    thead th { padding: 0; border-bottom: 1px solid var(--border); }
+    
+    .th-content {
+      padding: 12px 16px 4px 16px;
+      font-weight: 600;
+      color: var(--text-muted);
+      font-size: 0.75rem;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
     }
-    thead tr:nth-child(1) th { top: 0; padding: 12px 10px; font-weight: 600; letter-spacing: 0.5px; border-bottom: 1px solid rgba(255,255,255,0.1); }
-    thead tr:nth-child(2) th { top: 43px; padding: 8px 10px; background-color: #172554; z-index: 20; border-bottom: 2px solid #3b82f6; }
 
-    td { padding: 8px 10px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; vertical-align: middle; }
+    .th-filter { padding: 0 12px 12px 12px; }
+
+    td { padding: 10px 16px; border-bottom: 1px solid #f1f5f9; white-space: nowrap; vertical-align: middle; }
     tr:hover td { background: #f8fafc; }
 
     .col-filter { 
-      font-size: 0.75rem; padding: 4px 8px; border-radius: 4px; 
-      border: 1px solid rgba(255,255,255,0.3); 
+      font-size: 0.75rem; 
+      padding: 6px 10px; 
+      border-radius: 6px; 
+      border: 1px solid #e2e8f0; 
       width: 100%; 
-      background: rgba(255,255,255,0.1); 
-      color: white; 
+      background: #ffffff; 
+      color: var(--text-dark);
+      transition: all 0.2s;
     }
-    .col-filter::placeholder { color: rgba(255,255,255,0.5); }
-    .col-filter:focus { outline: none; background: white; color: #0f172a; border-color: white; }
-    select.col-filter { cursor: pointer; }
-    select.col-filter option { color: #0f172a; background: white; }
+    .col-filter::placeholder { color: #cbd5e1; }
+    .col-filter:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
 
-    .search-input { border-radius: 20px; padding-left: 15px; border: 1px solid #cbd5e1; }
+    .table-toolbar { padding: 12px 16px; background: white; border-bottom: 1px solid var(--border); display: flex; gap: 16px; align-items: center;}
+    .search-input { border-radius: 8px; padding: 8px 16px 8px 36px; border: 1px solid var(--border); font-size: 0.875rem; background: #f8fafc url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='16' height='16' fill='%2394a3b8' class='bi bi-search' viewBox='0 0 16 16'%3E%3Cpath d='M11.742 10.344a6.5 6.5 0 1 0-1.397 1.398h-.001c.03.04.062.078.098.115l3.85 3.85a1 1 0 0 0 1.415-1.414l-3.85-3.85a1.007 1.007 0 0 0-.115-.1zM12 6.5a5.5 5.5 0 1 1-11 0 5.5 5.5 0 0 1 11 0z'/%3E%3C/svg%3E") no-repeat 12px center; transition: all 0.2s; }
+    .search-input:focus { background-color: white; border-color: var(--primary); outline: none; box-shadow: 0 0 0 3px rgba(37,99,235,0.1); }
+
+    .badge-pill { padding: 4px 10px; border-radius: 6px; font-size: 0.75rem; font-weight: 600; display: inline-flex; align-items: center; gap: 4px;}
+    .bg-ok { background: var(--success-bg); color: var(--success-text); border: 1px solid var(--success-border); }
+    .bg-warn { background: var(--warning-bg); color: var(--warning-text); border: 1px solid var(--warning-border); }
+    .bg-err { background: var(--error-bg); color: var(--error-text); border: 1px solid var(--error-border); }
     
-    .badge-pill { padding: 4px 10px; border-radius: 50px; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.5px; box-shadow: 0 1px 2px rgba(0,0,0,0.05); }
-    .bg-ok { background: #dcfce7; color: #14532d; border: 1px solid #bbf7d0; }
-    .bg-warn { background: #fef9c3; color: #713f12; border: 1px solid #fde047; }
-    .bg-err { background: #fee2e2; color: #7f1d1d; border: 1px solid #fecaca; }
+    .db-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 8px; color: var(--text-dark);}
+    .indicator { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 8px; }
+    .ind-grey { background: #94a3b8; box-shadow: 0 0 0 3px #f1f5f9; } 
+    .ind-green { background: #22c55e; box-shadow: 0 0 0 3px #dcfce7; animation: pulse 2s infinite; } 
+    .ind-yellow { background: #eab308; box-shadow: 0 0 0 3px #fef9c3; }
     
-    .db-row { display: flex; justify-content: space-between; align-items: center; font-size: 0.85rem; margin-bottom: 5px; }
-    .indicator { width: 10px; height: 10px; border-radius: 50%; display: inline-block; margin-right: 8px; box-shadow: 0 0 0 2px rgba(255,255,255,0.8); }
-    .ind-grey { background: #94a3b8; } .ind-green { background: #22c55e; } .ind-yellow { background: #eab308; }
+    @keyframes pulse {
+      0% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0.4); }
+      70% { box-shadow: 0 0 0 6px rgba(34, 197, 94, 0); }
+      100% { box-shadow: 0 0 0 0 rgba(34, 197, 94, 0); }
+    }
+
+    .btn-primary-erp { background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 500; transition: background 0.2s; }
+    .btn-primary-erp:hover { background: var(--primary-hover); color: white;}
+    .btn-primary-erp:disabled { background: #94a3b8; cursor: not-allowed; }
   </style>
 </head>
 <body>
@@ -113,9 +189,12 @@
   <header class="app-header">
     <div class="container-fluid px-4 d-flex align-items-center justify-content-between">
       <div class="logo">
-        <i class="bi bi-layers-half me-2"></i> Comparador Materiales <span>PO45 vs SalesOrder</span>
+        <div class="icon-box"><i class="bi bi-box-seam text-white" style="font-size: 1rem;"></i></div>
+        Analisis PO45 VS Base General <span style="font-weight: 400; color: #94a3b8; margin: 0 8px;">|</span> PO45 vs SalesOrder
       </div>
-      <div class="version-tag">V3 Estable + Regla Brooks</div>
+      <div class="version-tag d-flex align-items-center gap-2">
+        <i class="bi bi-shield-check text-success"></i> V5 Estable + Data Dump DB
+      </div>
     </div>
   </header>
 
@@ -124,33 +203,42 @@
       
       <div class="col-lg-3">
         <div class="cardx d-flex flex-column">
-          <h6 class="text-uppercase text-muted fw-bold mb-3" style="font-size: 0.75rem; letter-spacing: 1px;">Estado Conexión</h6>
+          <div class="section-title"><i class="bi bi-hdd-network"></i> Estado de Conexión</div>
           
-          <div class="mb-4">
+          <div class="mb-4 bg-light p-3 rounded-3 border">
             <div class="db-row">
               <span class="fw-semibold"><span id="ind-so" class="indicator ind-grey"></span>SalesOrder</span>
-              <span id="so-count" class="badge bg-light text-dark border">0</span>
+              <span id="so-count" class="badge bg-white text-dark border shadow-sm">0</span>
             </div>
-            <div class="progress" style="height: 6px; background: #e2e8f0;">
-              <div id="prog-so" class="progress-bar" style="width:0%"></div>
+            <div class="progress mt-2" style="height: 4px; background: #e2e8f0;">
+              <div id="prog-so" class="progress-bar bg-primary" style="width:0%"></div>
             </div>
-            <div class="small text-muted mt-1 fst-italic" style="font-size:0.75rem">Tabla maestra (Lectura)</div>
+            <div class="small text-muted mt-2" style="font-size:0.75rem">Tabla maestra (Lectura)</div>
           </div>
 
-          <div class="mb-3">
+          <div class="mb-3 bg-light p-3 rounded-3 border">
             <div class="db-row">
               <span class="fw-semibold"><span id="ind-po" class="indicator ind-grey"></span>PO45 Data</span>
-              <span id="po-count" class="badge bg-light text-dark border">0</span>
+              <span id="po-count" class="badge bg-white text-dark border shadow-sm">0</span>
             </div>
-             <div class="progress" style="height: 6px; background: #e2e8f0;">
+            <div class="progress mt-2 mb-3" style="height: 4px; background: #e2e8f0;">
               <div id="prog-po" class="progress-bar bg-info" style="width:0%"></div>
             </div>
-            <div class="small text-muted mt-1 fst-italic" style="font-size:0.75rem">Histórico (Escritura)</div>
+            
+            <div class="d-flex justify-content-between align-items-center border-top pt-2 mt-2">
+              <div class="small text-muted" style="font-size:0.75rem">Histórico General</div>
+              <button class="btn btn-sm btn-outline-primary fw-medium" style="font-size: 0.75rem;" data-bs-toggle="modal" data-bs-target="#exportDbModal">
+                <i class="bi bi-database-down"></i> Bajar DB
+              </button>
+            </div>
           </div>
           
-          <div class="alert alert-primary border-0 bg-opacity-10 small mt-auto mb-0">
-            <div class="fw-bold mb-1"><i class="bi bi-magic"></i> Regla Brooks Activa</div>
-            Limpiamos automáticamente los números al inicio de los colores para el cliente Brooks.
+          <div class="alert alert-primary border-0 bg-primary bg-opacity-10 small mt-auto mb-0 d-flex gap-2 align-items-start">
+            <i class="bi bi-magic fs-6 text-primary mt-1"></i>
+            <div>
+              <div class="fw-bold text-primary mb-1">Mapeo Inteligente</div>
+              <span class="text-muted">Ignora espacios/guiones en colores.</span>
+            </div>
           </div>
         </div>
       </div>
@@ -158,24 +246,45 @@
       <div class="col-lg-9">
         <div class="cardx">
           <div class="d-flex justify-content-between align-items-center mb-3">
-            <h6 class="text-uppercase text-muted fw-bold mb-0" style="font-size: 0.75rem; letter-spacing: 1px;">Procesamiento</h6>
-            <button class="btn btn-sm btn-outline-danger px-3" id="resetAll">Limpiar</button>
+            <div class="section-title mb-0"><i class="bi bi-cpu"></i> Motor de Procesamiento</div>
+            <button class="btn btn-sm btn-outline-secondary px-3 rounded-pill" id="resetAll">
+              <i class="bi bi-arrow-counterclockwise me-1"></i> Reiniciar
+            </button>
           </div>
 
           <div id="dz" class="dropzone mb-4">
-            <div class="mb-1 text-dark fw-bold fs-5">Arrastra tus archivos Excel aquí</div>
-            <div class="small text-muted">Soporta carga múltiple (.xls, .xlsx)</div>
+            <i class="bi bi-cloud-arrow-up"></i>
+            <div class="mb-1 text-dark fw-semibold fs-5">Arrastra tus archivos Excel aquí</div>
+            <div class="small text-muted">o haz clic para explorar (.xls, .xlsx)</div>
             <input id="file" type="file" multiple accept=".xls,.xlsx" hidden>
           </div>
 
           <div class="stat-grid">
-            <div class="stat-item">Archivos <span class="stat-val text-primary" id="file-count">0</span></div>
-            <div class="stat-item">Filas Leídas <span class="stat-val text-dark" id="excel-rows">0</span></div>
-            <div class="stat-item bg-dark text-white border-0">Guardados DB <span class="stat-val text-warning" id="saved-count">0</span></div>
+            <div class="stat-item">
+              <div class="stat-label">Archivos <i class="bi bi-file-earmark-excel text-muted"></i></div>
+              <div class="stat-val text-primary" id="file-count">0</div>
+            </div>
+            <div class="stat-item">
+              <div class="stat-label">Filas Leídas <i class="bi bi-list-ul text-muted"></i></div>
+              <div class="stat-val" id="excel-rows">0</div>
+            </div>
+            <div class="stat-item bg-slate-900 border-0" style="background: #0f172a;">
+              <div class="stat-label text-slate-400" style="color: #94a3b8;">Guardados DB <i class="bi bi-database text-warning"></i></div>
+              <div class="stat-val text-warning" id="saved-count">0</div>
+            </div>
             
-            <div id="kpi-ok" class="stat-item bg-ok bg-opacity-10 kpi-btn">Correctos <span class="stat-val text-success" id="match-count">0</span></div>
-            <div id="kpi-warn" class="stat-item bg-warn bg-opacity-10 kpi-btn">Diferencias <span class="stat-val text-warning" id="diff-count">0</span></div>
-            <div id="kpi-err" class="stat-item bg-err bg-opacity-10 kpi-btn">No Encontrado <span class="stat-val text-danger" id="miss-count">0</span></div>
+            <div id="kpi-ok" class="stat-item kpi-btn">
+              <div class="stat-label text-success">Correctos <i class="bi bi-check-circle"></i></div>
+              <div class="stat-val text-success" id="match-count">0</div>
+            </div>
+            <div id="kpi-warn" class="stat-item kpi-btn">
+              <div class="stat-label text-warning" style="color:#ca8a04 !important">Diferencias <i class="bi bi-exclamation-triangle"></i></div>
+              <div class="stat-val" style="color:#ca8a04 !important" id="diff-count">0</div>
+            </div>
+            <div id="kpi-err" class="stat-item kpi-btn">
+              <div class="stat-label text-danger">No Encontrados <i class="bi bi-x-circle"></i></div>
+              <div class="stat-val text-danger" id="miss-count">0</div>
+            </div>
           </div>
         </div>
       </div>
@@ -184,12 +293,14 @@
     <div class="row mt-4">
       <div class="col-12">
         <div class="table-container">
-          <div class="p-3 bg-white d-flex gap-3 align-items-center border-bottom">
-            <div class="position-relative" style="width: 350px;">
-              <input id="q" class="form-control form-control-sm search-input" placeholder="Búsqueda rápida...">
+          <div class="table-toolbar">
+            <div style="flex: 1; max-width: 400px;">
+              <input id="q" class="form-control search-input w-100" placeholder="Búsqueda global en tabla...">
             </div>
             <div class="ms-auto">
-              <button id="exportXlsx" class="btn btn-success btn-sm fw-bold px-4 shadow-sm">Exportar Reporte</button>
+              <button id="exportXlsx" class="btn btn-primary-erp btn-sm px-4 py-2">
+                <i class="bi bi-file-earmark-excel me-2"></i> Exportar Análisis Actual
+              </button>
             </div>
           </div>
 
@@ -197,47 +308,73 @@
             <table id="tbl">
               <thead>
                 <tr>
-                  <th>PO45</th> <th>Cliente</th> <th>Estilo SAP</th> <th>Estilo Base</th>
-                  <th>Corte</th> <th>Color SAP</th> <th>Color Base</th> 
-                  <th>Talla SAP</th> <th>Talla Base</th> <th>Mat. SAP</th> <th>Mat. Base</th>
-                  <th class="text-center">Estado</th>
-                </tr>
-                <tr>
-                  <th><input class="col-filter" data-col="po45" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="cliente" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="estiloSAP" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="estiloBase" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="corte" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="colorSAP" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="colorBase" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="tallaSAP" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="tallaBase" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="materialSAP" placeholder="Filtrar..."></th>
-                  <th><input class="col-filter" data-col="materialBase" placeholder="Filtrar..."></th>
                   <th>
-                    <select class="col-filter" data-col="estado" id="statusFilter">
-                      <option value="">Todos</option>
-                      <option value="OK">Correctos</option>
-                      <option value="WARN">Diferencias</option>
-                      <option value="ERR">No Encontrados</option>
-                    </select>
+                    <div class="th-content">PO45</div>
+                    <div class="th-filter"><input class="col-filter" data-col="po45" placeholder="Filtrar PO..."></div>
+                  </th>
+                  <th>
+                    <div class="th-content">Cliente</div>
+                    <div class="th-filter"><input class="col-filter" data-col="cliente" placeholder="Filtrar Cliente..."></div>
+                  </th>
+                  <th>
+                    <div class="th-content">Estilo SAP / Base</div>
+                    <div class="th-filter"><input class="col-filter" data-col="estiloSAP" placeholder="Filtrar Estilo..."></div>
+                  </th>
+                  <th>
+                    <div class="th-content">Corte</div>
+                    <div class="th-filter"><input class="col-filter" data-col="corte" placeholder="Filtrar Corte..."></div>
+                  </th>
+                  <th>
+                    <div class="th-content">Color SAP / Base</div>
+                    <div class="th-filter"><input class="col-filter" data-col="colorSAP" placeholder="Filtrar Color..."></div>
+                  </th>
+                  <th>
+                    <div class="th-content">Talla SAP / Base</div>
+                    <div class="th-filter"><input class="col-filter" data-col="tallaSAP" placeholder="Filtrar Talla..."></div>
+                  </th>
+                  <th>
+                    <div class="th-content">Material SAP / Base</div>
+                    <div class="th-filter"><input class="col-filter" data-col="materialSAP" placeholder="Filtrar Material..."></div>
+                  </th>
+                  <th style="min-width: 150px;">
+                    <div class="th-content text-center">Estado</div>
+                    <div class="th-filter">
+                      <select class="col-filter fw-medium" data-col="estado" id="statusFilter" style="cursor:pointer">
+                        <option value="">Todos los Estados</option>
+                        <option value="OK">✓ Correctos</option>
+                        <option value="WARN">⚠ Diferencias</option>
+                        <option value="ERR">✕ No Encontrados</option>
+                      </select>
+                    </div>
                   </th>
                 </tr>
               </thead>
               <tbody id="tbody">
-                <tr><td colspan="12" class="text-center text-muted py-5 fs-5">Sube archivos para comenzar</td></tr>
+                <tr>
+                  <td colspan="8" class="text-center text-muted py-5">
+                    <i class="bi bi-inboxes fs-1 text-slate-300 d-block mb-3" style="color: #cbd5e1;"></i>
+                    <span class="fs-6">Sube archivos Excel para comenzar el análisis</span>
+                  </td>
+                </tr>
               </tbody>
             </table>
           </div>
 
-          <div class="p-2 border-top bg-light d-flex justify-content-between align-items-center">
-             <div class="small text-muted ps-2">
-               Mostrar: <select id="pageSize" class="form-select form-select-sm d-inline w-auto border-0 bg-transparent fw-bold"><option>25</option><option>100</option><option>500</option></select> filas
+          <div class="p-3 border-top bg-white d-flex justify-content-between align-items-center">
+             <div class="small text-muted d-flex align-items-center gap-2">
+               Mostrar: 
+               <select id="pageSize" class="form-select form-select-sm d-inline w-auto bg-light border-0 fw-medium">
+                 <option>25</option>
+                 <option>100</option>
+                 <option>500</option>
+               </select> filas
              </div>
-             <div class="pe-2">
-               <button id="prevPage" class="btn btn-sm btn-light border" disabled>&lt;</button>
-               <span id="pageInfo" class="small fw-bold mx-3 text-secondary">0 / 0</span>
-               <button id="nextPage" class="btn btn-sm btn-light border" disabled>&gt;</button>
+             <div class="d-flex align-items-center gap-3">
+               <span id="pageInfo" class="small fw-medium text-muted">0 / 0</span>
+               <div class="btn-group">
+                 <button id="prevPage" class="btn btn-sm btn-outline-secondary" disabled><i class="bi bi-chevron-left"></i></button>
+                 <button id="nextPage" class="btn btn-sm btn-outline-secondary" disabled><i class="bi bi-chevron-right"></i></button>
+               </div>
              </div>
           </div>
         </div>
@@ -245,13 +382,53 @@
     </div>
   </main>
 
-  <script type="module">
+  <div class="modal fade" id="exportDbModal" tabindex="-1" aria-labelledby="exportDbModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+      <div class="modal-content border-0 shadow-lg">
+        <div class="modal-header text-white" style="background-color: var(--header-bg);">
+          <h5 class="modal-title fs-6 d-flex align-items-center gap-2" id="exportDbModalLabel">
+            <i class="bi bi-database-down"></i> Extracción Directa de BD (PO45 Data)
+          </h5>
+          <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body bg-light">
+          <p class="text-muted small mb-4">
+            Aplica filtros para descargar una parte específica de la base de datos histórica. <br>
+            <strong>Si dejas todos los campos en blanco, se descargará toda la base de datos.</strong>
+          </p>
+          
+          <div class="card border-0 shadow-sm p-3">
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">Filtrar por Cliente</label>
+              <input type="text" id="db-filter-cliente" class="form-control form-control-sm" placeholder="Ej. BROOKS">
+            </div>
+            <div class="mb-3">
+              <label class="form-label small fw-semibold text-dark">Filtrar por Estilo SAP</label>
+              <input type="text" id="db-filter-estilo" class="form-control form-control-sm" placeholder="Ej. 123456">
+            </div>
+            <div class="mb-1">
+              <label class="form-label small fw-semibold text-dark">Filtrar por Color</label>
+              <input type="text" id="db-filter-color" class="form-control form-control-sm" placeholder="Ej. NAVY">
+            </div>
+          </div>
+        </div>
+        <div class="modal-footer bg-white">
+          <button type="button" class="btn btn-light btn-sm px-4" data-bs-dismiss="modal">Cancelar</button>
+          <button type="button" class="btn btn-primary-erp btn-sm px-4" id="btnRunDbExport">
+            <i class="bi bi-cloud-download me-2"></i> Procesar y Descargar
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
     // --- CONFIGURACIÓN SUPABASE ---
     const SUPABASE_URL = "https://aawqcgapxdqemjqzwcsy.supabase.co";
     const SUPABASE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
     
     if (!window.supabase) throw new Error("Supabase SDK no cargó.");
-    const supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+    const db = window.supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
 
     // --- ELEMENTOS DOM ---
     const ui = {
@@ -266,17 +443,22 @@
       }
     };
 
-    // --- ESTADO GLOBAL ---
     const state = {
       salesIdx: new Map(), salesIdxCM: new Map(), po45Idx: new Map(),
       rows: [], filtered: [], page: 1, size: 25
     };
 
-    // --- HELPERS ---
+    // --- NORMALIZADORES ---
     const norm = v => (v==null?"":String(v)).trim().toUpperCase();
+    const normColor = v => norm(v).replace(/[\s\-_]/g, '');
+    const normSize = v => {
+      let s = norm(v);
+      const sizeMap = { 'SM': 'S', 'MD': 'M', 'LG': 'L', 'XL': 'XL', 'XS': 'XS' };
+      return sizeMap[s] || s;
+    };
+    
     const esc = s => String(s==null?"":s).replace(/[&<>]/g, c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));
     
-    // Keys
     const keySO = (c, m, s) => `${norm(c)}|${norm(m)}|${norm(s)}`;
     const keyCM = (c, m) => `${norm(c)}|${norm(m)}`;
     const keyPO = (po, sty, cut, col, siz, mat) => `${norm(po)}|${norm(sty)}|${norm(cut)}|${norm(col)}|${norm(siz)}|${norm(mat)}`;
@@ -284,12 +466,11 @@
 
     // --- 1. CARGA INICIAL ---
     async function init() {
-      // SalesOrder
       try {
         ui.indSO.className = 'indicator ind-yellow';
         let from=0, total=0, keep=true;
         while(keep) {
-          const { data, error } = await supabase.from('SalesOrder').select('STYLE,CUT,COLOR,SIZE,MATERIAL').range(from, from+999);
+          const { data, error } = await db.from('SalesOrder').select('STYLE,CUT,COLOR,SIZE,MATERIAL').range(from, from+999);
           if(error) throw error;
           if(!data?.length) break;
           
@@ -307,12 +488,11 @@
         ui.progSO.style.width = '100%'; ui.progSO.classList.add('bg-success'); ui.indSO.className = 'indicator ind-green';
       } catch(e) { console.error(e); ui.indSO.className = 'indicator bg-danger'; alert("Error SalesOrder"); }
 
-      // PO45Data
       try {
         ui.indPO.className = 'indicator ind-yellow';
         let from=0, total=0, keep=true;
         while(keep) {
-          const { data, error } = await supabase.from('po45data').select('PO45,ESTILO,CORTE,COLORN,TALLA,MATERIAL').range(from, from+999);
+          const { data, error } = await db.from('po45data').select('PO45,ESTILO,CORTE,COLORN,TALLA,MATERIAL').range(from, from+999);
           if(error) throw error;
           if(!data?.length) break;
 
@@ -358,19 +538,12 @@
 
         for(let i=1; i<json.length; i++) {
           const r = json[i];
-          
-          // Extracción Previa
           let rawClient = idx.cli > -1 ? String(r[idx.cli]) : '';
           let rawColor = idx.col > -1 ? String(r[idx.col]) : '';
 
-          // ==========================================
-          // 🚀 REGLA BROOKS: Eliminar números iniciales
-          // ==========================================
           if(rawClient.toUpperCase().includes('BROOKS')) {
-             // Expresión regular: ^ (inicio) \d+ (dígitos) \s* (espacio opcional)
              rawColor = rawColor.replace(/^\d+\s*/, '');
           }
-          // ==========================================
 
           const dat = {
             po: idx.po>-1?r[idx.po]:'', cli: rawClient, sty: idx.sty>-1?r[idx.sty]:'',
@@ -389,8 +562,12 @@
 
           if(base) {
             row.estiloBase=base.STYLE; row.colorBase=base.COLOR; row.tallaBase=base.SIZE; row.materialBase=base.MATERIAL;
-            const match = norm(row.estiloSAP)===norm(base.STYLE) && norm(row.colorSAP)===norm(base.COLOR) &&
-                          norm(row.tallaSAP)===norm(base.SIZE) && norm(row.materialSAP)===norm(base.MATERIAL);
+            const matchEstilo = norm(row.estiloSAP) === norm(base.STYLE);
+            const matchMaterial = norm(row.materialSAP) === norm(base.MATERIAL);
+            const matchColor = normColor(row.colorSAP) === normColor(base.COLOR);
+            const matchTalla = normSize(row.tallaSAP) === normSize(base.SIZE);
+            
+            const match = matchEstilo && matchColor && matchTalla && matchMaterial;
             row.code = match ? 'OK' : 'WARN';
           }
           
@@ -398,7 +575,6 @@
           newRows.push(row);
           stats.rows++;
 
-          // Guardar
           const k = keyPO(dat.po, dat.sty, dat.cut, dat.col, dat.siz, dat.mat);
           if(!state.po45Idx.has(k)) {
             inserts.push({ PO45: dat.po, ESTILO: dat.sty, CLIENTE: dat.cli, CORTE: dat.cut, COLORN: dat.col, TALLA: dat.siz, MATERIAL: dat.mat });
@@ -410,19 +586,17 @@
 
       state.rows = newRows;
       
-      // Update UI
-      ui.stats.file.innerText = stats.files; ui.stats.row.innerText = stats.rows;
-      ui.stats.saved.innerText = stats.saved;
-      ui.stats.ok.innerText = stats.ok; ui.stats.warn.innerText = stats.warn; ui.stats.err.innerText = stats.err;
+      ui.stats.file.innerText = stats.files; ui.stats.row.innerText = stats.rows.toLocaleString();
+      ui.stats.saved.innerText = stats.saved.toLocaleString();
+      ui.stats.ok.innerText = stats.ok.toLocaleString(); ui.stats.warn.innerText = stats.warn.toLocaleString(); ui.stats.err.innerText = stats.err.toLocaleString();
       
       applyFilter();
 
-      // Batch Insert
       if(inserts.length) {
         const BATCH = 500;
         for(let i=0; i<inserts.length; i+=BATCH) {
           const slice = inserts.slice(i, i+BATCH);
-          await supabase.from('po45data').insert(slice);
+          await db.from('po45data').insert(slice);
         }
         ui.countPO.innerText = (parseInt(ui.countPO.innerText.replace(/,/g,'')) + stats.saved).toLocaleString();
       }
@@ -435,31 +609,50 @@
       ui.tbody.innerHTML = '';
       const data = state.filtered.length ? state.filtered : (ui.statusFilter.value || document.getElementById('q').value ? [] : state.rows);
       
-      if(!data.length) { ui.tbody.innerHTML = '<tr><td colspan="12" class="text-center py-5 text-muted fs-5">Sin datos visuales</td></tr>'; updatePager(0); return; }
+      if(!data.length) { 
+        ui.tbody.innerHTML = `<tr><td colspan="8" class="text-center py-5 text-muted"><i class="bi bi-search fs-2 mb-2 d-block text-slate-300"></i><span class="fs-6">No se encontraron resultados</span></td></tr>`; 
+        updatePager(0); return; 
+      }
 
       const start = (state.page-1)*state.size;
       const subset = data.slice(start, start+state.size);
 
       ui.tbody.innerHTML = subset.map(r => `
         <tr>
-          <td class="fw-bold" style="color:#0f172a">${esc(r.po45)}</td> <td>${esc(r.cliente)}</td>
-          <td class="small">${esc(r.estiloSAP)}</td> <td class="small text-muted">${esc(r.estiloBase)}</td>
-          <td class="fw-bold">${esc(r.corte)}</td>
-          <td class="small">${esc(r.colorSAP)}</td> <td class="small text-muted">${esc(r.colorBase)}</td>
-          <td class="small">${esc(r.tallaSAP)}</td> <td class="small text-muted">${esc(r.tallaBase)}</td>
-          <td class="small font-monospace">${esc(r.materialSAP)}</td> <td class="small font-monospace text-muted">${esc(r.materialBase)}</td>
+          <td class="fw-bold font-sap" style="color:var(--primary)">${esc(r.po45)}</td> 
+          <td>${esc(r.cliente)}</td>
+          <td>
+            <div class="font-sap">${esc(r.estiloSAP)}</div>
+            ${r.estiloBase ? `<div class="font-sap text-muted small" style="font-size:0.7rem">↳ ${esc(r.estiloBase)}</div>` : ''}
+          </td>
+          <td class="fw-bold text-dark font-sap">${esc(r.corte)}</td>
+          <td>
+            <div>${esc(r.colorSAP)}</div>
+            ${r.colorBase ? `<div class="text-muted small" style="font-size:0.7rem">↳ ${esc(r.colorBase)}</div>` : ''}
+          </td>
+          <td>
+            <div>${esc(r.tallaSAP)}</div>
+            ${r.tallaBase ? `<div class="text-muted small" style="font-size:0.7rem">↳ ${esc(r.tallaBase)}</div>` : ''}
+          </td>
+          <td>
+            <div class="font-sap">${esc(r.materialSAP)}</div>
+            ${r.materialBase ? `<div class="font-sap text-muted small" style="font-size:0.7rem">↳ ${esc(r.materialBase)}</div>` : ''}
+          </td>
           <td class="text-center">${badge(r.code)}</td>
         </tr>
       `).join('');
       updatePager(data.length);
     }
 
-    const badge = c => c==='OK' ? `<span class="badge-pill bg-ok">Correcto</span>` : (c==='WARN' ? `<span class="badge-pill bg-warn">Diferencia</span>` : `<span class="badge-pill bg-err">No Encontrado</span>`);
+    const badge = c => 
+      c==='OK' ? `<span class="badge-pill bg-ok"><i class="bi bi-check2"></i> Correcto</span>` : 
+      (c==='WARN' ? `<span class="badge-pill bg-warn"><i class="bi bi-exclamation-triangle"></i> Diferencia</span>` : 
+      `<span class="badge-pill bg-err"><i class="bi bi-x-lg"></i> No Encontrado</span>`);
 
     function updatePager(tot) {
       const p = Math.max(1, Math.ceil(tot/state.size));
       if(state.page > p) state.page = p;
-      document.getElementById('pageInfo').innerText = `${state.page} / ${p}`;
+      document.getElementById('pageInfo').innerText = `Página ${state.page} de ${p}`;
       document.getElementById('prevPage').disabled = state.page<=1;
       document.getElementById('nextPage').disabled = state.page>=p;
     }
@@ -484,7 +677,6 @@
       state.page = 1; render();
     }, 200);
 
-    // Events
     ui.dz.addEventListener('click', ()=>ui.fileIn.click());
     ui.fileIn.addEventListener('change', e=>processFiles(e.target.files));
     ui.dz.addEventListener('dragover', e=>{e.preventDefault(); ui.dz.classList.add('drag');});
@@ -505,22 +697,190 @@
       ui.stats.file.innerText='0'; ui.stats.row.innerText='0'; ui.stats.saved.innerText='0';
       ui.stats.ok.innerText='0'; ui.stats.warn.innerText='0'; ui.stats.err.innerText='0';
       ui.fileIn.value='';
+      document.getElementById('q').value='';
+      document.querySelectorAll('.col-filter').forEach(el => el.value='');
     });
     
     document.getElementById('prevPage').addEventListener('click', ()=>{state.page--; render();});
     document.getElementById('nextPage').addEventListener('click', ()=>{state.page++; render();});
     document.getElementById('pageSize').addEventListener('change', e=>{state.size=+e.target.value; state.page=1; render();});
 
-    document.getElementById('exportXlsx').addEventListener('click', ()=>{
-      const d = state.filtered.length ? state.filtered : state.rows;
-      if(!d.length) return alert("Nada que exportar");
-      const ws = XLSX.utils.json_to_sheet(d.map(r=>({
-        PO:r.po45, Cliente:r.cliente, EstiloSAP:r.estiloSAP, EstiloBase:r.estiloBase, Corte:r.corte,
-        ColorSAP:r.colorSAP, ColorBase:r.colorBase, TallaSAP:r.tallaSAP, TallaBase:r.tallaBase,
-        MatSAP:r.materialSAP, MatBase:r.materialBase, Estado:r.code
-      })));
-      const wb = XLSX.utils.book_new(); XLSX.utils.book_append_sheet(wb, ws, "Reporte");
-      XLSX.writeFile(wb, "Reporte_Master.xlsx");
+    // ==========================================
+    // EXPORTACIÓN ANÁLISIS ACTUAL EN PANTALLA
+    // ==========================================
+    document.getElementById('exportXlsx').addEventListener('click', async (e) => {
+      const dataToExport = state.filtered.length ? state.filtered : state.rows;
+      if (!dataToExport.length) return alert("Nada que exportar");
+
+      const btn = e.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<i class="bi bi-hourglass-split me-2"></i> Generando...';
+      btn.disabled = true;
+
+      try {
+        const wb = new ExcelJS.Workbook();
+        wb.creator = 'Comparador Master ERP';
+        const ws = wb.addWorksheet('Análisis', { views: [{ state: 'frozen', ySplit: 1 }] });
+
+        ws.columns = [
+          { header: 'PO45', key: 'po', width: 15 }, { header: 'Cliente', key: 'cliente', width: 25 },
+          { header: 'Estilo SAP', key: 'estiloSAP', width: 15 }, { header: 'Estilo Base', key: 'estiloBase', width: 15 },
+          { header: 'Corte', key: 'corte', width: 18 }, { header: 'Color SAP', key: 'colorSAP', width: 30 },
+          { header: 'Color Base', key: 'colorBase', width: 30 }, { header: 'Talla SAP', key: 'tallaSAP', width: 12 },
+          { header: 'Talla Base', key: 'tallaBase', width: 12 }, { header: 'Material SAP', key: 'matSAP', width: 18 },
+          { header: 'Material Base', key: 'matBase', width: 18 }, { header: 'Estado Global', key: 'estado', width: 18 }
+        ];
+
+        const headerRow = ws.getRow(1);
+        headerRow.height = 25;
+        headerRow.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF0F172A' } };
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+
+        dataToExport.forEach(r => {
+          let estadoTexto = r.code === 'OK' ? 'CORRECTO' : (r.code === 'WARN' ? 'DIFERENCIA' : 'NO ENCONTRADO');
+          const row = ws.addRow({
+            po: r.po45, cliente: r.cliente, estiloSAP: r.estiloSAP, estiloBase: r.estiloBase, corte: r.corte,
+            colorSAP: r.colorSAP, colorBase: r.colorBase, tallaSAP: r.tallaSAP, tallaBase: r.tallaBase,
+            matSAP: r.materialSAP, matBase: r.materialBase, estado: estadoTexto
+          });
+
+          row.eachCell((cell, colNumber) => {
+            cell.alignment = { vertical: 'middle', horizontal: colNumber === 12 ? 'center' : 'left' };
+            cell.border = { top: {style:'hair', color:{argb:'FFE2E8F0'}}, left: {style:'hair', color:{argb:'FFE2E8F0'}}, bottom: {style:'hair', color:{argb:'FFE2E8F0'}}, right: {style:'hair', color:{argb:'FFE2E8F0'}} };
+            if (colNumber === 12) {
+              cell.font = { bold: true, size: 10 };
+              if (r.code === 'OK') { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFDCFCE7' } }; cell.font.color = { argb: 'FF166534' }; }
+              else if (r.code === 'WARN') { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEF9C3' } }; cell.font.color = { argb: 'FF854D0E' }; }
+              else { cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FFFEE2E2' } }; cell.font.color = { argb: 'FF991B1B' }; }
+            }
+          });
+        });
+
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        saveAs(blob, `Analisis_Master_${new Date().toISOString().slice(0,10).replace(/-/g, "")}.xlsx`);
+
+      } catch (error) {
+        console.error(error); alert("Ocurrió un error.");
+      } finally {
+        btn.innerHTML = originalText; btn.disabled = false;
+      }
+    });
+
+    // ==========================================
+    // ⬇️ NUEVA LÓGICA: DESCARGAR BD PO45 (CON O SIN FILTROS)
+    // ==========================================
+    document.getElementById('btnRunDbExport').addEventListener('click', async (e) => {
+      const btn = e.target;
+      const originalText = btn.innerHTML;
+      btn.innerHTML = '<span class="spinner-border spinner-border-sm me-2" role="status" aria-hidden="true"></span> Descargando...';
+      btn.disabled = true;
+
+      // Leer los filtros del modal
+      const fCli = document.getElementById('db-filter-cliente').value.trim();
+      const fSty = document.getElementById('db-filter-estilo').value.trim();
+      const fCol = document.getElementById('db-filter-color').value.trim();
+
+      try {
+        let allData = [];
+        let keep = true;
+        let from = 0;
+        const step = 999;
+
+        // Bucle para descargar miles de datos saltándose el límite de 1000 por consulta
+        while (keep) {
+          let query = db.from('po45data').select('PO45, ESTILO, CLIENTE, CORTE, COLORN, TALLA, MATERIAL').range(from, from + step);
+          
+          if (fCli) query = query.ilike('CLIENTE', `%${fCli}%`);
+          if (fSty) query = query.ilike('ESTILO', `%${fSty}%`);
+          if (fCol) query = query.ilike('COLORN', `%${fCol}%`);
+
+          const { data, error } = await query;
+          if (error) throw error;
+          
+          if (!data || data.length === 0) {
+            keep = false;
+            break;
+          }
+
+          allData = allData.concat(data);
+          
+          if (data.length <= step) {
+             keep = false; // Ya no hay más datos por descargar
+          } else {
+             from += step + 1; // Avanzamos a los siguientes 1000
+          }
+        }
+
+        if (allData.length === 0) {
+          alert("No se encontraron registros en la base de datos con esos criterios.");
+          btn.innerHTML = originalText;
+          btn.disabled = false;
+          return;
+        }
+
+        // Crear el archivo Excel Profesional
+        const wb = new ExcelJS.Workbook();
+        wb.creator = 'Comparador Master ERP';
+        const ws = wb.addWorksheet('Data Histórica PO45', { views: [{ state: 'frozen', ySplit: 1 }] });
+
+        ws.columns = [
+          { header: 'Documento PO45', key: 'PO45', width: 18 },
+          { header: 'Cliente', key: 'CLIENTE', width: 28 },
+          { header: 'Estilo SAP', key: 'ESTILO', width: 16 },
+          { header: 'N° Corte', key: 'CORTE', width: 18 },
+          { header: 'Color SAP', key: 'COLORN', width: 30 },
+          { header: 'Talla', key: 'TALLA', width: 12 },
+          { header: 'Material SAP', key: 'MATERIAL', width: 18 }
+        ];
+
+        // Diseño del encabezado
+        const headerRow = ws.getRow(1);
+        headerRow.height = 25;
+        headerRow.eachCell((cell) => {
+          cell.fill = { type: 'pattern', pattern: 'solid', fgColor: { argb: 'FF1E3A8A' } }; // Azul rey
+          cell.font = { color: { argb: 'FFFFFFFF' }, bold: true, size: 11 };
+          cell.alignment = { vertical: 'middle', horizontal: 'center' };
+          cell.border = { top: {style:'thin'}, left: {style:'thin'}, bottom: {style:'thin'}, right: {style:'thin'} };
+        });
+
+        // Insertar datos
+        allData.forEach(r => {
+          const row = ws.addRow(r);
+          row.eachCell((cell) => {
+            cell.alignment = { vertical: 'middle' };
+            cell.border = { 
+              top: {style:'hair', color:{argb:'FFCBD5E1'}}, 
+              left: {style:'hair', color:{argb:'FFCBD5E1'}}, 
+              bottom: {style:'hair', color:{argb:'FFCBD5E1'}}, 
+              right: {style:'hair', color:{argb:'FFCBD5E1'}} 
+            };
+          });
+        });
+
+        // Generar y descargar Blob
+        const buffer = await wb.xlsx.writeBuffer();
+        const blob = new Blob([buffer], { type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet' });
+        
+        const dateStr = new Date().toISOString().slice(0,10).replace(/-/g, "");
+        saveAs(blob, `BaseDatos_PO45_${dateStr}.xlsx`);
+
+        // Cerrar el modal mediante Bootstrap JS
+        const modalElement = document.getElementById('exportDbModal');
+        const modalInstance = bootstrap.Modal.getInstance(modalElement);
+        modalInstance.hide();
+
+      } catch (error) {
+        console.error("Error extraiendo base de datos: ", error);
+        alert("Ocurrió un error al extraer los datos desde el servidor.");
+      } finally {
+        btn.innerHTML = originalText;
+        btn.disabled = false;
+      }
     });
 
     init(); 
