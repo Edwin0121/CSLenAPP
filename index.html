@@ -3,261 +3,278 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Customer Service Lenor</title>
+    <title>Customer Service | Lenor Industries</title>
     
-    <!-- Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     
-    <!-- Font Awesome -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
-    <!-- React Hot Toast (alternativa) -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.css">
     <script src="https://cdn.jsdelivr.net/npm/notyf@3/notyf.min.js"></script>
     
-    <!-- Supabase -->
     <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     
     <style>
-        /* Estilos adicionales para mejorar la experiencia */
+        /* Estilos optimizados para entorno corporativo */
         .sidebar-transition {
-            transition: transform 0.3s ease-in-out;
-        }
-        .backdrop-blur-xl {
-            backdrop-filter: blur(12px);
-        }
-        .scrollbar-thin::-webkit-scrollbar {
-            width: 6px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-track {
-            background: transparent;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb {
-            background: rgba(156, 163, 175, 0.5);
-            border-radius: 3px;
-        }
-        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
-            background: rgba(156, 163, 175, 0.7);
+            transition: transform 0.2s ease-in-out;
         }
         
-        /* Mejoras para el tema claro */
+        .scrollbar-thin::-webkit-scrollbar {
+            width: 8px;
+            height: 8px;
+        }
+        .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(241, 245, 249, 1); /* slate-100 */
+        }
+        .dark .scrollbar-thin::-webkit-scrollbar-track {
+            background: rgba(15, 23, 42, 1); /* slate-900 */
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(203, 213, 225, 1); /* slate-300 */
+            border-radius: 4px;
+        }
+        .dark .scrollbar-thin::-webkit-scrollbar-thumb {
+            background: rgba(51, 65, 85, 1); /* slate-700 */
+        }
+        .scrollbar-thin::-webkit-scrollbar-thumb:hover {
+            background: rgba(148, 163, 184, 1); /* slate-400 */
+        }
+
+        /* Tema claro corporativo */
         .light-theme-bg {
-            background: linear-gradient(135deg, #f0f9ff 0%, #e0f2fe 50%, #f0fdf4 100%);
+            background-color: #f8fafc; /* slate-50 */
         }
         .light-card {
-            background: rgba(255, 255, 255, 0.9);
-            backdrop-filter: blur(12px);
-            border: 1px solid rgba(226, 232, 240, 0.8);
-            box-shadow: 0 10px 25px -5px rgba(14, 165, 233, 0.1), 0 8px 10px -6px rgba(14, 165, 233, 0.1);
+            background-color: #ffffff;
+            border: 1px solid #e2e8f0;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
         }
         .light-sidebar {
-            background: rgba(248, 250, 252, 0.9);
-            backdrop-filter: blur(12px);
-            border-right: 1px solid rgba(226, 232, 240, 0.8);
+            background-color: #ffffff;
+            border-right: 1px solid #e2e8f0;
         }
         .light-header {
-            background: rgba(248, 250, 252, 0.9);
-            backdrop-filter: blur(12px);
-            border-bottom: 1px solid rgba(226, 232, 240, 0.8);
+            background-color: #ffffff;
+            border-bottom: 1px solid #e2e8f0;
         }
     </style>
 </head>
-<body class="min-h-screen dark:bg-slate-950 light-theme-bg dark:text-white text-slate-800 transition-colors duration-300">
-    <!-- Contenedor principal -->
+<body class="min-h-screen dark:bg-slate-950 light-theme-bg dark:text-slate-100 text-slate-800 transition-colors duration-200 font-sans">
+    
     <div id="app">
-        <!-- Pantalla de login -->
+        
         <div id="login-screen">
-            <div class="fixed inset-0 bg-gradient-to-br from-cyan-500/10 via-transparent to-teal-500/10 pointer-events-none"></div>
-            
-            <div class="fixed inset-0 overflow-hidden pointer-events-none">
-                <div class="absolute top-1/4 -left-48 w-96 h-96 bg-cyan-500/20 rounded-full blur-3xl animate-pulse"></div>
-                <div class="absolute bottom-1/4 -right-48 w-96 h-96 bg-teal-500/20 rounded-full blur-3xl animate-pulse" style="animation-delay: 1s;"></div>
-            </div>
+            <div class="fixed inset-0 bg-slate-100 dark:bg-slate-950 -z-10"></div>
+            <div class="fixed top-0 left-0 w-full h-1/2 bg-blue-700 dark:bg-blue-900 -z-10"></div>
 
             <div class="relative min-h-screen flex items-center justify-center p-6">
-                <div id="login-card" class="w-full max-w-md light-card dark:bg-slate-900/80 dark:border-slate-800 rounded-2xl shadow-2xl border p-8 space-y-6">
-                    <div class="flex items-center gap-3">
-                        <div class="w-12 h-12 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/50">
-                            <span class="text-white font-bold text-xl">L</span>
+                <div id="login-card" class="w-full max-w-md light-card dark:bg-slate-900 dark:border-slate-700 rounded-lg shadow-xl p-8 space-y-6">
+                    
+                    <div class="text-center mb-8">
+                        <div class="mx-auto w-16 h-16 rounded-md bg-blue-700 text-white flex items-center justify-center mb-4 shadow-md">
+                            <span class="font-bold text-3xl tracking-wider">L</span>
                         </div>
-                        <div>
-                            <h1 class="text-2xl font-bold dark:text-white text-slate-800">Customer Service</h1>
-                            <p class="text-sm dark:text-slate-400 text-slate-600">Sistema Lenor v3.0</p>
-                        </div>
+                        <h1 class="text-2xl font-bold dark:text-white text-slate-800">Customer Service</h1>
+                        <p class="text-sm dark:text-slate-400 text-slate-500 mt-1 uppercase tracking-wide">Portal Administrativo Lenor</p>
                     </div>
 
-                    <form id="login-form" class="space-y-4">
+                    <form id="login-form" class="space-y-5">
                         <div>
-                            <label class="block text-sm font-medium mb-2 dark:text-slate-300 text-slate-700">Usuario</label>
-                            <input 
-                                type="text" 
-                                id="usuario"
-                                class="w-full px-4 py-3 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white bg-white border-slate-300 text-slate-900 border focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition" 
-                                placeholder="Ingrese su usuario" 
-                                required
-                            >
+                            <label class="block text-sm font-semibold mb-1 dark:text-slate-300 text-slate-700">Usuario</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-user text-slate-400"></i>
+                                </div>
+                                <input 
+                                    type="text" 
+                                    id="usuario"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-md dark:bg-slate-800 dark:border-slate-600 dark:text-white bg-slate-50 border-slate-300 text-slate-900 border focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors" 
+                                    placeholder="ID de empleado" 
+                                    required
+                                >
+                            </div>
                         </div>
 
                         <div>
-                            <label class="block text-sm font-medium mb-2 dark:text-slate-300 text-slate-700">Contraseña</label>
-                            <input 
-                                type="password" 
-                                id="contrasena"
-                                class="w-full px-4 py-3 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white bg-white border-slate-300 text-slate-900 border focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition" 
-                                placeholder="••••••••" 
-                                required
-                            >
+                            <label class="block text-sm font-semibold mb-1 dark:text-slate-300 text-slate-700">Contraseña</label>
+                            <div class="relative">
+                                <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                                    <i class="fas fa-lock text-slate-400"></i>
+                                </div>
+                                <input 
+                                    type="password" 
+                                    id="contrasena"
+                                    class="w-full pl-10 pr-4 py-2.5 rounded-md dark:bg-slate-800 dark:border-slate-600 dark:text-white bg-slate-50 border-slate-300 text-slate-900 border focus:ring-2 focus:ring-blue-600 focus:border-blue-600 transition-colors" 
+                                    placeholder="••••••••" 
+                                    required
+                                >
+                            </div>
                         </div>
 
-                        <div class="flex items-center gap-2">
-                            <input 
-                                type="checkbox" 
-                                id="remember"
-                                class="w-4 h-4 rounded text-cyan-500 focus:ring-cyan-500"
-                            >
-                            <label for="remember" class="text-sm dark:text-slate-400 text-slate-600">Recordarme</label>
+                        <div class="flex items-center justify-between">
+                            <div class="flex items-center gap-2">
+                                <input 
+                                    type="checkbox" 
+                                    id="remember"
+                                    class="w-4 h-4 rounded text-blue-600 border-slate-300 focus:ring-blue-600"
+                                >
+                                <label for="remember" class="text-sm dark:text-slate-400 text-slate-600 cursor-pointer">Mantener sesión iniciada</label>
+                            </div>
                         </div>
 
                         <button
                             type="submit"
                             id="login-button"
-                            class="w-full py-3 px-4 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white font-semibold rounded-lg shadow-lg shadow-cyan-500/50 transition-all duration-200 hover:scale-[1.02] disabled:opacity-50 disabled:cursor-not-allowed"
+                            class="w-full py-2.5 px-4 bg-blue-700 hover:bg-blue-800 text-white font-semibold rounded-md shadow-sm transition-colors duration-200 flex justify-center items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                         >
-                            Iniciar Sesión
+                            <span>Ingresar al Sistema</span>
+                            <i class="fas fa-arrow-right text-sm"></i>
                         </button>
                     </form>
 
-                    <div class="flex justify-end">
+                    <div class="pt-6 mt-6 border-t dark:border-slate-700 border-slate-200 flex justify-between items-center">
+                        <span class="text-xs text-slate-500 dark:text-slate-400">Versión 3.0.1</span>
                         <button
                             id="theme-toggle-login"
-                            class="p-2 rounded-lg dark:bg-slate-800 dark:hover:bg-slate-700 bg-slate-100 hover:bg-slate-200 transition"
-                            aria-label="Toggle theme"
+                            class="p-2 rounded-md dark:bg-slate-800 dark:hover:bg-slate-700 bg-slate-100 hover:bg-slate-200 text-slate-600 dark:text-slate-300 transition-colors"
+                            aria-label="Alternar tema"
                         >
-                            <i id="theme-icon-login" class="fas fa-sun text-yellow-400 w-5 h-5"></i>
+                            <i id="theme-icon-login" class="fas fa-moon w-4 h-4"></i>
                         </button>
                     </div>
                 </div>
             </div>
         </div>
 
-        <!-- Pantalla principal (oculta inicialmente) -->
-        <div id="main-screen" class="hidden">
-            <!-- Header -->
-            <header id="header" class="sticky top-0 z-50 light-header dark:bg-slate-900/80 dark:border-slate-800 backdrop-blur-xl border-b shadow-lg">
-                <div class="flex items-center justify-between px-6 py-4">
+        <div id="main-screen" class="hidden h-screen flex flex-col overflow-hidden">
+            <header id="header" class="flex-shrink-0 z-50 light-header dark:bg-slate-900 dark:border-slate-800 border-b shadow-sm">
+                <div class="flex items-center justify-between px-4 lg:px-6 py-3">
                     <div class="flex items-center gap-4">
                         <button
                             id="sidebar-toggle"
-                            class="p-2 rounded-lg dark:hover:bg-slate-800 hover:bg-slate-100 transition lg:hidden"
+                            class="p-2 rounded-md dark:hover:bg-slate-800 hover:bg-slate-100 transition-colors lg:hidden text-slate-600 dark:text-slate-300"
                         >
                             <i class="fas fa-bars w-5 h-5"></i>
                         </button>
 
                         <div class="flex items-center gap-3">
-                            <div class="w-10 h-10 rounded-xl bg-gradient-to-br from-cyan-500 to-teal-500 flex items-center justify-center shadow-lg shadow-cyan-500/50">
-                                <span class="text-white font-bold">L</span>
+                            <div class="w-8 h-8 rounded bg-blue-700 text-white flex items-center justify-center font-bold">
+                                L
                             </div>
                             <div class="hidden sm:block">
-                                <h1 class="text-lg font-bold bg-gradient-to-r from-cyan-500 to-teal-500 bg-clip-text text-transparent">
-                                    Customer Service Lenor
+                                <h1 class="text-base font-bold text-slate-800 dark:text-white leading-tight">
+                                    Lenor Industries
                                 </h1>
-                                <p class="text-xs dark:text-slate-400 text-slate-600">
-                                    Suite de análisis y conversión
+                                <p class="text-xs dark:text-slate-400 text-slate-500 font-medium tracking-wide">
+                                    CUSTOMER SERVICE PORTAL
                                 </p>
                             </div>
                         </div>
                     </div>
 
-                    <div class="flex items-center gap-3">
-                        <div id="clock" class="hidden md:flex items-center gap-2 px-3 py-2 rounded-lg dark:bg-slate-800 dark:border-slate-700 bg-slate-100 border-slate-200 border font-mono text-sm">
-                            <i class="fas fa-clock text-cyan-500 w-4 h-4"></i>
-                            <span>00:00:00 AM</span>
+                    <div class="flex items-center gap-2 lg:gap-4">
+                        <div id="clock" class="hidden md:flex items-center gap-2 px-3 py-1.5 rounded bg-slate-100 dark:bg-slate-800 text-slate-600 dark:text-slate-300 font-mono text-sm border border-slate-200 dark:border-slate-700">
+                            <i class="fas fa-clock text-blue-600 dark:text-blue-400 w-3 h-3"></i>
+                            <span>00:00:00</span>
                         </div>
 
-                        <div id="user-info" class="flex items-center gap-2 px-3 py-2 rounded-full dark:bg-slate-800 bg-slate-100">
-                            <i class="fas fa-user text-cyan-500 w-4 h-4"></i>
-                            <span id="username" class="text-sm font-medium hidden sm:inline"></span>
+                        <div class="h-8 w-px bg-slate-200 dark:bg-slate-700 hidden sm:block mx-1"></div>
+                        
+                        <div id="user-info" class="flex items-center gap-2 px-2 py-1.5 rounded-md">
+                            <div class="w-8 h-8 rounded-full bg-slate-200 dark:bg-slate-700 flex items-center justify-center text-slate-600 dark:text-slate-300">
+                                <i class="fas fa-user text-sm"></i>
+                            </div>
+                            <div class="hidden sm:block text-left">
+                                <div id="username" class="text-sm font-semibold text-slate-800 dark:text-slate-200 leading-none">Usuario</div>
+                                <div class="text-[10px] text-slate-500 dark:text-slate-400 uppercase mt-1">En línea</div>
+                            </div>
                         </div>
 
-                        <button
-                            id="logout-button"
-                            class="p-2 rounded-lg dark:hover:bg-slate-800 hover:bg-slate-100 transition"
-                            title="Cerrar sesión"
-                        >
-                            <i class="fas fa-sign-out-alt w-5 h-5"></i>
-                        </button>
-
-                        <button
-                            id="theme-toggle"
-                            class="p-2 rounded-lg dark:hover:bg-slate-800 hover:bg-slate-100 transition"
-                            aria-label="Toggle theme"
-                        >
-                            <i id="theme-icon" class="fas fa-sun text-yellow-400 w-5 h-5"></i>
-                        </button>
+                        <div class="flex items-center gap-1">
+                            <button
+                                id="theme-toggle"
+                                class="p-2 rounded-md text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
+                                aria-label="Alternar tema"
+                                title="Cambiar tema visual"
+                            >
+                                <i id="theme-icon" class="fas fa-moon w-4 h-4"></i>
+                            </button>
+                            <button
+                                id="logout-button"
+                                class="p-2 rounded-md text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20 transition-colors ml-1"
+                                title="Cerrar sesión"
+                            >
+                                <i class="fas fa-sign-out-alt w-4 h-4"></i>
+                            </button>
+                        </div>
                     </div>
                 </div>
             </header>
 
-            <div class="flex">
-                <!-- Sidebar -->
+            <div class="flex flex-1 overflow-hidden">
                 <aside
                     id="sidebar"
-                    class="sidebar-transition fixed lg:sticky top-[73px] left-0 h-[calc(100vh-73px)] w-72 light-sidebar dark:bg-slate-900/80 dark:border-slate-800 backdrop-blur-xl border-r p-4 z-40 overflow-y-auto scrollbar-thin"
+                    class="sidebar-transition absolute lg:relative lg:translate-x-0 -translate-x-full h-full w-64 light-sidebar dark:bg-slate-900 dark:border-slate-800 border-r flex flex-col z-40 bg-white"
                 >
-                    <!-- Search -->
-                    <div class="relative mb-4">
-                        <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 dark:text-slate-400 text-slate-500"></i>
-                        <input
-                            type="text"
-                            id="search-input"
-                            placeholder="Buscar página..."
-                            class="w-full pl-10 pr-4 py-2 rounded-lg dark:bg-slate-800 dark:border-slate-700 dark:text-white bg-slate-50 border-slate-200 text-slate-900 border focus:ring-2 focus:ring-cyan-500 focus:border-transparent transition text-sm"
-                        >
+                    <div class="p-4 border-b border-slate-200 dark:border-slate-800">
+                        <div class="relative">
+                            <i class="fas fa-search absolute left-3 top-1/2 -translate-y-1/2 w-3 h-3 text-slate-400"></i>
+                            <input
+                                type="text"
+                                id="search-input"
+                                placeholder="Buscar módulo..."
+                                class="w-full pl-8 pr-3 py-1.5 rounded text-sm dark:bg-slate-800 dark:border-slate-700 dark:text-white bg-slate-50 border-slate-200 text-slate-900 border focus:ring-1 focus:ring-blue-600 focus:border-blue-600 transition-colors"
+                            >
+                        </div>
                     </div>
 
-                    <!-- Menu -->
-                    <nav id="menu" class="space-y-1">
-                        <!-- Los elementos del menú se generarán dinámicamente -->
-                    </nav>
+                    <nav id="menu" class="flex-1 overflow-y-auto scrollbar-thin p-3 space-y-0.5">
+                        </nav>
                 </aside>
 
-                <!-- Overlay para móviles -->
-                <div id="sidebar-overlay" class="fixed inset-0 bg-black/50 z-30 lg:hidden hidden"></div>
+                <div id="sidebar-overlay" class="fixed inset-0 bg-slate-900/50 z-30 lg:hidden hidden backdrop-blur-sm"></div>
 
-                <!-- Main content -->
-                <main class="flex-1 p-6">
-                    <div class="h-[calc(100vh-145px)] rounded-xl light-card dark:bg-slate-900/50 dark:border-slate-800 border shadow-xl overflow-hidden flex flex-col">
-                        <!-- Toolbar -->
-                        <div class="flex items-center justify-between px-4 py-3 border-b dark:border-slate-800 border-slate-200 dark:bg-slate-900/80 bg-slate-50">
-                            <div class="flex items-center gap-2">
-                                <span class="px-2 py-1 text-xs font-medium rounded dark:bg-slate-800 dark:text-slate-300 bg-slate-200 text-slate-700">VISTA</span>
-                                <code id="current-page" class="text-xs text-cyan-600 dark:text-cyan-400 font-mono">dashboard.html</code>
+                <main class="flex-1 flex flex-col min-w-0 bg-slate-50 dark:bg-slate-950 p-4 lg:p-6 overflow-hidden">
+                    <div class="flex-1 rounded-md light-card dark:bg-slate-900 dark:border-slate-800 border shadow-sm flex flex-col overflow-hidden">
+                        
+                        <div class="flex items-center justify-between px-4 py-2.5 border-b border-slate-200 dark:border-slate-800 bg-white dark:bg-slate-900">
+                            <div class="flex items-center gap-3">
+                                <div class="flex items-center gap-1.5">
+                                    <div class="w-2 h-2 rounded-full bg-green-500"></div>
+                                    <span class="text-xs font-semibold text-slate-500 dark:text-slate-400 uppercase tracking-wider">Módulo Activo</span>
+                                </div>
+                                <div class="h-4 w-px bg-slate-300 dark:bg-slate-700"></div>
+                                <code id="current-page" class="text-xs text-blue-700 dark:text-blue-400 font-mono bg-blue-50 dark:bg-blue-900/30 px-2 py-0.5 rounded">dashboard.html</code>
                             </div>
-                            <div class="flex items-center gap-2">
+                            
+                            <div class="flex items-center gap-1">
                                 <button
                                     id="reload-button"
-                                    class="p-2 rounded-lg dark:hover:bg-slate-800 hover:bg-slate-100 transition"
-                                    title="Recargar"
+                                    class="p-1.5 rounded text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-blue-600 dark:hover:text-blue-400 transition-colors"
+                                    title="Actualizar módulo"
                                 >
                                     <i class="fas fa-sync-alt w-4 h-4"></i>
                                 </button>
                                 <button
                                     id="open-button"
-                                    class="flex items-center gap-2 px-3 py-2 bg-gradient-to-r from-cyan-500 to-teal-500 hover:from-cyan-600 hover:to-teal-600 text-white text-sm font-medium rounded-lg transition"
+                                    class="flex items-center gap-1.5 px-2.5 py-1.5 text-xs font-medium text-slate-600 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 rounded transition-colors ml-1"
+                                    title="Abrir en ventana nueva"
                                 >
-                                    <i class="fas fa-external-link-alt w-4 h-4"></i>
-                                    <span class="hidden sm:inline">Abrir</span>
+                                    <i class="fas fa-external-link-alt w-3 h-3"></i>
+                                    <span class="hidden sm:inline">Ventana Nueva</span>
                                 </button>
                             </div>
                         </div>
 
-                        <!-- Iframe -->
-                        <iframe
-                            id="content-frame"
-                            src="dashboard.html"
-                            class="flex-1 w-full"
-                            title="Content viewer"
-                        ></iframe>
+                        <div class="flex-1 relative bg-slate-50 dark:bg-slate-950">
+                            <iframe
+                                id="content-frame"
+                                src="dashboard.html"
+                                class="absolute inset-0 w-full h-full border-0"
+                                title="Visor de módulos"
+                            ></iframe>
+                        </div>
                     </div>
                 </main>
             </div>
@@ -265,55 +282,18 @@
     </div>
 
     <script>
-        // Configuración de Tailwind
+        // Configuración de Tailwind adaptada a colores corporativos
         tailwind.config = {
             darkMode: 'class',
             theme: {
                 extend: {
-                    colors: {
-                        cyan: {
-                            50: '#ecfeff',
-                            100: '#cffafe',
-                            200: '#a5f3fc',
-                            300: '#67e8f9',
-                            400: '#22d3ee',
-                            500: '#06b6d4',
-                            600: '#0891b2',
-                            700: '#0e7490',
-                            800: '#155e75',
-                            900: '#164e63',
-                        },
-                        teal: {
-                            50: '#f0fdfa',
-                            100: '#ccfbf1',
-                            200: '#99f6e4',
-                            300: '#5eead4',
-                            400: '#2dd4bf',
-                            500: '#14b8a6',
-                            600: '#0d9488',
-                            700: '#0f766e',
-                            800: '#115e59',
-                            900: '#134e4a',
-                        },
-                        slate: {
-                            50: '#f8fafc',
-                            100: '#f1f5f9',
-                            200: '#e2e8f0',
-                            300: '#cbd5e1',
-                            400: '#94a3b8',
-                            500: '#64748b',
-                            600: '#475569',
-                            700: '#334155',
-                            800: '#1e293b',
-                            900: '#0f172a',
-                            950: '#020617',
-                        }
+                    fontFamily: {
+                        sans: ['Inter', 'Segoe UI', 'Roboto', 'Helvetica Neue', 'Arial', 'sans-serif'],
                     }
                 }
             }
         }
 
-        // Datos de la aplicación
         const SUPABASE_URL = "https://aawqcgapxdqemjqzwcsy.supabase.co";
         const SUPABASE_ANON_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImFhd3FjZ2FweGRxZW1qcXp3Y3N5Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTM4MDcyMzAsImV4cCI6MjA2OTM4MzIzMH0.LH0_ROcN1-foBkUZFwL4xAcuG68FJz-ReTxsYZFoXss";
 
@@ -329,29 +309,29 @@
                 label: "Convertir PDF",
                 icon: "file-pdf",
                 children: [
-                    { id: "fox", label: "FOX", icon: "file-pdf", src: "pdffoxv2.html" },
-                    { id: "dudley", label: "Dudley", icon: "file-pdf", src: "pdfdudley.html" },
-                    { id: "official", label: "Official Sports", icon: "file-pdf", src: "pdfofficial.html" },
-                    { id: "brooks", label: "Brooks", icon: "file-pdf", src: "brookspdfextrac.html" },
-                    { id: "ariat", label: "Ariat", icon: "file-pdf", src: "ariat.html" }
-                                       ]
+                    { id: "fox", label: "FOX", icon: "file-alt", src: "pdffoxv2.html" },
+                    { id: "dudley", label: "Dudley", icon: "file-alt", src: "pdfdudley.html" },
+                    { id: "official", label: "Official Sports", icon: "file-alt", src: "pdfofficial.html" },
+                    { id: "brooks", label: "Brooks", icon: "file-alt", src: "brookspdfextrac.html" },
+                    { id: "ariat", label: "Ariat", icon: "file-alt", src: "ariat.html" }
+                ]
             },
             {
                 id: "po45",
                 label: "PO45 vs Materiales SO",
-                icon: "info-circle",
+                icon: "clipboard-list",
                 src: "po45.html"
             },
             {
                 id: "carga",
                 label: "Carga MRKS",
-                icon: "upload",
+                icon: "cloud-upload-alt",
                 src: "seg_carga.html"
             },
             {
                 id: "wip",
-                label: "Wip Brooks vs Base General",
-                icon: "exchange-alt",
+                label: "WIP Brooks vs Base",
+                icon: "layer-group",
                 src: "wipbrooks.html"
             },
             {
@@ -375,7 +355,7 @@
             {
                 id: "cargasap",
                 label: "Formatos Carga SAP",
-                icon: "upload",
+                icon: "database",
                 src: "cargasap.html"
             },
             {
@@ -387,7 +367,7 @@
             {
                 id: "ypack",
                 label: "Revisión Ypack vs SAP",
-                icon: "clipboard-check",
+                icon: "check-double",
                 src: "ypackvssap.html"
             },
             {
@@ -404,12 +384,11 @@
             }
         ];
 
-        // Estado de la aplicación
         let state = {
             isAuthenticated: false,
             username: "",
-            sidebarOpen: true,
-            theme: "dark",
+            sidebarOpen: false, /* Sidebar cerrado por defecto en móviles */
+            theme: "light",     /* Tema corporativo claro por defecto */
             currentPage: "dashboard.html",
             searchQuery: "",
             expandedGroups: ["pdf-group"],
@@ -417,42 +396,26 @@
             isLoggingIn: false
         };
 
-        // Inicialización de notificaciones
         const notyf = new Notyf({
             duration: 4000,
-            position: {
-                x: 'center',
-                y: 'top',
-            },
+            position: { x: 'right', y: 'bottom' },
             types: [
-                {
-                    type: 'success',
-                    background: '#10b981',
-                    icon: false
-                },
-                {
-                    type: 'error',
-                    background: '#ef4444',
-                    icon: false
-                }
+                { type: 'success', background: '#059669', icon: false },
+                { type: 'error', background: '#dc2626', icon: false }
             ]
         });
 
-        // Inicialización de la aplicación
         document.addEventListener('DOMContentLoaded', function() {
-            // Inicializar Supabase
             if (typeof supabase !== 'undefined') {
                 state.supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
             }
 
-            // Configurar tema
             const savedTheme = localStorage.getItem("csl-theme");
             if (savedTheme === "light" || savedTheme === "dark") {
                 state.theme = savedTheme;
-                applyTheme();
             }
+            applyTheme();
 
-            // Verificar sesión existente
             const sessionData = sessionStorage.getItem("csl-user-session") || localStorage.getItem("csl-user");
             if (sessionData) {
                 try {
@@ -462,7 +425,6 @@
                     const lastPage = localStorage.getItem("csl-last");
                     if (lastPage) state.currentPage = lastPage;
                     
-                    // Mostrar pantalla principal
                     document.getElementById('login-screen').classList.add('hidden');
                     document.getElementById('main-screen').classList.remove('hidden');
                     updateUsername();
@@ -473,15 +435,16 @@
                 }
             }
 
-            // Iniciar reloj
             updateClock();
             setInterval(updateClock, 1000);
-
-            // Configurar eventos
             setupEventListeners();
+            
+            // Ajustar sidebar en pantallas grandes
+            if(window.innerWidth >= 1024) {
+                state.sidebarOpen = true;
+            }
         });
 
-        // Funciones de la aplicación
         function updateClock() {
             const now = new Date();
             let h = now.getHours();
@@ -498,19 +461,18 @@
         }
 
         function applyTheme() {
+            const iconMain = document.getElementById('theme-icon');
+            const iconLogin = document.getElementById('theme-icon-login');
+
             if (state.theme === "dark") {
                 document.documentElement.classList.add('dark');
-                // Actualizar iconos de tema
-                document.getElementById('theme-icon').className = 'fas fa-sun text-yellow-400 w-5 h-5';
-                document.getElementById('theme-icon-login').className = 'fas fa-sun text-yellow-400 w-5 h-5';
+                if(iconMain) iconMain.className = 'fas fa-sun text-yellow-500 w-4 h-4';
+                if(iconLogin) iconLogin.className = 'fas fa-sun text-yellow-500 w-4 h-4';
             } else {
                 document.documentElement.classList.remove('dark');
-                // Actualizar iconos de tema
-                document.getElementById('theme-icon').className = 'fas fa-moon text-slate-700 w-5 h-5';
-                document.getElementById('theme-icon-login').className = 'fas fa-moon text-slate-700 w-5 h-5';
+                if(iconMain) iconMain.className = 'fas fa-moon text-slate-500 w-4 h-4';
+                if(iconLogin) iconLogin.className = 'fas fa-moon text-slate-500 w-4 h-4';
             }
-            
-            // Actualizar menú para reflejar cambios de tema
             renderMenu();
         }
 
@@ -524,21 +486,14 @@
         function updateFrame() {
             const frame = document.getElementById('content-frame');
             const currentPageElement = document.getElementById('current-page');
-            
-            if (frame) {
-                frame.src = state.currentPage;
-            }
-            
-            if (currentPageElement) {
-                currentPageElement.textContent = state.currentPage;
-            }
+            if (frame) frame.src = state.currentPage;
+            if (currentPageElement) currentPageElement.textContent = state.currentPage;
         }
 
         function renderMenu() {
             const menuContainer = document.getElementById('menu');
             if (!menuContainer) return;
             
-            // Filtrar elementos del menú según la búsqueda
             const filteredItems = menuItems.filter(item => {
                 const matchesSearch = item.label.toLowerCase().includes(state.searchQuery.toLowerCase());
                 const childrenMatch = item.children?.some(child =>
@@ -547,56 +502,54 @@
                 return matchesSearch || childrenMatch;
             });
             
-            // Generar HTML del menú
             let menuHTML = '';
             
             filteredItems.forEach(item => {
                 if (item.children) {
                     const isExpanded = state.expandedGroups.includes(item.id);
-                    
                     menuHTML += `
-                        <div>
+                        <div class="mb-1">
                             <button
                                 onclick="toggleGroup('${item.id}')"
-                                class="w-full flex items-center justify-between gap-2 px-3 py-2 rounded-lg hover:bg-slate-100 dark:hover:bg-slate-800 transition text-sm font-medium"
+                                class="w-full flex items-center justify-between px-3 py-2 rounded text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors"
                             >
-                                <div class="flex items-center gap-2">
-                                    <i class="fas fa-${item.icon} w-4 text-cyan-500"></i>
+                                <div class="flex items-center gap-2.5">
+                                    <i class="fas fa-${item.icon} w-4 text-center text-slate-400 dark:text-slate-500"></i>
                                     <span>${item.label}</span>
                                 </div>
-                                ${isExpanded ? 
-                                    '<i class="fas fa-chevron-down w-4 h-4"></i>' : 
-                                    '<i class="fas fa-chevron-right w-4 h-4"></i>'
-                                }
+                                <i class="fas fa-chevron-${isExpanded ? 'down' : 'right'} w-3 h-3 text-slate-400"></i>
                             </button>
                             ${isExpanded ? `
-                                <div class="ml-4 mt-1 space-y-1">
-                                    ${item.children.map(child => `
+                                <div class="mt-0.5 ml-6 pl-2 border-l border-slate-200 dark:border-slate-700 space-y-0.5">
+                                    ${item.children.map(child => {
+                                        const isActive = state.currentPage === child.src;
+                                        return `
                                         <button
                                             onclick="navigateTo('${child.src}')"
-                                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg ${state.currentPage === child.src ? 
-                                                'bg-cyan-50 text-cyan-600 border border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/30' : 
-                                                'hover:bg-slate-100 dark:hover:bg-slate-800'
-                                            } transition text-sm"
+                                            class="w-full flex items-center gap-2.5 px-3 py-1.5 rounded text-sm ${isActive ? 
+                                                'bg-blue-50 text-blue-700 font-semibold dark:bg-blue-900/40 dark:text-blue-400' : 
+                                                'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
+                                            } transition-colors"
                                         >
-                                            <i class="fas fa-${child.icon} w-4"></i>
+                                            <i class="fas fa-${child.icon} w-3 text-center ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400'}"></i>
                                             <span>${child.label}</span>
                                         </button>
-                                    `).join('')}
+                                    `}).join('')}
                                 </div>
                             ` : ''}
                         </div>
                     `;
                 } else {
+                    const isActive = state.currentPage === item.src;
                     menuHTML += `
                         <button
                             onclick="navigateTo('${item.src}')"
-                            class="w-full flex items-center gap-2 px-3 py-2 rounded-lg ${state.currentPage === item.src ? 
-                                'bg-cyan-50 text-cyan-600 border border-cyan-200 dark:bg-cyan-500/10 dark:text-cyan-400 dark:border-cyan-500/30' : 
-                                'hover:bg-slate-100 dark:hover:bg-slate-800'
-                            } transition text-sm font-medium"
+                            class="w-full flex items-center gap-2.5 px-3 py-2 mb-1 rounded text-sm font-medium ${isActive ? 
+                                'bg-blue-50 text-blue-700 dark:bg-blue-900/40 dark:text-blue-400 border border-blue-100 dark:border-blue-800/50' : 
+                                'text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-slate-800 border border-transparent'
+                            } transition-colors"
                         >
-                            <i class="fas fa-${item.icon} w-4 text-cyan-500"></i>
+                            <i class="fas fa-${item.icon} w-4 text-center ${isActive ? 'text-blue-600 dark:text-blue-400' : 'text-slate-400 dark:text-slate-500'}"></i>
                             <span>${item.label}</span>
                         </button>
                     `;
@@ -621,8 +574,7 @@
             updateFrame();
             renderMenu();
             
-            // Cerrar sidebar en móviles
-            if (window.innerWidth < 1024) {
+            if (window.innerWidth < 1024 && state.sidebarOpen) {
                 toggleSidebar();
             }
         }
@@ -651,15 +603,16 @@
             e.preventDefault();
             
             if (!state.supabase) {
-                notyf.error("Error de conexión");
+                notyf.error("Error de conexión a la base de datos.");
                 return;
             }
 
             state.isLoggingIn = true;
             const loginButton = document.getElementById('login-button');
+            const btnText = loginButton.querySelector('span');
             if (loginButton) {
                 loginButton.disabled = true;
-                loginButton.textContent = "Verificando...";
+                btnText.textContent = "Autenticando...";
             }
 
             const usuario = document.getElementById('usuario').value;
@@ -673,38 +626,16 @@
                     .ilike("USUARIO", usuario)
                     .limit(1);
 
-                if (error) {
-                    notyf.error("Error de conexión a la base de datos");
-                    state.isLoggingIn = false;
-                    if (loginButton) {
-                        loginButton.disabled = false;
-                        loginButton.textContent = "Iniciar Sesión";
-                    }
-                    return;
-                }
+                if (error) throw error;
 
-                if (!data || data.length === 0) {
-                    notyf.error("Usuario no encontrado");
-                    state.isLoggingIn = false;
-                    if (loginButton) {
-                        loginButton.disabled = false;
-                        loginButton.textContent = "Iniciar Sesión";
-                    }
-                    return;
+                if (!data || data.length === 0 || String(data[0].CONTRASENA) !== String(contrasena)) {
+                    notyf.error("Credenciales de acceso inválidas.");
+                    throw new Error("Invalid credentials");
                 }
 
                 const user = data[0];
-                if (String(user.CONTRASENA) !== String(contrasena)) {
-                    notyf.error("Contraseña incorrecta");
-                    state.isLoggingIn = false;
-                    if (loginButton) {
-                        loginButton.disabled = false;
-                        loginButton.textContent = "Iniciar Sesión";
-                    }
-                    return;
-                }
-
                 const sessionData = { usuario: user.USUARIO, ts: Date.now() };
+                
                 if (remember) {
                     localStorage.setItem("csl-user", JSON.stringify(sessionData));
                 } else {
@@ -713,21 +644,20 @@
 
                 state.username = user.USUARIO;
                 state.isAuthenticated = true;
-                notyf.success("¡Bienvenido!");
+                notyf.success("Autenticación exitosa.");
                 
-                // Mostrar pantalla principal
                 document.getElementById('login-screen').classList.add('hidden');
                 document.getElementById('main-screen').classList.remove('hidden');
                 updateUsername();
                 renderMenu();
                 updateFrame();
             } catch (err) {
-                notyf.error("Error al iniciar sesión");
+                // El error ya se notificó
             } finally {
                 state.isLoggingIn = false;
                 if (loginButton) {
                     loginButton.disabled = false;
-                    loginButton.textContent = "Iniciar Sesión";
+                    btnText.textContent = "Ingresar al Sistema";
                 }
             }
         }
@@ -737,48 +667,31 @@
             sessionStorage.removeItem("csl-user-session");
             state.isAuthenticated = false;
             state.username = "";
-            notyf.success("Sesión cerrada");
+            notyf.success("Sesión finalizada correctamente.");
             
-            // Mostrar pantalla de login
             document.getElementById('login-screen').classList.remove('hidden');
             document.getElementById('main-screen').classList.add('hidden');
-            
-            // Limpiar formulario
             document.getElementById('login-form').reset();
         }
 
         function setupEventListeners() {
-            // Login form
             document.getElementById('login-form').addEventListener('submit', handleLogin);
-            
-            // Logout button
             document.getElementById('logout-button').addEventListener('click', handleLogout);
-            
-            // Theme toggles
             document.getElementById('theme-toggle').addEventListener('click', toggleTheme);
             document.getElementById('theme-toggle-login').addEventListener('click', toggleTheme);
-            
-            // Sidebar toggle
             document.getElementById('sidebar-toggle').addEventListener('click', toggleSidebar);
-            
-            // Sidebar overlay
             document.getElementById('sidebar-overlay').addEventListener('click', toggleSidebar);
             
-            // Search input
             document.getElementById('search-input').addEventListener('input', function(e) {
                 state.searchQuery = e.target.value;
                 renderMenu();
             });
             
-            // Reload button
             document.getElementById('reload-button').addEventListener('click', function() {
                 const iframe = document.getElementById('content-frame');
-                if (iframe) {
-                    iframe.contentWindow.location.reload();
-                }
+                if (iframe) iframe.contentWindow.location.reload();
             });
             
-            // Open button
             document.getElementById('open-button').addEventListener('click', function() {
                 window.open(state.currentPage, "_blank");
             });
