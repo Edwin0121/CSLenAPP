@@ -1,593 +1,565 @@
 <!DOCTYPE html>
 <html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>PDF to Excel Official Sports</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
-
-    <!-- UI base -->
-    <link
-      href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css"
-      rel="stylesheet"
-    />
-    <link rel="stylesheet" href="theme.css" />
-
-    <style>
-      body {
-        padding: 16px;
-      }
-
-      /* Header claro */
-      header {
-        background: linear-gradient(135deg, #f3f4f6 0%, #d1d5db 100%);
-        color: #111;
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 16px;
-        margin-bottom: 12px;
-      }
-      header h1,
-      header .small {
-        color: #111;
-      }
-      header .badge {
-        color: #111;
-        background: rgba(0, 0, 0, 0.06);
-        border-color: rgba(0, 0, 0, 0.25);
-      }
-
-      /* Pills */
-      .pill {
-        display: inline-flex;
-        align-items: center;
-        gap: 6px;
-        padding: 6px 10px;
-        border-radius: 999px;
-        font-size: 12px;
-        font-weight: 600;
-        border: 1px solid #e5e7eb;
-        background: #fff;
-        color: #111;
-      }
-      .pill.status {
-        background: #eef2ff;
-        border-color: #c7d2fe;
-      }
-      .pill.count {
-        background: #ecfeff;
-        border-color: #a5f3fc;
-      }
-
-      /* Cards & toolbar */
-      .card {
-        border: 1px solid #e5e7eb;
-        border-radius: 12px;
-        padding: 16px;
-        background: #fff;
-      }
-      .toolbar {
-        display: flex;
-        gap: 12px;
-        align-items: center;
-        justify-content: space-between;
-        flex-wrap: wrap;
-      }
-      .toolbar .left,
-      .toolbar .right {
-        display: flex;
-        gap: 8px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .small {
-        font-size: 12px;
-        color: #475569;
-      }
-      .hint {
-        color: #6b7280;
-      }
-
-      /* Dropzone-like input */
-      .filebox {
-        border: 2px dashed #cbd5e1;
-        border-radius: 12px;
-        padding: 12px 14px;
-        background: #fff;
-        display: flex;
-        align-items: center;
-        gap: 10px;
-      }
-      .filebox .name {
-        color: #475569;
-        font-size: 14px;
-      }
-
-      /* Table wrapper */
-      .table-wrap {
-        margin-top: 12px;
-        overflow: auto;
-        max-height: 65vh;
-      }
-      table {
-        width: 100%;
-        border-collapse: collapse;
-      }
-      th,
-      td {
-        border-bottom: 1px solid #e5e7eb;
-        padding: 8px 10px;
-        white-space: nowrap;
-      }
-      thead th {
-        background: #f7f7f7;
-        font-weight: 700;
-        position: sticky;
-        top: 0;
-        z-index: 1;
-      }
-      .num {
-        text-align: right;
-      }
-
-      /* Subtotal */
-      tr.subtotal-row td {
-        background: #fff7ed; /* naranja clarito */
-        border-top: 2px solid #fdba74;
-        font-weight: 700;
-      }
-      .footer-note {
-        color: #64748b;
-        font-size: 12px;
-        margin-top: 8px;
-      }
-
-      /* Pager */
-      .pager-bar {
-        display: flex;
-        gap: 10px;
-        align-items: center;
-        flex-wrap: wrap;
-      }
-      .pager-bar .form-select {
-        width: auto;
-      }
-    </style>
-
-    <script>
-      (function () {
-        try {
-          var t = localStorage.getItem("csl-theme");
-          if (t) {
-            document.documentElement.setAttribute("data-theme", t);
-          }
-        } catch (e) {}
-      })();
-    </script>
-  </head>
-  <body class="stretch-full">
-    <!-- Header -->
-    <header class="d-flex align-items-center justify-content-between">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Extractor PDF PO OSI - ExcelJS v4 Ship To Box Fix</title>
+  <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet">
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/exceljs@4.4.0/dist/exceljs.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/file-saver@2.0.5/dist/FileSaver.min.js"></script>
+  <style>
+    :root{
+      --bg:#f4f6f9;--card:#ffffff;--ink:#111827;--muted:#6b7280;--line:#d9e2ec;
+      --brand:#1f4e78;--brand2:#0f766e;--danger:#be123c;--soft:#eef6ff;
+    }
+    body{background:var(--bg);color:var(--ink);font-family:Inter,system-ui,-apple-system,BlinkMacSystemFont,"Segoe UI",sans-serif;}
+    .app-shell{max-width:1520px;margin:0 auto;padding:22px;}
+    .hero{background:linear-gradient(135deg,#17324d,#1f4e78);color:#fff;border-radius:18px;padding:22px;box-shadow:0 12px 35px rgba(15,23,42,.18);}
+    .hero small{color:#dbeafe}.card{border:1px solid var(--line);border-radius:16px;box-shadow:0 8px 24px rgba(15,23,42,.06)}
+    .dropzone{border:2px dashed #94a3b8;border-radius:16px;padding:28px;text-align:center;background:#f8fafc;transition:.2s;cursor:pointer;min-height:178px;}
+    .dropzone.drag{background:#e0f2fe;border-color:#0284c7}.dropzone input{display:none}
+    .btn-brand{background:var(--brand);border-color:var(--brand);color:#fff}.btn-brand:hover{background:#17324d;border-color:#17324d;color:#fff}
+    .btn-green{background:var(--brand2);border-color:var(--brand2);color:#fff}.btn-green:hover{background:#0b5f59;color:#fff}
+    .kpi{border-radius:14px;border:1px solid var(--line);padding:14px;background:#fff;height:100%}.kpi .label{font-size:12px;color:var(--muted);text-transform:uppercase;letter-spacing:.05em}.kpi .val{font-size:28px;font-weight:800;color:#0f172a}
+    .table-wrap{max-height:58vh;overflow:auto;border:1px solid var(--line);border-radius:14px;background:white}.table thead th{position:sticky;top:0;z-index:2;background:#eef2f7;color:#0f172a;font-size:12px;text-transform:uppercase;white-space:nowrap}.table td{font-size:13px;white-space:nowrap;vertical-align:middle}.table td.desc{min-width:320px;white-space:normal}.table td.ship{min-width:280px;white-space:normal}
+    .log{height:210px;overflow:auto;background:#0f172a;color:#d1fae5;border-radius:12px;padding:12px;font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;white-space:pre-wrap}.badge-soft{background:#e0f2fe;color:#075985}.footer{color:#64748b;font-size:12px;text-align:center;padding:20px}
+    .form-control,.form-select{border-radius:10px}.invalid-row{background:#fff1f2!important}.toolbar{gap:8px;flex-wrap:wrap}.small-note{font-size:12px;color:#64748b}.status-pill{background:var(--soft);border:1px solid #bfdbfe;border-radius:999px;padding:6px 10px;font-size:12px;color:#1e3a8a;}
+  </style>
+</head>
+<body>
+<div class="app-shell">
+  <section class="hero mb-4">
+    <div class="d-flex flex-wrap justify-content-between align-items-center gap-3">
       <div>
-        <h1 class="m-0">PDF to Excel Official Sports</h1>
-        <div class="badge">
-          Extracción por coordenadas con PDF.js → Tabla / Excel
+        <h1 class="h3 mb-1">Extractor PDF PO OSI</h1>
+        <small>Carga PDF de ordenes de compra y extrae PO, Ship To, estilo, talla, descripcion, color, tipo de prenda, cantidades y costos.</small>
+      </div>
+      <div class="text-end small"><div>Motor: PDF.js + parser OSI v4 con Ship To por bloque/box</div><div>Reportes descargables: ExcelJS</div></div>
+    </div>
+  </section>
+
+  <section class="card mb-4">
+    <div class="card-body">
+      <div class="row g-3 align-items-stretch">
+        <div class="col-lg-5">
+          <div id="dropzone" class="dropzone h-100 d-flex flex-column justify-content-center" role="button" tabindex="0">
+            <input id="fileInput" type="file" accept=".pdf,application/pdf" multiple>
+            <div class="fw-bold fs-5">Arrastra PDF aqui o haz clic para seleccionar</div>
+            <div class="text-muted mt-1">Puedes cargar varias PO a la vez. El selector se abre una sola vez.</div>
+            <div id="fileList" class="mt-3 small text-muted">Sin archivos seleccionados.</div>
+          </div>
+        </div>
+        <div class="col-lg-7">
+          <div class="row g-3 h-100">
+            <div class="col-6 col-xl-3"><div class="kpi"><div class="label">PDF</div><div id="kpiFiles" class="val">0</div></div></div>
+            <div class="col-6 col-xl-3"><div class="kpi"><div class="label">Lineas</div><div id="kpiLines" class="val">0</div></div></div>
+            <div class="col-6 col-xl-3"><div class="kpi"><div class="label">QTY</div><div id="kpiQty" class="val">0</div></div></div>
+            <div class="col-6 col-xl-3"><div class="kpi"><div class="label">Total</div><div id="kpiAmount" class="val">$0</div></div></div>
+            <div class="col-12 d-flex toolbar">
+              <button id="btnProcess" class="btn btn-brand">Procesar PDF</button>
+              <button id="btnExcel" class="btn btn-green" disabled>Exportar Excel</button>
+              <button id="btnClear" class="btn btn-outline-secondary">Limpiar</button>
+              <span class="status-pill align-self-center">Tallas: XXS, XS, S, M, L, XL, XXL, XXXL</span>
+            </div>
+          </div>
         </div>
       </div>
-      <div class="d-flex align-items-center gap-2">
-        <span id="statusPill" class="pill status">Listo</span>
-        <span id="poCountPill" class="pill count">0 POs</span>
-        <span id="rowCountPill" class="pill count">0 filas</span>
-        <div class="small">pdfofficial.html</div>
+    </div>
+  </section>
+
+  <section class="card mb-4">
+    <div class="card-body">
+      <div class="row g-2 align-items-center mb-3">
+        <div class="col-md-5"><input id="search" class="form-control" placeholder="Busqueda general: PO, estilo, color, talla, ship to..."></div>
+        <div class="col-md-2"><select id="filterPO" class="form-select"><option value="">Todas las PO</option></select></div>
+        <div class="col-md-2"><select id="filterSize" class="form-select"><option value="">Todas las tallas</option></select></div>
+        <div class="col-md-2"><select id="filterColor" class="form-select"><option value="">Todos los colores</option></select></div>
+        <div class="col-md-1 text-end"><span id="countRows" class="badge badge-soft rounded-pill">0</span></div>
       </div>
-    </header>
+      <div class="table-wrap">
+        <table class="table table-sm table-hover mb-0" id="dataTable">
+          <thead><tr id="thead"></tr></thead><tbody id="tbody"><tr><td class="text-muted p-3">Sin datos cargados.</td></tr></tbody>
+        </table>
+      </div>
+    </div>
+  </section>
 
-    <main class="container">
-      <!-- Controles -->
-      <section class="card mb-3">
-        <div class="toolbar">
-          <div class="left">
-            <div class="filebox">
-              <span class="name">Selecciona uno o varios PDF</span>
-              <input
-                type="file"
-                id="pdfInput"
-                multiple
-                accept="application/pdf"
-                class="form-control form-control-sm"
-                style="max-width: 340px"
-              />
-            </div>
-            <button class="btn btn-sm btn-primary" onclick="procesarPDFs()">
-              Procesar PDFs
-            </button>
-            <button class="btn btn-sm btn-success" onclick="exportarExcel()">
-              Exportar a Excel
-            </button>
-          </div>
-          <div class="right hint">
-            Carga los PDF de Official Sports y conviértelos a una tabla
-            exportable.
-          </div>
-        </div>
-      </section>
+  <section class="card mb-4">
+    <div class="card-header bg-white fw-bold">Bitacora de extraccion</div>
+    <div class="card-body"><div id="log" class="log">Esperando archivos...</div></div>
+  </section>
+  <div class="footer">Disenado para Customer Service development tools - OSI PO extractor</div>
+</div>
 
-      <!-- Resultados -->
-      <section class="card">
-        <div class="d-flex align-items-center justify-content-between">
-          <h5 class="m-0">Resultados</h5>
-          <div class="pager-bar">
-            <label class="small">PO por página</label>
-            <select id="pageSize" class="form-select form-select-sm">
-              <option value="10">10</option>
-              <option value="25" selected>25</option>
-              <option value="50">50</option>
-            </select>
-            <div
-              class="btn-group btn-group-sm"
-              role="group"
-              aria-label="Paginación"
-            >
-              <button id="prevPage" class="btn btn-outline-secondary">
-                « Anterior
-              </button>
-              <button id="nextPage" class="btn btn-outline-secondary">
-                Siguiente »
-              </button>
-            </div>
-            <span id="pageInfo" class="small text-muted">Página 1 de 1</span>
-          </div>
-        </div>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-        <div class="table-wrap">
-          <table class="table" id="tablaResultados">
-            <thead>
-              <tr>
-                <th>PO</th>
-                <th>Estilo</th>
-                <th>Color</th>
-                <th>Talla</th>
-                <th class="num">Qty</th>
-                <th class="num">Precio Venta</th>
-                <th>XFD</th>
-                <th>Ship To</th>
-                <th class="num">Importe (Qty×Precio)</th>
-              </tr>
-            </thead>
-            <tbody></tbody>
-          </table>
-        </div>
+const SIZE_SUFFIXES = ['XXXL','XXL','XXS','XLG','XL','XS','MD','MED','LG','SM','S','M','L'];
+const SIZE_TOKENS = ['XXXSMALL','XXSMALL','XXXL','XXL','XXS','XLG','XL','XS','SM','MED','MD','LG','S','M','L'];
+const SIZE_MAP = {XXXSMALL:'XXXS',XXSMALL:'XXS',XXS:'XXS',XS:'XS',SM:'S',S:'S',MED:'M',MD:'M',M:'M',LG:'L',L:'L',XLG:'XL',XL:'XL',XXL:'XXL',XXXL:'XXXL'};
+const COLOR_WORDS = new Set(['YELLOW','RED','BLUE','GREEN','PINK','BLACK','WHITE','NAVY','ORANGE','PURPLE','GREY','GRAY','ROYAL','CHARCOAL']);
+const HEADERS = ['Order Date','PO','Estilo','Color','Talla','QTY','Cost','Ext Cost PDF','Ship To','Vndr Item','OSI Item #','Talla Vndr','Talla PDF','Description Raw','Descripcion Estilo','Tipo Prenda','Ext Cost Calculado','Diferencia','Validacion','Archivo'];
+let selectedFiles = [];
+let rows = [];
+let processing = false;
 
-        <div class="footer-note">
-          Subtotales por PO incluyen Qty y <em>Importe (Qty × Precio)</em>. La
-          paginación es por PO; no se cortan grupos.
-        </div>
-      </section>
-    </main>
+const $ = id => document.getElementById(id);
+function norm(s){ return String(s ?? '').replace(/[\u00a0\t]+/g,' ').replace(/\s+/g,' ').trim(); }
+function cleanText(s){ return norm(s).replace(/[“”]/g,'"').replace(/[’]/g,"'"); }
+function moneyToNum(s){ return Number(String(s || '0').replace(/[^0-9.-]/g,'')) || 0; }
+function intToNum(s){ return Number(String(s || '0').replace(/[^0-9-]/g,'')) || 0; }
+function fmtMoney(n){ return (Number(n)||0).toLocaleString('en-US',{style:'currency',currency:'USD'}); }
+function fmtNum(n){ return (Number(n)||0).toLocaleString('en-US'); }
+function log(msg){ const el=$('log'); const t=new Date().toLocaleTimeString(); el.textContent += `\n[${t}] ${msg}`; el.scrollTop=el.scrollHeight; }
+function normalizeSize(s){ const k=String(s||'').toUpperCase().replace(/\./g,'').trim(); return SIZE_MAP[k] || k; }
+function escapeHtml(v){ return String(v ?? '').replace(/[&<>]/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;'}[c])); }
+function sizeOrder(s){ const arr=['XXXS','XXS','XS','S','M','L','XL','XXL','XXXL']; const i=arr.indexOf(s); return i < 0 ? 99 : i; }
 
-    <!-- PDF.js y SheetJS -->
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.min.js"></script>
-    <script>
-      pdfjsLib.GlobalWorkerOptions.workerSrc =
-        "https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.4.120/pdf.worker.min.js";
-    </script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+function updateFileList(){
+  $('kpiFiles').textContent = selectedFiles.length;
+  if(!selectedFiles.length){ $('fileList').textContent = 'Sin archivos seleccionados.'; return; }
+  const names = selectedFiles.slice(0,5).map(f=>f.name).join(', ');
+  $('fileList').textContent = selectedFiles.length > 5 ? `${names} ... +${selectedFiles.length-5} mas` : names;
+}
 
-    <!-- LÓGICA ORIGINAL + capa de agrupado/paginación (post-proceso) -->
-    <script>
-      const statusPill = document.getElementById("statusPill");
-      const rowCountPill = document.getElementById("rowCountPill");
-      const poCountPill = document.getElementById("poCountPill");
+function extractStyleSize(vndr){
+  const raw = String(vndr||'').toUpperCase().trim();
+  for (const suf of [...SIZE_SUFFIXES].sort((a,b)=>b.length-a.length)){
+    if(raw.endsWith(suf)) return {style: raw.slice(0,-suf.length), size: normalizeSize(suf)};
+  }
+  return {style: raw, size: ''};
+}
 
-      const pageSizeSel = document.getElementById("pageSize");
-      const prevBtn = document.getElementById("prevPage");
-      const nextBtn = document.getElementById("nextPage");
-      const pageInfo = document.getElementById("pageInfo");
+function parseDescription(desc){
+  let raw = norm(desc).toUpperCase().replace(/WMN'S/g,'WMNS').replace(/\s+-\s*/g,' -');
+  let tokens = raw.split(' ').filter(Boolean);
+  let sizePdfRaw = '';
+  if(tokens.length && SIZE_TOKENS.includes(tokens[0])) sizePdfRaw = tokens.shift();
 
-      let grouped = []; // [{po, rows:[...], subtotalQty:number, subtotalImporte:number}]
-      let flatRows = []; // [{po, estilo, color, talla, qty, precio, xfd, shipto}]
-      let currentPage = 1; // 1-based
+  let garment = '';
+  let color = '';
 
-      function setStatus(text) {
-        statusPill.textContent = text;
+  const shortIdx = tokens.findIndex(t => t === 'SHORT' || t === 'SHORTS');
+  if(shortIdx >= 0){
+    garment = tokens.slice(shortIdx).join(' ').replace(/-NO/g,'- NO');
+    tokens = tokens.slice(0, shortIdx);
+    color = 'BLACK';
+  } else if(tokens.length >= 2 && tokens[tokens.length-2] === 'SS' && tokens[tokens.length-1] === 'SHIRT') {
+    garment = 'SS SHIRT'; tokens.splice(-2);
+  } else if(tokens.length >= 2 && tokens[tokens.length-2] === 'LS' && tokens[tokens.length-1] === 'SHIRT') {
+    garment = 'LS SHIRT'; tokens.splice(-2);
+  } else if(tokens.length && tokens[tokens.length-1] === 'SHIRT') {
+    garment = 'SHIRT'; tokens.pop();
+  }
+
+  if(!color && tokens.length && COLOR_WORDS.has(tokens[tokens.length-1])) color = tokens.pop();
+  return {sizePdf: normalizeSize(sizePdfRaw), styleDesc: norm(tokens.join(' ')), color, garment, raw};
+}
+
+function buildLinesFromItems(items, yTolerance=2.8){
+  const groups = [];
+  for(const it of items){
+    let g = groups.find(row => Math.abs(row.y - it.y) <= yTolerance);
+    if(!g){ g = {y:it.y, items:[]}; groups.push(g); }
+    g.items.push(it);
+  }
+  groups.sort((a,b)=>b.y-a.y);
+  const out = [];
+  for(const g of groups){
+    g.items.sort((a,b)=>a.x-b.x);
+    const line = norm(g.items.map(it=>it.text).join(' '));
+    if(line) out.push(line);
+  }
+  return out;
+}
+
+function extractShipToFromPageItems(items){
+  // Coordinate-based extraction for the boxed Ship To area.
+  // This avoids losing lines when PDF.js interleaves columns or text chunks.
+  const markers = items.filter(it => /^SHIP\s+TO:?$/i.test(norm(it.text)) || /SHIP\s+TO:/i.test(norm(it.text)));
+  const blocks = [];
+  for(const marker of markers){
+    const markerText = norm(marker.text);
+    const sameLineExtra = markerText.replace(/^.*?SHIP\s+TO:\s*/i,'').trim();
+    const boxItems = items.filter(it => {
+      if(it === marker) return false;
+      const t = norm(it.text);
+      if(!t) return false;
+      // In PDF coordinates, lines below the label normally have a slightly smaller Y.
+      const belowLabel = it.y < marker.y + 4 && it.y > marker.y - 95;
+      const insideRightBox = it.x >= marker.x - 8 && it.x <= marker.x + 285;
+      return belowLabel && insideRightBox;
+    });
+    let blockLines = [];
+    if(sameLineExtra) blockLines.push(sameLineExtra);
+    blockLines = blockLines.concat(buildLinesFromItems(boxItems, 3.5));
+    blockLines = blockLines
+      .map(cleanShipToLine)
+      .filter(Boolean)
+      .filter(l => looksLikeShipToAddressLine(l))
+      .filter(l => !parseDetailLine(l) && !isMoneyDetailLine(l));
+
+    // Keep the real destination only. For these OSI PDFs the valid block is 3 lines.
+    const officialIdx = blockLines.findIndex(l => /OFFICIAL\s+SPORTS/i.test(l));
+    if(officialIdx >= 0) blockLines = blockLines.slice(officialIdx, officialIdx + 3);
+    if(blockLines.length) blocks.push(norm(blockLines.join(' | ')));
+  }
+  // Prefer the block with the known OSI destination structure.
+  blocks.sort((a,b)=>{
+    const score = x => (/OFFICIAL\s+SPORTS/i.test(x)?10:0) + (/CORRIDOR/i.test(x)?5:0) + (/WARSAW/i.test(x)?5:0) + (x.split('|').length);
+    return score(b)-score(a);
+  });
+  return blocks[0] || '';
+}
+
+async function pdfToLines(file){
+  const buffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({data: buffer}).promise;
+  const lines = [];
+  const rawTextLines = [];
+  const shipToCandidates = [];
+
+  for(let p=1; p<=pdf.numPages; p++){
+    const page = await pdf.getPage(p);
+    const content = await page.getTextContent({normalizeWhitespace:true, disableCombineTextItems:false});
+    const items = content.items
+      .map(it => ({text:cleanText(it.str), x:it.transform[4], y:it.transform[5]}))
+      .filter(it => it.text);
+
+    // 1) Preserve PDF.js natural reading order as a fallback for text searches.
+    const natural = items.map(it=>norm(it.text)).filter(Boolean);
+    rawTextLines.push(...natural);
+
+    // 2) Extract Ship To by coordinates from the visible boxed area.
+    const shipBlock = extractShipToFromPageItems(items);
+    if(shipBlock) shipToCandidates.push(shipBlock);
+
+    // 3) Build visual rows for detail extraction.
+    lines.push(...buildLinesFromItems(items, 2.8));
+  }
+  lines.rawTextLines = rawTextLines;
+  lines.shipToCandidates = shipToCandidates;
+  return lines;
+}
+
+function isMoneyDetailLine(line){
+  return /^\S+\s+.+\s+[\d,]+\s+\$[\d,]+\.\d{2}\s+\$[\d,]+\.\d{2}$/.test(norm(line));
+}
+function isStandaloneItem(line){
+  return /^[A-Z]*\d+[A-Z]+$/.test(String(line||'').toUpperCase().trim());
+}
+
+function extractPO(lines){
+  const joined = lines.join(' ');
+  let po = (joined.match(/PURCHASE\s+ORDER\s+NO:\s*(\d+)/i) || [])[1] || '';
+  if(!po){
+    const idx = lines.findIndex(l => /^PURCHASE\s+ORDER\s+NO:?$/i.test(l));
+    if(idx >= 0 && lines[idx+1]) po = (lines[idx+1].match(/\d+/) || [])[0] || '';
+  }
+  if(!po) po = (joined.match(/PO\s*#:\s*(\d+)/i) || [])[1] || '';
+  return po;
+}
+function extractOrderDate(lines){
+  const joined = lines.join(' ');
+  let d = (joined.match(/ORDER\s+DATE:\s*(\d{2}\/\d{2}\/\d{4})/i) || [])[1] || '';
+  if(d) return d;
+  const idx = lines.findIndex(l => /^ORDER\s+DATE:?$/i.test(l));
+  if(idx >= 0){
+    for(let j=Math.max(0,idx-2); j<=idx+2 && j<lines.length; j++){
+      const m = lines[j].match(/\d{2}\/\d{2}\/\d{4}/); if(m) return m[0];
+    }
+  }
+  return '';
+}
+function looksLikeShipToAddressLine(line){
+  const l = norm(line).toUpperCase();
+  if(!l) return false;
+  if(isMoneyDetailLine(l) || parseDetailLine(l)) return false;
+  if(/^SPECIAL\s+INSTRUCTIONS/i.test(l) || /^TOTALS:?/i.test(l) || /^PER\s+THE\s+APPROVED/i.test(l) || /^PLEASE\s+DELIVER/i.test(l) || /^PAGE\s+\d+/i.test(l)) return false;
+  if(/^Vndr\s+Item/i.test(l) || /^ORDER\s+DATE/i.test(l) || /^EARLIEST\s+SHIP/i.test(l) || /^LATEST\s+SHIP/i.test(l)) return false;
+  if(/^MILCO\s+APPAREL/i.test(l) || /^DIVISION\s+OF\s+INTRADECO/i.test(l) || /^ACCOUNT\s+NO/i.test(l) || /^FAX:?/i.test(l) || /^EMAIL:?/i.test(l)) return false;
+  if(/^\d+\s+HAGGERTY/i.test(l) || /WEST\s+ORANGE/i.test(l)) return false;
+  if(/OFFICIAL\s+SPORTS|OFFICIAL\s+SPORTS\s+INT|CORRIDOR|WARSAW|\bIN\s+\d{5}\b/.test(l)) return true;
+  if(partsLikelyAddressToken(l)) return true;
+  return false;
+}
+function partsLikelyAddressToken(l){
+  return /^[A-Z0-9 &'.,#-]{4,80}$/.test(l) && !/^(PH:|FAX:|EMAIL:|TERMS:|ORDER DATE|PO #:)/i.test(l);
+}
+function cleanShipToLine(line){
+  return norm(line)
+    .replace(/^.*?SHIP\s+TO:\s*/i,'')
+    .replace(/^SHIP\s+TO:?\s*/i,'')
+    .trim();
+}
+function extractShipTo(lines){
+  const firstDetailIdx = lines.findIndex(l => !!parseDetailLine(l) || isMoneyDetailLine(l));
+  const searchEnd = firstDetailIdx >= 0 ? firstDetailIdx : lines.length;
+  const candidates = [];
+  for(let i=0; i<searchEnd; i++){
+    if(/SHIP\s+TO:?/i.test(lines[i])) candidates.push(i);
+  }
+  if(!candidates.length) return '';
+
+  // Prefer the Ship To marker closest to the detail table. This avoids grabbing vendor/remit-to blocks.
+  const idx = candidates[candidates.length - 1];
+  const parts = [];
+
+  const sameLine = cleanShipToLine(lines[idx]);
+  if(sameLine && !/^SHIP\s+TO:?$/i.test(sameLine) && looksLikeShipToAddressLine(sameLine)) parts.push(sameLine);
+
+  for(let i=idx+1; i<lines.length; i++){
+    let l = cleanShipToLine(lines[i]);
+    if(!l) continue;
+    if(parseDetailLine(l) || isMoneyDetailLine(l)) break;
+    if(/^SPECIAL\s+INSTRUCTIONS/i.test(l) || /^TOTALS:?/i.test(l)) break;
+    if(/^Vndr\s+Item/i.test(l) || /^ORDER\s+DATE/i.test(l) || /^EARLIEST\s+SHIP/i.test(l) || /^LATEST\s+SHIP/i.test(l)) continue;
+
+    // Stop if the parser has moved back into vendor/remit-to information.
+    if(/^MILCO\s+APPAREL/i.test(l) || /^DIVISION\s+OF\s+INTRADECO/i.test(l) || /^ACCOUNT\s+NO/i.test(l) || /^FAX:?/i.test(l) || /^EMAIL:?/i.test(l) || /^\d+\s+HAGGERTY/i.test(l) || /WEST\s+ORANGE/i.test(l)) {
+      if(parts.length) break;
+      continue;
+    }
+
+    if(looksLikeShipToAddressLine(l)) parts.push(l);
+    if(parts.length >= 3 && /\b[A-Z]{2}\s+\d{5}(?:-\d{4})?\b/.test(parts[parts.length-1].toUpperCase())) break;
+    if(parts.length >= 4) break;
+  }
+
+  // OSI PDFs currently use this exact 3-line Ship To block. Keep only the actual destination block if present.
+  const joined = parts.join(' | ');
+  const officialIdx = parts.findIndex(x => /OFFICIAL\s+SPORTS/i.test(x));
+  if(officialIdx >= 0){
+    const clean = parts.slice(officialIdx, officialIdx + 3);
+    return norm(clean.join(' | '));
+  }
+  return norm(joined);
+}
+
+function parseDetailLine(line){
+  const l = norm(line);
+  const m = l.match(/^(.*?)\s+([\d,]+)\s+\$([\d,]+\.\d{2})\s+\$([\d,]+\.\d{2})$/);
+  if(!m) return null;
+  const prefix = norm(m[1]);
+  const tokens = prefix.split(' ').filter(Boolean);
+  if(tokens.length < 2) return null;
+  const vndr = tokens.shift().toUpperCase();
+  let osi = vndr;
+  if(tokens.length && tokens[0].toUpperCase() === vndr){ osi = tokens.shift().toUpperCase(); }
+  const desc = tokens.join(' ');
+  return {vndr, osi, desc, qty:intToNum(m[2]), cost:moneyToNum(m[3]), ext:moneyToNum(m[4])};
+}
+
+function parsePO(lines, fileName){
+  const po = extractPO(lines);
+  const orderDate = extractOrderDate(lines);
+  const shipTo = extractShipTo(lines);
+  const out=[];
+
+  for(let i=0;i<lines.length;i++){
+    const base = parseDetailLine(lines[i]);
+    if(!base) continue;
+
+    const descParts = [base.desc];
+    let j=i+1;
+    while(j<lines.length){
+      const t = norm(lines[j]);
+      if(!t) { j++; continue; }
+      if(/^SPECIAL\s+INSTRUCTIONS/i.test(t) || /^TOTALS:?/i.test(t) || /^PER\s+THE\s+APPROVED/i.test(t) || /^PLEASE\s+DELIVER/i.test(t) || /^PAGE\s+\d+/i.test(t)) break;
+      if(parseDetailLine(t)) break;
+      if(isStandaloneItem(t) && (t.toUpperCase() === base.vndr || t.toUpperCase() === base.osi)) { j++; break; }
+      if(/^\$[\d,]+\.\d{2}$/.test(t)) break;
+      descParts.push(t);
+      j++;
+    }
+
+    const descJoined = descParts.join(' ');
+    const ss = extractStyleSize(base.vndr);
+    const pd = parseDescription(descJoined);
+    const calc = +(base.qty * base.cost).toFixed(2);
+    const diff = +(base.ext - calc).toFixed(2);
+    out.push({
+      'Archivo': fileName,
+      'PO': po,
+      'Order Date': orderDate,
+      'Ship To': shipTo,
+      'Vndr Item': base.vndr,
+      'OSI Item #': base.osi,
+      'Estilo': ss.style,
+      'Talla': pd.sizePdf || ss.size,
+      'Talla Vndr': ss.size,
+      'Talla PDF': pd.sizePdf,
+      'Description Raw': pd.raw,
+      'Descripcion Estilo': pd.styleDesc,
+      'Color': pd.color,
+      'Tipo Prenda': pd.garment,
+      'QTY': base.qty,
+      'Cost': base.cost,
+      'Ext Cost PDF': base.ext,
+      'Ext Cost Calculado': calc,
+      'Diferencia': diff,
+      'Validacion': Math.abs(diff) < 0.01 ? 'OK' : 'REVISAR'
+    });
+    i = Math.max(i, j-1);
+  }
+  return out;
+}
+
+async function processFiles(){
+  if(processing) return;
+  processing = true;
+  $('btnProcess').disabled = true;
+  rows=[]; $('log').textContent='Procesando...';
+
+  for(const file of selectedFiles){
+    try{
+      log(`Leyendo ${file.name}`);
+      const lines = await pdfToLines(file);
+      const parsed = parsePO(lines, file.name);
+      rows.push(...parsed);
+      log(`${file.name}: ${parsed.length} linea(s) extraida(s).`);
+      if(!parsed.length){
+        log(`Advertencia: no se detectaron lineas de detalle. Primeras lineas leidas:`);
+        log(lines.slice(0,18).join(' | ') || '(sin texto leido)');
       }
-      function setRowCount(n) {
-        rowCountPill.textContent = `${n.toLocaleString()} fila${
-          n === 1 ? "" : "s"
-        }`;
-      }
-      function setPOCount(n) {
-        poCountPill.textContent = `${n.toLocaleString()} PO${
-          n === 1 ? "" : "s"
-        }`;
-      }
+    }catch(err){
+      log(`${file.name}: ERROR ${err && err.message ? err.message : err}`);
+    }
+  }
 
-      function parseNumber(val) {
-        if (val == null) return 0;
-        if (typeof val === "number") return val;
-        const s = String(val).replace(/[^\d.-]/g, ""); // quita $ , espacios, etc.
-        const n = Number(s);
-        return isNaN(n) ? 0 : n;
-      }
+  rows.sort((a,b)=>(Number(a.PO)-Number(b.PO)) || String(a['Vndr Item']).localeCompare(String(b['Vndr Item'])));
+  populateFilters(); render(); $('btnExcel').disabled = rows.length === 0;
+  log(`Finalizado. ${rows.length} linea(s) consolidadas.`);
+  $('btnProcess').disabled = false;
+  processing = false;
+}
 
-      // --- RENDER AGRUPADO + PAGINADO (por PO) ---
-      function gatherFromTable() {
-        flatRows = [];
-        const tbody = document.querySelector("#tablaResultados tbody");
-        for (const tr of tbody.querySelectorAll("tr")) {
-          const tds = tr.querySelectorAll("td");
-          if (tds.length < 8) continue;
-          // nota: la columna 9 (importe) se deja vacía en filas normales
-          flatRows.push({
-            po: tds[0].textContent.trim(),
-            estilo: tds[1].textContent.trim(),
-            color: tds[2].textContent.trim(),
-            talla: tds[3].textContent.trim(),
-            qty: parseNumber(tds[4].textContent),
-            precio: parseNumber(tds[5].textContent),
-            xfd: tds[6].textContent.trim(),
-            shipto: tds[7].textContent.trim(),
-          });
-        }
-      }
+function getFiltered(){
+  const q=$('search').value.toLowerCase().trim(); const po=$('filterPO').value; const size=$('filterSize').value; const color=$('filterColor').value;
+  return rows.filter(r => (!po || r.PO===po) && (!size || r.Talla===size) && (!color || r.Color===color) && (!q || HEADERS.some(h => String(r[h]??'').toLowerCase().includes(q))));
+}
+function populateFilters(){
+  const fill=(id, vals, label)=>{ const el=$(id); const keep=el.value; el.innerHTML=`<option value="">${label}</option>` + vals.map(v=>`<option value="${escapeHtml(v)}">${escapeHtml(v)}</option>`).join(''); if(vals.includes(keep)) el.value=keep; };
+  fill('filterPO',[...new Set(rows.map(r=>r.PO).filter(Boolean))].sort((a,b)=>Number(a)-Number(b)),'Todas las PO');
+  fill('filterSize',[...new Set(rows.map(r=>r.Talla).filter(Boolean))].sort((a,b)=>sizeOrder(a)-sizeOrder(b)),'Todas las tallas');
+  fill('filterColor',[...new Set(rows.map(r=>r.Color).filter(Boolean))].sort(),'Todos los colores');
+}
+function render(){
+  const data=getFiltered();
+  $('thead').innerHTML = HEADERS.map(h=>`<th>${h}</th>`).join('');
+  const body=$('tbody');
+  if(!data.length){ body.innerHTML=`<tr><td colspan="${HEADERS.length}" class="text-muted p-3">Sin datos para mostrar.</td></tr>`; }
+  else body.innerHTML = data.map(r=>`<tr class="${r.Validacion==='OK'?'':'invalid-row'}">${HEADERS.map(h=>{
+    let v=r[h]??'';
+    if(['Cost','Ext Cost PDF','Ext Cost Calculado','Diferencia'].includes(h)) v=fmtMoney(v);
+    if(h==='QTY') v=fmtNum(v);
+    const cls=h==='Description Raw'||h==='Descripcion Estilo'?'desc':h==='Ship To'?'ship':'';
+    return `<td class="${cls}">${escapeHtml(v)}</td>`;
+  }).join('')}</tr>`).join('');
+  $('countRows').textContent = `${data.length} fila(s)`;
+  $('kpiFiles').textContent = selectedFiles.length || new Set(rows.map(r=>r.Archivo)).size;
+  $('kpiLines').textContent = rows.length;
+  $('kpiQty').textContent = fmtNum(rows.reduce((s,r)=>s+r.QTY,0));
+  $('kpiAmount').textContent = fmtMoney(rows.reduce((s,r)=>s+r['Ext Cost PDF'],0));
+}
 
-      function groupByPO() {
-        const map = new Map();
-        flatRows.forEach((r) => {
-          if (!map.has(r.po)) map.set(r.po, []);
-          map.get(r.po).push(r);
-        });
-        grouped = Array.from(map.entries()).map(([po, rows]) => {
-          const subtotalQty = rows.reduce((a, b) => a + parseNumber(b.qty), 0);
-          const subtotalImporte = rows.reduce((a, b) => {
-            const q = parseNumber(b.qty);
-            const p = parseNumber(b.precio);
-            return a + q * p;
-          }, 0);
-          return { po, rows, subtotalQty, subtotalImporte };
-        });
-      }
+function formatSheet(ws, headers){
+  ws.getRow(1).font={bold:true,color:{argb:'FFFFFFFF'}};
+  ws.getRow(1).fill={type:'pattern',pattern:'solid',fgColor:{argb:'FF1F4E78'}};
+  ws.getRow(1).alignment={vertical:'middle',horizontal:'center',wrapText:true};
+  ws.columns = headers.map(h=>({header:h,key:h,width: ({'Ship To':42,'Description Raw':42,'Descripcion Estilo':28,'Ext Cost Calculado':20,'Order Date':14,'Vndr Item':16,'OSI Item #':16}[h] || 14)}));
+  ws.eachRow((row, rn)=>{ row.eachCell(cell=>{ cell.border={top:{style:'thin',color:{argb:'FFD9E2EC'}},left:{style:'thin',color:{argb:'FFD9E2EC'}},bottom:{style:'thin',color:{argb:'FFD9E2EC'}},right:{style:'thin',color:{argb:'FFD9E2EC'}}}; if(rn>1) cell.alignment={vertical:'middle',wrapText:['Ship To','Description Raw','Descripcion Estilo'].includes(headers[cell.col-1])}; }); });
+  ws.autoFilter = {from:{row:1,column:1}, to:{row:1,column:headers.length}};
+}
+function addTable(ws, name, headers, rowCount){
+  if(rowCount < 2) return;
+  const dataRows = [];
+  for(let r=2; r<=rowCount; r++) dataRows.push(ws.getRow(r).values.slice(1));
+  ws.addTable({name, ref:'A1', headerRow:true, totalsRow:false, style:{theme:'TableStyleMedium2', showRowStripes:true}, columns:headers.map(h=>({name:h})), rows:dataRows});
+}
+function groupPO(data){
+  const m=new Map(); data.forEach(r=>{ const k=r.PO; if(!m.has(k)) m.set(k,{PO:k,'Ship To':r['Ship To'],Lineas:0,'QTY Total':0,'Importe PDF':0,'Importe Calculado':0,Diferencia:0}); const d=m.get(k); d.Lineas++; d['QTY Total']+=r.QTY; d['Importe PDF']+=r['Ext Cost PDF']; d['Importe Calculado']+=r['Ext Cost Calculado']; d.Diferencia+=r.Diferencia; });
+  return [...m.values()].sort((a,b)=>Number(a.PO)-Number(b.PO)).map(r=>({...r,'Importe PDF':+r['Importe PDF'].toFixed(2),'Importe Calculado':+r['Importe Calculado'].toFixed(2),Diferencia:+r.Diferencia.toFixed(2)}));
+}
+function groupStyle(data){
+  const m=new Map(); data.forEach(r=>{ const k=[r.Estilo,r['Descripcion Estilo'],r.Color,r['Tipo Prenda']].join('|'); if(!m.has(k)) m.set(k,{Estilo:r.Estilo,'Descripcion Estilo':r['Descripcion Estilo'],Color:r.Color,'Tipo Prenda':r['Tipo Prenda'],Lineas:0,'QTY Total':0,Importe:0}); const d=m.get(k); d.Lineas++; d['QTY Total']+=r.QTY; d.Importe+=r['Ext Cost PDF']; });
+  return [...m.values()].sort((a,b)=>String(a.Estilo).localeCompare(String(b.Estilo))).map(r=>({...r,Importe:+r.Importe.toFixed(2)}));
+}
 
-      function totalPages() {
-        const size = Number(pageSizeSel.value) || 25;
-        return Math.max(1, Math.ceil(grouped.length / size));
-      }
+async function exportExcel(){
+  const wb = new ExcelJS.Workbook(); wb.creator='Customer Service development tools'; wb.created=new Date();
+  const detail = wb.addWorksheet('Detalle', {views:[{state:'frozen', ySplit:1}]});
+  detail.addRow(HEADERS);
+  rows.forEach(r => detail.addRow(HEADERS.map(h=>r[h])));
+  formatSheet(detail, HEADERS);
+  const col = name => HEADERS.indexOf(name)+1;
+  const colLetter = c => {
+    let s = '';
+    while(c > 0){ const m = (c - 1) % 26; s = String.fromCharCode(65 + m) + s; c = Math.floor((c - 1) / 26); }
+    return s;
+  };
+  const qtyCol = colLetter(col('QTY'));
+  const costCol = colLetter(col('Cost'));
+  const extPdfCol = colLetter(col('Ext Cost PDF'));
+  const extCalcCol = colLetter(col('Ext Cost Calculado'));
+  const diffCol = colLetter(col('Diferencia'));
+  for(let r=2;r<=rows.length+1;r++){
+    detail.getCell(r, col('Ext Cost Calculado')).value = {formula:`${qtyCol}${r}*${costCol}${r}`, result: rows[r-2]['Ext Cost Calculado']};
+    detail.getCell(r, col('Diferencia')).value = {formula:`${extPdfCol}${r}-${extCalcCol}${r}`, result: rows[r-2]['Diferencia']};
+    detail.getCell(r, col('Validacion')).value = {formula:`IF(ABS(${diffCol}${r})<0.01,"OK","REVISAR")`, result: rows[r-2]['Validacion']};
+    detail.getCell(r, col('QTY')).numFmt = '#,##0';
+    ['Cost','Ext Cost PDF','Ext Cost Calculado','Diferencia'].forEach(h=>detail.getCell(r,col(h)).numFmt = '$#,##0.00');
+  }
+  addTable(detail, 'DetallePO', HEADERS, rows.length+1);
 
-      function renderPage() {
-        const tbody = document.querySelector("#tablaResultados tbody");
-        tbody.innerHTML = "";
-        if (!grouped.length) {
-          setRowCount(0);
-          setPOCount(0);
-          pageInfo.textContent = `Página 1 de 1`;
-          return;
-        }
+  const byPO = groupPO(rows);
+  const wsPO = wb.addWorksheet('Resumen PO', {views:[{state:'frozen', ySplit:1}]});
+  const hPO=['PO','Ship To','Lineas','QTY Total','Importe PDF','Importe Calculado','Diferencia']; wsPO.addRow(hPO);
+  byPO.forEach(r=>wsPO.addRow(hPO.map(h=>r[h]))); formatSheet(wsPO,hPO); addTable(wsPO,'ResumenPO',hPO,byPO.length+1); wsPO.getColumn(4).numFmt='#,##0'; [5,6,7].forEach(c=>wsPO.getColumn(c).numFmt='$#,##0.00');
 
-        const size = Number(pageSizeSel.value) || 25;
-        const pages = totalPages();
-        if (currentPage > pages) currentPage = pages;
-        if (currentPage < 1) currentPage = 1;
+  const byStyle = groupStyle(rows);
+  const wsST = wb.addWorksheet('Resumen Estilo', {views:[{state:'frozen', ySplit:1}]});
+  const hST=['Estilo','Descripcion Estilo','Color','Tipo Prenda','Lineas','QTY Total','Importe']; wsST.addRow(hST); byStyle.forEach(r=>wsST.addRow(hST.map(h=>r[h]))); formatSheet(wsST,hST); addTable(wsST,'ResumenEstilo',hST,byStyle.length+1); [5,6].forEach(c=>wsST.getColumn(c).numFmt='#,##0'); wsST.getColumn(7).numFmt='$#,##0.00';
 
-        const start = (currentPage - 1) * size;
-        const end = Math.min(grouped.length, start + size);
-        const slice = grouped.slice(start, end);
+  const notes = wb.addWorksheet('Notas');
+  notes.addRows([
+    ['Campo','Regla aplicada'],
+    ['Ship To','Bloque posterior al marcador Ship To: mas cercano a la tabla de detalle. Excluye datos de vendor/remit-to y captura nombre, direccion y ciudad/estado/ZIP.'],
+    ['Talla','SM -> S, MED/MD -> M, LG -> L, XLG -> XL, XXSMALL -> XXS.'],
+    ['Parser','La app detecta lineas completas tipo: Vndr Item / OSI Item / Description / QTY / Cost / Ext Cost. Tambien une continuaciones como SHIRT y LINER.'],
+    ['Color','Si el tipo de prenda es Short/Shorts, se asigna BLACK.'],
+    ['Validacion','Ext Cost PDF contra QTY * Cost.'],
+    ['Orden columnas','Order Date, PO, Estilo, Color, Talla, QTY, Cost, Ext Cost PDF, Ship To, Vndr Item, OSI Item #, Talla Vndr, Talla PDF, Description Raw, Descripcion Estilo, Tipo Prenda, Ext Cost Calculado, Diferencia, Validacion, Archivo.']
+  ]);
+  formatSheet(notes, ['Campo','Regla aplicada']); notes.getColumn(2).width=105;
 
-        let visibleRows = 0;
-        const frag = document.createDocumentFragment();
+  const buffer = await wb.xlsx.writeBuffer();
+  saveAs(new Blob([buffer], {type:'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'}), 'OSI_PO_consolidado.xlsx');
+}
 
-        slice.forEach((section) => {
-          // filas del PO
-          section.rows.forEach((r) => {
-            const tr = document.createElement("tr");
-            tr.innerHTML = `
-            <td>${r.po}</td>
-            <td>${r.estilo}</td>
-            <td>${r.color}</td>
-            <td>${r.talla}</td>
-            <td class="num">${r.qty}</td>
-            <td class="num">${parseNumber(r.precio).toLocaleString(undefined, {
-              minimumFractionDigits: 2,
-              maximumFractionDigits: 2,
-            })}</td>
-            <td>${r.xfd}</td>
-            <td>${r.shipto}</td>
-            <td class="num"></td>
-          `;
-            frag.appendChild(tr);
-            visibleRows++;
-          });
-          // subtotal
-          const trSub = document.createElement("tr");
-          trSub.className = "subtotal-row";
-          trSub.innerHTML = `
-          <td colspan="4">Subtotal PO ${section.po}</td>
-          <td class="num">${section.subtotalQty.toLocaleString()}</td>
-          <td class="num"></td>
-          <td></td>
-          <td></td>
-          <td class="num">${section.subtotalImporte.toLocaleString(undefined, {
-            minimumFractionDigits: 2,
-            maximumFractionDigits: 2,
-          })}</td>
-        `;
-          frag.appendChild(trSub);
-          visibleRows++;
-        });
+function handleFiles(fileList){
+  selectedFiles = [...fileList].filter(f => /\.pdf$/i.test(f.name) || f.type === 'application/pdf');
+  updateFileList();
+  log(`${selectedFiles.length} archivo(s) seleccionado(s).`);
+}
 
-        tbody.appendChild(frag);
-
-        // KPIs y estado de paginación
-        setPOCount(grouped.length);
-        setRowCount(visibleRows);
-        pageInfo.textContent = `Página ${currentPage} de ${pages}`;
-        prevBtn.disabled = currentPage <= 1;
-        nextBtn.disabled = currentPage >= pages;
-      }
-
-      function rebuildGroupsAndRender() {
-        // Se llama justo DESPUÉS de tu extracción (post-proceso)
-        gatherFromTable();
-        groupByPO();
-        currentPage = 1;
-        renderPage();
-      }
-
-      // ---- TU LÓGICA DE EXTRACCIÓN (SIN CAMBIOS) ----
-      async function procesarPDFs() {
-        const input = document.getElementById("pdfInput");
-        const tabla = document.querySelector("#tablaResultados tbody");
-        tabla.innerHTML = "";
-
-        const total = input.files.length || 0;
-        setStatus(total ? `Procesando 0/${total}…` : "Sin archivos");
-        setRowCount(0);
-        setPOCount(0);
-
-        let processed = 0;
-
-        for (const file of input.files) {
-          const arrayBuffer = await file.arrayBuffer();
-          const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
-
-          let fragments = [];
-
-          for (let i = 1; i <= pdf.numPages; i++) {
-            const page = await pdf.getPage(i);
-            const content = await page.getTextContent();
-            fragments.push(
-              ...content.items.map((item) => ({
-                texto: item.str.trim(),
-                x: item.transform[4],
-                y: item.transform[5],
-              }))
-            );
-          }
-
-          extraerPorCoordenadas(fragments, tabla);
-
-          processed++;
-          setStatus(`Procesando ${processed}/${total}…`);
-        }
-
-        setStatus("Listo");
-        // 🔽 Agrupado + paginación + subtotales (Qty y Monto)
-        rebuildGroupsAndRender();
-      }
-
-      function extraerPorCoordenadas(fragments, tabla) {
-        const po = buscarTexto(fragments, /PURCHASE ORDER NO:\s*(\d+)/);
-        const xfd = buscarTexto(
-          fragments,
-          /PLEASE DELIVER\s*(\d{2}\/\d{2}\/\d{2})/
-        );
-        const shipTo = buscarBloque(fragments, "Ship To:");
-
-        const lineas = {};
-        fragments.forEach((frag) => {
-          const y = Math.round(frag.y);
-          if (!lineas[y]) lineas[y] = [];
-          if (frag.texto) lineas[y].push(frag);
-        });
-
-        Object.entries(lineas).forEach(([y, fila]) => {
-          const encabezados = [
-            "QTY",
-            "Cost",
-            "Description",
-            "OSI Item",
-            "Vndr Item",
-          ];
-          const contieneEncabezado = fila.some((frag) =>
-            encabezados.some((e) => frag.texto.includes(e))
-          );
-          if (contieneEncabezado) return; // ⛔ Ignorar encabezado
-
-          let estiloRaw = "",
-            desc = "",
-            qty = "",
-            precio = "";
-
-          fila.forEach((frag) => {
-            const x = frag.x;
-            const texto = frag.texto;
-
-            if (x >= 70 && x < 150) estiloRaw += texto + " ";
-            else if (x >= 240 && x < 300) desc += texto + " ";
-            else if (x >= 420 && x < 460) qty += texto;
-            else if (x >= 480 && x < 520) precio += texto.replace("$", "");
-          });
-
-          if (estiloRaw && desc && qty && precio) {
-            estiloRaw = estiloRaw.trim();
-            const tallaMatch = estiloRaw.match(/(XXS|XS|S|M|L|XL|XXL|XXXL)$/i);
-            const talla = tallaMatch?.[1] || "";
-            const estilo = estiloRaw.replace(
-              /(XXS|XS|S|M|L|XL|XXL|XXXL)$/i,
-              ""
-            );
-
-            const color = /SHORTS/i.test(desc)
-              ? "BLACK"
-              : /GREEN/i.test(desc)
-              ? "GREEN"
-              : "";
-
-            const filaHTML = document.createElement("tr");
-            const datos = [po, estilo, color, talla, qty, precio, xfd, shipTo];
-            datos.forEach((val, idx) => {
-              const td = document.createElement("td");
-              td.textContent = val;
-              if (idx === 4 || idx === 5) td.className = "num";
-              filaHTML.appendChild(td);
-            });
-            // agrega celda Importe vacía (solo subtotal la usa)
-            const tdImporte = document.createElement("td");
-            tdImporte.className = "num";
-            filaHTML.appendChild(tdImporte);
-
-            tabla.appendChild(filaHTML);
-          }
-        });
-      }
-
-      function buscarTexto(fragments, regex) {
-        const textoPlano = fragments.map((f) => f.texto).join(" ");
-        const match = textoPlano.match(regex);
-        return match?.[1] || "";
-      }
-
-      function buscarBloque(fragments, inicio) {
-        const idx = fragments.findIndex((f) => f.texto.includes(inicio));
-        if (idx === -1) return "";
-        const bloque = [];
-        for (let i = idx + 1; i < fragments.length; i++) {
-          if (bloque.length >= 3) break;
-          if (fragments[i].texto) bloque.push(fragments[i].texto);
-        }
-        return bloque.join(", ");
-      }
-
-      function exportarExcel() {
-        // Exporta la tabla tal cual se ve (incluye subtotales e importe)
-        const tabla = document.getElementById("tablaResultados");
-        const wb = XLSX.utils.table_to_book(tabla, { sheet: "POs" });
-        XLSX.writeFile(wb, "ordenes.xlsx");
-      }
-
-      // Eventos de paginación
-      pageSizeSel.addEventListener("change", () => {
-        currentPage = 1;
-        renderPage();
-      });
-      prevBtn.addEventListener("click", () => {
-        currentPage = Math.max(1, currentPage - 1);
-        renderPage();
-      });
-      nextBtn.addEventListener("click", () => {
-        currentPage = Math.min(totalPages(), currentPage + 1);
-        renderPage();
-      });
-    </script>
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-  </body>
+$('dropzone').addEventListener('click', (e)=>{
+  if(e.target && e.target.id === 'fileInput') return;
+  $('fileInput').click();
+});
+$('dropzone').addEventListener('keydown', (e)=>{ if(e.key === 'Enter' || e.key === ' '){ e.preventDefault(); $('fileInput').click(); } });
+$('fileInput').addEventListener('click', e=>e.stopPropagation());
+$('fileInput').addEventListener('change', e=> handleFiles(e.target.files));
+['dragenter','dragover'].forEach(ev=>$('dropzone').addEventListener(ev,e=>{e.preventDefault();$('dropzone').classList.add('drag');}));
+['dragleave','drop'].forEach(ev=>$('dropzone').addEventListener(ev,e=>{e.preventDefault();$('dropzone').classList.remove('drag');}));
+$('dropzone').addEventListener('drop',e=> handleFiles(e.dataTransfer.files));
+$('btnProcess').addEventListener('click',()=>{ if(!selectedFiles.length){log('Selecciona al menos un PDF.'); return;} processFiles(); });
+$('btnExcel').addEventListener('click', exportExcel);
+$('btnClear').addEventListener('click',()=>{ selectedFiles=[]; rows=[]; $('fileInput').value=''; $('log').textContent='Esperando archivos...'; updateFileList(); populateFilters(); render(); $('btnExcel').disabled=true; });
+['search','filterPO','filterSize','filterColor'].forEach(id=>$(id).addEventListener('input',render));
+updateFileList();
+render();
+</script>
+</body>
 </html>
